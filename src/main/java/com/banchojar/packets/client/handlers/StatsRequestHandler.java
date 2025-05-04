@@ -24,6 +24,11 @@ public class StatsRequestHandler implements BanchoPacketHandler {
         
         int processedCount = 0;
         for (int userId : userIds) {
+
+            if(userId == playerId) {
+                continue;
+            }
+
             Player requestedPlayer = Server.players.values().stream()
                 .filter(player -> player.getId() == userId)
                 .findFirst()
