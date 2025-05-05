@@ -16,6 +16,10 @@ public class PacketSender {
         this.packetWriter = packetWriter;
     }
 
+    public BanchoPacketWriter getPacketWriter() {
+        return packetWriter;
+    }
+
     // Sends the login reply packet
     public void sendLoginReply(int userId) {
         packetWriter.startPacket(ServerPackets.LOGIN_REPLY.getValue());  // Start new packet with LOGIN_REPLY packet ID

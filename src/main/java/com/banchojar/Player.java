@@ -1,5 +1,9 @@
 package com.banchojar;
 
+import java.util.Stack;
+
+import com.banchojar.packets.server.ServerPacketHandler;
+
 import lombok.Data;
 
 @Data
@@ -10,11 +14,14 @@ public class Player {
         this.username = "User" + id;
     }
 
+    private Stack <ServerPacketHandler> packetStack = new Stack<>();
 
     private int id;
     private PlayerState playerState = PlayerState.CONNECTING;
     private LoginState loginState = LoginState.CONNECTING;
     private String username;
+
+    private long lastServedStatsRequest = 0;
 
     // --- StatusUpdate fields --- 0B 00 00 2E 00 00 00 E8 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 F4 01 00 00 00 00 00 00 00 00 80 3F 2B 02 00 00 B3 15 00 00 00 00 00 00 01 00 00 00 0F 27
     private byte action = 0;                         // Idle
@@ -41,4 +48,16 @@ public class Player {
     private long totalScore = 0;
     private int globalRank = 0;                // Unranked
     private short pp = 0;
+
+    public void addPacketToStack(ServerPacketHandler packet) {
+        packetStack.push(packet);
+    }
+
+    public ServerPacketHandler getPacketFromStack() {
+        return packetStack.pop();
+    }
+
+    public boolean isPacketStackEmpty() {
+        return packetStack.isEmpty();
+    }
 }

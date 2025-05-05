@@ -10,15 +10,10 @@ import io.javalin.jetty.JettyUtil;
 
 import java.util.List;
 
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.banchojar.javalin.RouteRegistrar;
 
 @Data
 @NoArgsConstructor
@@ -106,8 +101,17 @@ public class App {
                 logger.info("[REQ] | " + ctx.path() + " | " + ctx.method() + " | " + ctx.status());
             }
         });
+        
+        BanchoHandler banchoHandler = new BanchoHandler();
+        OsuHandler osuHandler = new OsuHandler();
+        LoginHandler loginHandler = new LoginHandler();
+
+        RouteRegistrar.registerAnnotatedRoutes(app, banchoHandler);
+        RouteRegistrar.registerAnnotatedRoutes(app, osuHandler);
+        RouteRegistrar.registerAnnotatedRoutes(app, loginHandler);
 
         BanchoHandler.registerRoutes(app);
+        OsuHandler.registerRoutes(app);
         LoginHandler.registerRoutes(app);
 
         System.out.println("Bancho server is running on HTTPS port 7000...");

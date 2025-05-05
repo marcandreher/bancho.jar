@@ -37,7 +37,6 @@ public class BanchoPacketWriter {
         byte[] payload = output.toByteArray();
         int length = payload.length;
         
-        logger.info("Payload Length: " + length);
         
         // Create a new ByteArrayOutputStream for the complete packet
         ByteArrayOutputStream finalPacket = new ByteArrayOutputStream();

@@ -12,28 +12,30 @@ import com.banchojar.packets.BanchoPacket;
 import com.banchojar.packets.client.BanchoPacketHandler;
 import com.banchojar.packets.client.BanchoPacketReader;
 import com.banchojar.packets.server.PacketSender;
+import com.banchojar.packets.server.handlers.UserPresenceHandler;
+import com.banchojar.packets.server.handlers.UserStatsHandler;
 
 public class PresenceRequestHandler implements BanchoPacketHandler {
 
     public Logger logger = LoggerFactory.getLogger(BanchoPacketHandler.class);
   
     @Override
-    public boolean handle(BanchoPacket packet, PacketSender sender, BanchoPacketReader reader, int playerId) throws IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         List<Integer> userIds = reader.readIntList();
-        logger.info("Presence request for userIds: " + userIds + " from playerId: " + playerId);
+        logger.info("Presence request for userIds: " + userIds + " from playerId: " + player.getId());
 
         // Process each user ID in the request
         int processedCount = 0;
         for (int userId : userIds) {
             Player requestedPlayer = Server.players.values().stream()
-                .filter(player -> player.getId() == userId)
+                .filter(p -> p.getId() == userId)
                 .findFirst()
                 .orElse(null);
 
             // If player is found, send their presence and stats
             if (requestedPlayer != null) {
-                sender.sendUserPresence(requestedPlayer);
-                sender.sendUserStats(requestedPlayer);
+                player.addPacketToStack(new UserPresenceHandler(requestedPlayer.getId()));
+                player.addPacketToStack(new UserStatsHandler(requestedPlayer.getId()));
                 processedCount++;
                 logger.info("Sent presence for user: " + userId);
             } else {

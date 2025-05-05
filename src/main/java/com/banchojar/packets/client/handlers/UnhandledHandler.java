@@ -12,7 +12,7 @@ import com.banchojar.packets.server.PacketSender;
 public class UnhandledHandler implements BanchoPacketHandler {
     private Logger logger = LoggerFactory.getLogger(UnhandledHandler.class);
     @Override
-    public boolean handle(BanchoPacket packet, PacketSender sender, BanchoPacketReader reader, int playerId) {
+    public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) {
        logger.warn("Unhandled packet: " + reader.getCurrentPacketId() + " (" + packet.type.name() + ")");
        return true;
     }

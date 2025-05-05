@@ -12,39 +12,53 @@ import com.banchojar.packets.BanchoPacket;
 import com.banchojar.packets.client.BanchoPacketHandler;
 import com.banchojar.packets.client.BanchoPacketReader;
 import com.banchojar.packets.server.PacketSender;
+import com.banchojar.packets.server.handlers.UserStatsHandler;
+import com.google.gson.Gson;
+import com.squareup.okhttp.OkHttpClient;
 
 public class StatsRequestHandler implements BanchoPacketHandler {
+
+    private static final OkHttpClient client = new OkHttpClient();
+    private static final Gson gson = new Gson();
 
     public Logger logger = LoggerFactory.getLogger(BanchoPacketHandler.class);
   
     @Override
-    public boolean handle(BanchoPacket packet, PacketSender sender, BanchoPacketReader reader, int playerId) throws IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         List<Integer> userIds = reader.readIntList();
-        logger.info("Stats request for userIds: " + userIds + " from playerId: " + playerId);
-        
+      
         int processedCount = 0;
         for (int userId : userIds) {
 
-            if(userId == playerId) {
-                continue;
+            if(player.getId() == userId) {
+                if(player.getLastServedStatsRequest() + 10000 > System.currentTimeMillis()) {
+                    continue; // Skip if the player is requesting stats too frequently
+                }
+    
+                player.setLastServedStatsRequest(System.currentTimeMillis());
             }
 
+            
+
+
             Player requestedPlayer = Server.players.values().stream()
-                .filter(player -> player.getId() == userId)
+                .filter(p -> p.getId() == userId)
                 .findFirst()
                 .orElse(null);
 
             if (requestedPlayer != null) {
-                sender.sendUserStats(requestedPlayer);
+
+                
+                
+                player.addPacketToStack(new UserStatsHandler(requestedPlayer.getId()));
+                
                 processedCount++;
-                logger.info("Sent stats for user: " + userId);
+              
             } else {
                 logger.warn("Requested userId " + userId + " not found in server players.");
             }
         }
 
-        // Acknowledge the request
-        logger.info("Processed " + processedCount + " out of " + userIds.size() + " stats requests");
         return true;
     }
 }

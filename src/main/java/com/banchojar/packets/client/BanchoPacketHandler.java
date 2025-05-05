@@ -7,5 +7,5 @@ import com.banchojar.packets.BanchoPacket;
 import com.banchojar.packets.server.PacketSender;
 
 public interface BanchoPacketHandler {
-    boolean handle(BanchoPacket packet, PacketSender sender, BanchoPacketReader reader, int playerId) throws IOException;
+    boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException;
 }

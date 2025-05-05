@@ -24,13 +24,11 @@ public class BanchoPacketReader {
     private int bytesReadInCurrentPacket;
     private boolean compressionFlag;
     private List<Integer> packetIds = new ArrayList<>();
-    private PacketSender sender;
-    private int playerId;
+    private Player player;
 
-    public BanchoPacketReader(byte[] packetData, PacketSender sender, int playerId) {
+    public BanchoPacketReader(byte[] packetData, Player player) {
         this.data = new ByteArrayInputStream(packetData);
-        this.sender = sender;
-        this.playerId = playerId;
+        this.player = player;
         this.bytesReadInCurrentPacket = 0;
     }
 
@@ -117,7 +115,7 @@ public class BanchoPacketReader {
         BanchoPacketHandler handler = BanchoHandler.packetHandlers.getOrDefault(ClientPackets.getById(currentPacketId), new UnhandledHandler());
         BanchoPacket packet = new BanchoPacket(currentPacketId, compressionFlag, ClientPackets.getById(currentPacketId));
         
-        boolean result = handler.handle(packet, sender, this, playerId);
+        boolean result = handler.handle(packet, this, player);
         
         // After handling, if we haven't read all the data for this packet, skip the rest
         skipRemainingPacketData();
@@ -131,7 +129,6 @@ public class BanchoPacketReader {
     private void skipRemainingPacketData() {
         if (currentPacketLength > 0 && bytesReadInCurrentPacket < currentPacketLength) {
             int bytesToSkip = currentPacketLength - bytesReadInCurrentPacket;
-            logger.info("Skipping " + bytesToSkip + " unread bytes from packet ID " + currentPacketId);
             data.skip(bytesToSkip);
             bytesReadInCurrentPacket = currentPacketLength; // Mark as fully read
         }

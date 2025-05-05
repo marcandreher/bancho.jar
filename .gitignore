@@ -24,6 +24,6 @@ hs_err_pid*
 replay_pid*
 
 # bancho.jar
-logs/
 target/
 keystore.jks
+.data/

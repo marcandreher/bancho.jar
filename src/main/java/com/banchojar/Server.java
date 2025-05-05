@@ -2,10 +2,11 @@ package com.banchojar;
 
 import java.util.HashMap;
 
-import lombok.Data;
+import com.banchojar.packets.server.BanchoChannel;
 
 public class Server {
     public static HashMap<String, Player> players = new HashMap<>();
+    public static HashMap<String, BanchoChannel> channels = new HashMap<>();
 }
 
 enum PlayerState {
