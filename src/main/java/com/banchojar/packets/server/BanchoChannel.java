@@ -16,5 +16,8 @@ public class BanchoChannel {
     private String description;
     private boolean autoJoin;
     private final List<Player> players = new ArrayList<>();
-    
+
+    public int getPlayerCount() {
+        return players.size() + 1; // +1 for the bot
+    }
 }

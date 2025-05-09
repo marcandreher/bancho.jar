@@ -1,0 +1,13 @@
+[db]
+provider = "sqlite" # sqlite, mysql, mariadb, postgres
+host = "localhost"
+db = "bancho.db"
+port = 3306 # not used for sqlite
+username = "root" # not used for sqlite
+password = "" # not used for sqlite
+
+[osuapi]
+key = ""
+
+[tuning]
+db_poolsize = 10

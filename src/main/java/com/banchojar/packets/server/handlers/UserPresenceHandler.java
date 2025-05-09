@@ -9,35 +9,36 @@ import com.banchojar.packets.server.ServerPackets;
 
 public class UserPresenceHandler implements ServerPacketHandler {
 
-    final ServerPackets type = ServerPackets.USER_PRESENCE;  // Define the packet type for USER_PRESENCE
+    final ServerPackets type = ServerPackets.USER_PRESENCE;
 
-    private int userId; 
+    private final int userId;
 
     public UserPresenceHandler(int userId) {
-        this.userId = userId;  // Initialize the user ID
+        this.userId = userId;
     }
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws java.io.IOException {
-        
         Player player = Server.players.values().stream()
-            .filter(p -> p.getId() == userId) // Find the player by ID
-            .findFirst()
-            .orElse(null); // Retrieve the player object using the user ID
-
-        writer.startPacket(type.getValue());  // Start new packet with USER_PRESENCE packet ID
-        
-        writer.writeInt(player.getId());
-        writer.writeString(player.getUsername());
-        writer.writeByte(player.getTimezone() + 24);
-        writer.writeByte(player.getCountry());
-        byte permissionsAndMode = (byte) ((player.getPrivileges() | (player.getMode() << 5)) & 0xFF);
-        writer.writeByte(permissionsAndMode);
-        writer.writeFloat(player.getLongitude());
-        writer.writeFloat(player.getLatitude());
-        writer.writeInt(player.getRank());
-        
-        writer.endPacket();  // Finalize the packet with the user presence details
+                .filter(p -> p.getId() == userId)
+                .findFirst()
+                .orElse(null);
+    
+        if (player == null) return false;
+    
+        writer.startPacket(type.getValue());
+    
+        // Write each field, ensuring correct sizes
+        writer.writeInt(player.getId()); // User ID (4 bytes)
+        writer.writeString(player.getUsername()); // Username (null-terminated string)
+        writer.writeByte((byte) (player.getTimezone() + 24)); // Timezone (1 byte)
+        writer.writeByte((byte) player.getCountry()); // Country ID (1 byte)
+        writer.writeByte((byte) (player.getPrivileges() | (player.getGameMode()) << 5)); // Permissions | Mode << 5 (1 byte)
+        writer.writeFloat(player.getLongitude()); // Longitude (4 bytes)
+        writer.writeFloat(player.getLatitude()); // Latitude (4 bytes)
+        writer.writeInt(player.getRank()); // Rank (4 bytes)
+    
+        writer.endPacket();
         return true;
     }
     

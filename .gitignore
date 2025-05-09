@@ -27,3 +27,7 @@ replay_pid*
 target/
 keystore.jks
 .data/
+.config/server.toml
+bancho.db
+.config/metrics.toml
+.vscode/

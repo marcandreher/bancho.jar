@@ -9,15 +9,13 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.banchojar.BanchoHandler;
 import com.banchojar.Player;
+import com.banchojar.handlers.bancho.BanchoHandler;
 import com.banchojar.packets.BanchoPacket;
 import com.banchojar.packets.client.handlers.UnhandledHandler;
-import com.banchojar.packets.server.PacketSender;
 
 public class BanchoPacketReader {
-
-    public Logger logger = LoggerFactory.getLogger(BanchoPacketReader.class);
+    static Logger logger = LoggerFactory.getLogger("packets");
     private ByteArrayInputStream data;
     private int currentPacketId;
     private int currentPacketLength;
@@ -101,10 +99,10 @@ public class BanchoPacketReader {
         packetIds.add(currentPacketId);
        
         // Log packet details
-        logger.info("Reading Packet: ID=" + currentPacketId + " NAME=" + 
+        logger.info("Reading Packet: ID=(" + currentPacketId + ") NAME=<" + 
                     ClientPackets.getNameById(currentPacketId) + 
-                    ", Length=" + currentPacketLength + 
-                    ", Compressed=" + compressionFlag);
+                    ">, Length=(" + currentPacketLength + 
+                    "), Compressed=" + compressionFlag);
 
         if (currentPacketLength < 0 || currentPacketLength > 100000) {
             logger.error("Invalid packet length: " + currentPacketLength);

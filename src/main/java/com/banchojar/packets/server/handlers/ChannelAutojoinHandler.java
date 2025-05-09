@@ -1,6 +1,7 @@
 package com.banchojar.packets.server.handlers;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import com.banchojar.Player;
 import com.banchojar.Server;
@@ -24,6 +25,10 @@ public class ChannelAutojoinHandler implements ServerPacketHandler {
         writer.startPacket(ServerPackets.CHANNEL_AUTO_JOIN.getValue());  // Start new packet with CHANNEL_AUTO_JOIN packet ID
         writer.writeString(channel);  // Channel name
         writer.endPacket();  // Finalize the packet
+
+        if (Arrays.asList("#osu", "#lobby").contains(channel)) {
+            return true; 
+        }
 
         Server.channels.get(channel).getPlayers().add(sender);
         return true;

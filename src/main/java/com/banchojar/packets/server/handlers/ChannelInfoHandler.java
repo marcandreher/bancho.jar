@@ -12,9 +12,9 @@ public class ChannelInfoHandler implements ServerPacketHandler {
 
     private String channelName; 
     private String channelDescription;
-    private int userCount;
+    private short userCount;
 
-    public ChannelInfoHandler(String channelName, String channelDescription, int userCount) {
+    public ChannelInfoHandler(String channelName, String channelDescription, short userCount) {
         this.channelName = channelName;  // Initialize the channel name
         this.channelDescription = channelDescription;  // Initialize the channel description
         this.userCount = userCount;  // Initialize the user count
@@ -27,7 +27,7 @@ public class ChannelInfoHandler implements ServerPacketHandler {
     
         writer.writeString(channelName);          // Channel name
         writer.writeString(channelDescription);   // Channel description
-        writer.writeInt(userCount);        // Number of connected users
+        writer.writeShort((short)userCount);        // Number of connected users
     
         writer.endPacket();
         return true;

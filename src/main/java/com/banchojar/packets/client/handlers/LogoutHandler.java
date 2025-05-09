@@ -10,15 +10,14 @@ import com.banchojar.Server;
 import com.banchojar.packets.BanchoPacket;
 import com.banchojar.packets.client.BanchoPacketHandler;
 import com.banchojar.packets.client.BanchoPacketReader;
-import com.banchojar.packets.server.PacketSender;
 
 public class LogoutHandler implements BanchoPacketHandler {
 
-     public Logger logger = LoggerFactory.getLogger(BanchoPacketHandler.class);
+     public Logger logger = LoggerFactory.getLogger("bancho.jar");
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
-        logger.info("Player (" + player.getId() + ") has logged out.");
+        logger.info("[BANCHO] Player (" + player.getId() + ") has logged out.");
         
         Server.players.entrySet().removeIf(entry -> entry.getValue() == player);
 

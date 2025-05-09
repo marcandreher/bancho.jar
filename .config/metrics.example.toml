@@ -1,0 +1,8 @@
+[prometheus]
+enabled = true
+port = 8080
+
+[handlers]
+osu = true
+bancho = true
+assets = true

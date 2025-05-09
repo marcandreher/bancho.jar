@@ -2,6 +2,8 @@ package com.banchojar.packets.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 public class BanchoPacketWriter {
 
-    public Logger logger = LoggerFactory.getLogger(BanchoPacketWriter.class);
+    static Logger logger = LoggerFactory.getLogger("packets");
 
     private final List<byte[]> packets = new ArrayList<>();
     private ByteArrayOutputStream packetBuffer;
@@ -37,7 +39,6 @@ public class BanchoPacketWriter {
         byte[] payload = output.toByteArray();
         int length = payload.length;
         
-        
         // Create a new ByteArrayOutputStream for the complete packet
         ByteArrayOutputStream finalPacket = new ByteArrayOutputStream();
         
@@ -46,10 +47,10 @@ public class BanchoPacketWriter {
             finalPacket.write(packetBuffer.toByteArray());
             
             // Write the content length (4 bytes, little-endian)
-            finalPacket.write(length & 0xFF);           // Byte 0 (least significant)
-            finalPacket.write((length >> 8) & 0xFF);    // Byte 1
-            finalPacket.write((length >> 16) & 0xFF);   // Byte 2
-            finalPacket.write((length >> 24) & 0xFF);   // Byte 3 (most significant)
+            finalPacket.write(length & 0xFF);           // Least significant byte first
+            finalPacket.write((length >> 8) & 0xFF);
+            finalPacket.write((length >> 16) & 0xFF);
+            finalPacket.write((length >> 24) & 0xFF);   // Most significant byte last
             
             // Write the actual payload
             finalPacket.write(payload);
@@ -59,12 +60,14 @@ public class BanchoPacketWriter {
             byte[] packetBytes = finalPacket.toByteArray();
             int packetId = (packetBytes[0] & 0xFF) | ((packetBytes[1] & 0xFF) << 8);
             
-            sb.append("Packet: ID=").append(packetId).append( " NAME=" + ServerPackets.getNameById(packetId));
-            sb.append(", Length=").append(length);
-            sb.append(", Full packet in hex: ");
+            sb.append("Writing Packet: ID=(").append(packetId).append(") NAME=<").append(ServerPackets.getNameById(packetId));
+            sb.append(">, Length=(").append(length);
+            sb.append("), HEX: <");
             for (byte b : packetBytes) {
                 sb.append(String.format("%02X ", b));
             }
+            sb.delete(sb.length()-1, sb.length());
+            sb.append(">");
             logger.info(sb.toString());
             
             // Add the complete packet to the list
@@ -87,34 +90,66 @@ public class BanchoPacketWriter {
         return all.toByteArray();
     }
 
+
+
     public void writeByte(int value) {
+        // A single byte is the same in both endianness
         output.write(value & 0xFF);
     }
 
-    public void writeShort(short value) {
-        // Little-endian
-        output.write(value & 0xFF);            // Low byte first
-        output.write((value >> 8) & 0xFF);     // High byte next
+    public void writeShort(short value) throws IOException {
+        // Changed to little-endian to be consistent with packet format
+        writeShortLE(value);
     }
 
     public void writeInt(int value) {
-        // Little-endian
-        output.write(value & 0xFF);            // Byte 0 (least significant)
-        output.write((value >> 8) & 0xFF);     // Byte 1
-        output.write((value >> 16) & 0xFF);    // Byte 2
-        output.write((value >> 24) & 0xFF);    // Byte 3 (most significant)
+        // Changed to little-endian to be consistent with packet format
+        writeIntLE(value);
     }
 
-    public void writeLong(long value) {
-        // Little-endian
-        for (int i = 0; i < 8; i++) {
-            output.write((int) (value >> (i * 8)) & 0xFF);
-        }
+    public void writeShortLE(short value) throws IOException {
+        output.write(new byte[]{
+			(byte) (value & 0xFF),
+			(byte) ((value >> 8) & 0xFF)
+		});
     }
 
-    public void writeFloat(float value) {
-        int intBits = Float.floatToIntBits(value);
-        writeInt(intBits);
+    public void writeIntLE(int value) {
+        // Little-endian: Low byte first, then high bytes
+        output.write(value & 0xFF);         // Low byte first
+        output.write((value >> 8) & 0xFF);
+        output.write((value >> 16) & 0xFF);
+        output.write((value >> 24) & 0xFF); // Most significant byte last
+    }
+
+    public void writeByteLE(int value) {
+        // A single byte is the same in both endianness
+        output.write(value & 0xFF);
+    }
+
+    public void writeLongLE(long value) throws IOException {
+        // Write 8 bytes in little-endian order
+        output.write(new byte[]{
+			(byte) (value & 0xFF),
+			(byte) ((value >> 8) & 0xFF),
+			(byte) ((value >> 16) & 0xFF),
+			(byte) ((value >> 24) & 0xFF),
+			(byte) ((value >> 32) & 0xFF),
+			(byte) ((value >> 40) & 0xFF),
+			(byte) ((value >> 48) & 0xFF),
+			(byte) ((value >> 56) & 0xFF),
+		});
+    }
+    
+
+    public void writeLong(long value) throws IOException {
+        // Changed to little-endian to be consistent with packet format
+        writeLongLE(value);
+    }
+
+    public void writeFloat(float value) throws IOException {
+       byte[] bytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putFloat(value).array();
+       output.write(bytes);
     }
 
     public void writeBoolean(boolean value) {

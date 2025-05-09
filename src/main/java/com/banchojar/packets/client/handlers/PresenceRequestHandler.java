@@ -11,7 +11,6 @@ import com.banchojar.Server;
 import com.banchojar.packets.BanchoPacket;
 import com.banchojar.packets.client.BanchoPacketHandler;
 import com.banchojar.packets.client.BanchoPacketReader;
-import com.banchojar.packets.server.PacketSender;
 import com.banchojar.packets.server.handlers.UserPresenceHandler;
 import com.banchojar.packets.server.handlers.UserStatsHandler;
 

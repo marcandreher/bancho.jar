@@ -1,10 +1,8 @@
 <configuration>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
             <charset>UTF-8</charset>
-            <pattern>
-                %highlight(%-5level) %yellow(%d{yyyy-MM-dd HH:mm:ss}) %magenta(%logger{36}) - %msg%n%red(%throwable)
-            </pattern>
+            <layout class="com.banchojar.utils.PrettyLogLayout" />
         </encoder>
     </appender>
 
@@ -13,20 +11,18 @@
             <fileNamePattern>.data/logs/bancho-%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
-    
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss} %thread %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <logger name="org.eclipse.jetty" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.util.log" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.server" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.servlet" level="OFF" additivity="false" />
 
-     
-    <root level="debug">
-        <appender-ref ref="STDOUT" />
+    <logger name="bancho.jar" level="ALL" additivity="true">
+        <appender-ref ref="CONSOLE" />
         <appender-ref ref="ROLLING_FILE" />
-    </root>
+    </logger>
+
+    <logger name="packets" level="INFO" additivity="false">
+       
+    </logger>
 </configuration>
