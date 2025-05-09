@@ -30,7 +30,7 @@ jobs:
         TAG_NAME: ${{ github.ref_name }}
       run: |
         mkdir release
-        cp target/server-${TAG_NAME}-shaded.jar release/
+        cp target/server-${TAG_NAME}.jar release/
         cp -r .config release/
         cp README.md LICENSE release/
         cd release
