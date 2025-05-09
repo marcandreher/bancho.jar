@@ -8,8 +8,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write    # needed for uploading release assets
-      packages: write    # needed for GitHub Packages deploy
+      contents: write
+      packages: write
 
     steps:
     - uses: actions/checkout@v4
@@ -25,12 +25,17 @@ jobs:
     - name: Build with Maven
       run: mvn -B package --file pom.xml
 
-    - name: Deploy to GitHub Packages
-      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Prepare ZIP archive
+      run: |
+        mkdir release
+        cp target/server-2.0.jar release/
+        cp -r .config release/
+        cp README.md LICENSE release/
+        cd release
+        zip -r ../server-release.zip .
 
-    - name: Upload JARs to GitHub Release
+    - name: Upload release ZIP
       uses: softprops/action-gh-release@v1
       with:
-        files: target/*.jar
+        files: |
+          server-release.zip
