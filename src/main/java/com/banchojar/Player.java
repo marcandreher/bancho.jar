@@ -95,7 +95,8 @@ public class Player {
         }
 
         public ModeStats(ModeStats stats) {
-            this.mode = stats.mode;            this.rankedScore = stats.rankedScore;
+            this.mode = stats.mode;            
+            this.rankedScore = stats.rankedScore;
             this.accuracy = stats.accuracy;
             this.playCount = stats.playCount;
             this.totalScore = stats.totalScore;

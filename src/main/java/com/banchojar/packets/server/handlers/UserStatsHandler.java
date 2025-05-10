@@ -52,7 +52,7 @@ public class UserStatsHandler implements ServerPacketHandler {
         writer.writeByte((byte) (player.getAction() & 0xFF));
         writer.writeString(player.getActionText());
         writer.writeString(beatmapMd5);
-        writer.writeShort((short)player.getMods());
+        writer.writeInt((short)player.getMods());
         writer.writeByte((byte) ( player.getGameMode()));
         writer.writeInt(player.getBeatmapId());
         writer.writeLong(playerStats.getRankedScore());

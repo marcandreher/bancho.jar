@@ -20,6 +20,7 @@ import com.banchojar.packets.server.handlers.ChannelJoinSuccessHandler;
 import com.banchojar.packets.server.handlers.LoginReplyHandler;
 import com.banchojar.packets.server.handlers.NotificationHandler;
 import com.banchojar.packets.server.handlers.PermissionsHandler;
+import com.banchojar.packets.server.handlers.SendProtocolVersion;
 import com.banchojar.packets.server.handlers.UserPresenceHandler;
 import com.banchojar.packets.server.handlers.UserStatsHandler;
 import com.github.f4b6a3.uuid.UuidCreator;
@@ -116,6 +117,8 @@ public class LoginHandler implements ILoginHandler {
 
         player.addPacketToStack(new LoginReplyHandler(player.getId()));
         player.addPacketToStack(new PermissionsHandler(4));
+
+        player.addPacketToStack(new SendProtocolVersion());
 
         player.addPacketToStack(new ChannelAutojoinHandler("#osu"));
         player.addPacketToStack(new ChannelJoinSuccessHandler("#osu"));
