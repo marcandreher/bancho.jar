@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.banchojar.App;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 import io.javalin.http.Context;
@@ -18,10 +17,6 @@ public class ScreenshotHandler implements Handler {
 
     @Override
     public void handle(@NotNull Context ctx) throws Exception {
-        App.logger.info(ctx.formParamMap().toString());
-        String username = ctx.formParam("u");
-
-        // Handle file upload
         UploadedFile screenshot = ctx.uploadedFile("ss");
         if (screenshot == null) {
             ctx.status(400).result("Screenshot file missing.");

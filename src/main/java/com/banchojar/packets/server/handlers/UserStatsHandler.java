@@ -14,7 +14,7 @@ import com.banchojar.packets.server.ServerPackets;
 public class UserStatsHandler implements ServerPacketHandler {
 
     private Player player;
-   private String userId;
+    private String userId;
 
     public UserStatsHandler(int userId) {
 
@@ -59,7 +59,7 @@ public class UserStatsHandler implements ServerPacketHandler {
         writer.writeFloat(accuracy);
         writer.writeInt(playerStats.getPlayCount());
         writer.writeLong(playerStats.getTotalScore());  
-        writer.writeInt(playerStats.getGlobalRank());
+        writer.writeInt((int) playerStats.getGlobalRank());
         writer.writeShort((short) Math.ceil(playerStats.getPp()));
         writer.endPacket();
         return true;

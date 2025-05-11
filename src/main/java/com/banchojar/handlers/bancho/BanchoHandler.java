@@ -51,6 +51,7 @@ public class BanchoHandler {
     public static final List<AbstractBanchoCommandHandler> commandHandlers = new ArrayList<>();
     public static void registerRoutes(Javalin app) {
         app.post("/", BanchoHandler::handleRequest);
+        app.get("/", new MainPageHandler());
         packetHandlers.put(ClientPackets.PING, new PingHandler());
         packetHandlers.put(ClientPackets.USER_PRESENCE_REQUEST, new PresenceRequestHandler());
         packetHandlers.put(ClientPackets.USER_STATS_REQUEST, new StatsRequestHandler());

@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.banchojar</groupId>
   <artifactId>server</artifactId>
-  <version>1.1</version>
+  <version>1.2</version>
 
   <name>server</name>
   <url>http://osu-server-list.com</url>
@@ -35,7 +35,7 @@
 
     <uuid-creator.version>6.1.1</uuid-creator.version>
     <tomlj.version>1.1.1</tomlj.version>
-    <ousu-api.version>b088426f1c</ousu-api.version>
+    <ousu-api.version>2.1</ousu-api.version>
     <koohi.version>2.1.0</koohi.version>
     <bcprov.version>1.80</bcprov.version>
     <prometheus.version>0.16.0</prometheus.version>

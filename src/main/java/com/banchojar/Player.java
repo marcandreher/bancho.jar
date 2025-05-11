@@ -78,7 +78,7 @@ public class Player {
         private int playCount = 0;
         private long totalScore = 0;
         public int maxCombo = 0;
-        private int globalRank = 0;
+        private long globalRank = 0;
         private short pp = 0;
         private int totalHits = 0;
 
@@ -105,6 +105,7 @@ public class Player {
             this.pp = stats.pp;
             this.totalHits = stats.totalHits;
         }
+
 
 
         public void addScore(Score s, short pp) {

@@ -2,7 +2,6 @@ package com.banchojar.handlers.osu;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.jetbrains.annotations.NotNull;
 import org.jooq.impl.DSL;
@@ -46,8 +45,6 @@ public class Osz2GetScoresHandler implements Handler {
 
         StringBuilder sb = new StringBuilder();
         Approval approval = Approval.getById(apiResponse.status() + 1);
-
-        AtomicBoolean foundScore = new AtomicBoolean(false);
 
         // Fetch user's own best score
         org.jooq.Record ownScoreRecord = Server.dsl
@@ -107,7 +104,7 @@ public class Osz2GetScoresHandler implements Handler {
                 .from(rankedScores)
                 .join(users).on(DSL.field("ranked_scores.user_id").eq(DSL.field("users.id")))
                 .where(DSL.field("ranked_scores.rn").eq(1)) // this is now safe: rn is a field of the subquery
-                .orderBy(DSL.field("ranked_scores.score").desc())
+                .orderBy(DSL.field("ranked_scores.score").desc(), DSL.field("users.username"))
                 .limit(100)
                 .fetch()
                 .forEach(record -> {
@@ -131,11 +128,29 @@ public class Osz2GetScoresHandler implements Handler {
                     scoreList.add(s);
                 });
 
-        // Sort scores by score (descending)
-        scoreList.sort((s1, s2) -> Long.compare(s2.getScore(), s1.getScore())); // Sort descending by score
-        
-        for (int i = 0; i < scoreList.size(); i++) {
-            scoreList.get(i).setRank(i + 1);
+
+        // Assign ranks based on position (players with same score get same rank)
+        if (!scoreList.isEmpty()) {
+            int currentRank = 1;
+            int position = 1;
+            long previousScore = scoreList.get(0).getScore();
+            scoreList.get(0).setRank(currentRank);
+            
+            // Assign ranks correctly handling ties
+            // In osu!, the best scores (highest values) get rank 1
+            for (int i = 1; i < scoreList.size(); i++) {
+                position++; // Position always increments
+                Score currentScore = scoreList.get(i);
+                
+                // If score is different from previous, update the rank to current position
+                if (currentScore.getScore() != previousScore) {
+                    currentRank = position;
+                }
+                
+                // Assign the current rank
+                currentScore.setRank(currentRank);
+                previousScore = currentScore.getScore();
+            }
         }
 
         sb.append(String.format(
@@ -151,21 +166,30 @@ public class Osz2GetScoresHandler implements Handler {
         if (ownScore == null) {
             sb.append("\n");
         }
+        
         if (!scoreList.isEmpty()) {
-
             StringBuilder sb2 = new StringBuilder();
-            // Then append all other scores in descending order (highest to lowest)
-            for (int i = 0; i < scoreList.size(); i++) {
-                Score s = scoreList.get(i);
-
-                if (s.getPlayerId() == player.getId()) {
-                    foundScore.set(true);
-                    sb.append(Score.buildScoreWebString(s, s.getId(), 1));
+            
+            // First, check and output player's own score if present
+            if (ownScore != null) {
+                // Find player's score in the list to get its correct rank
+                for (Score s : scoreList) {
+                    if (s.getPlayerId() == player.getId()) {
+                        // Clone the rank from the player's score in the list
+                        ownScore.setRank(s.getRank());
+                        break;
+                    }
                 }
+                // Display player's own score at the top
+                sb.append(Score.buildScoreWebString(ownScore, ownScore.getId(), 1));
+            }
+            
+            // Then append all scores in their order
+            for (Score s : scoreList) {
                 sb2.append(Score.buildScoreWebString(s, s.getId(), 1));
             }
+            
             sb.append(sb2.toString());
-
         }
 
         ctx.status(200).result(sb.toString());

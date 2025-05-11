@@ -144,7 +144,9 @@ public class LoginHandler implements ILoginHandler {
                 player.getModeStats()[modeIndex].setPlayCount((int) row.get("play_count"));
                 player.getModeStats()[modeIndex].setTotalScore((long) row.get("total_score"));
                 player.getModeStats()[modeIndex].setRankedScore((long) row.get("ranked_score"));
-
+                player.getModeStats()[modeIndex].setGlobalRank((Server.redis.zrevrank("bjar:leaderboard:" + modeIndex,
+                String.valueOf(player.getId())) != null ? Math.toIntExact(Server.redis.zrevrank("bjar:leaderboard:" + modeIndex,
+                String.valueOf(player.getId()))) : -1) + 1);
                 player.getModeStats()[modeIndex].setPp((short) ((int) (long) row.get("pp")));
             });
         }
