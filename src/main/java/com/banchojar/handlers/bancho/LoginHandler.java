@@ -11,6 +11,7 @@ import com.banchojar.Server;
 import com.banchojar.Server.LoginState;
 import com.banchojar.Server.PlayerState;
 import com.banchojar.db.models.UserRecord;
+import com.banchojar.geo.GeoLocResponse;
 import com.banchojar.packets.server.BanchoChannel;
 import com.banchojar.packets.server.PacketSender;
 import com.banchojar.packets.server.handlers.ChannelAutojoinHandler;
@@ -65,7 +66,7 @@ public class LoginHandler implements ILoginHandler {
             uuid = UuidCreator.getTimeOrderedEpoch().toString();
             username = body[0];
             passwordMd5 = body[1];
-            ip = ctx.ip();
+            ip = ctx.header("X-Real-IP");
 
             String[] clientInfo = body[2].split("\\|");
 
@@ -99,13 +100,20 @@ public class LoginHandler implements ILoginHandler {
             return null;
         }
 
+        GeoLocResponse geoLocResponse = Server.geoProvider.getCountryCode(loginResponse.getIp());
+
+
         Server.dsl.insertInto(DSL.table("logins"))
                 .columns(DSL.field("user_id"), DSL.field("ip"), DSL.field("timestamp"), DSL.field("ver"))
                 .values(dbUser.id(), loginResponse.getIp(), Timestamp.from(Instant.now()), loginResponse.getBuildName())
                 .execute();
 
+   
         Player player = new Player(dbUser.id(), false);
         player.setTimezone(Integer.parseInt(loginResponse.getUtcOffset()));
+        player.setCountry((short) geoLocResponse.getCountryId());
+        player.setLongitude(geoLocResponse.getLongitude());
+        player.setLatitude(geoLocResponse.getLatitude());
         player.setDisplayCityLocation(loginResponse.isDisplayCityLocation());
         player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
         player.setUsername(dbUser.username());
@@ -122,6 +130,8 @@ public class LoginHandler implements ILoginHandler {
 
         player.addPacketToStack(new ChannelAutojoinHandler("#osu"));
         player.addPacketToStack(new ChannelJoinSuccessHandler("#osu"));
+
+
 
         for (BanchoChannel channel : Server.channels.values()) {
             if (channel.isAutoJoin()) {

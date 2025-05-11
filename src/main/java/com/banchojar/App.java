@@ -16,6 +16,8 @@ import org.tomlj.TomlParseResult;
 
 import com.banchojar.db.provider.Provider;
 import com.banchojar.db.provider.Providers;
+import com.banchojar.geo.GeoLocProvider;
+import com.banchojar.geo.GeoProviders;
 import com.banchojar.handlers.assets.AssetHandler;
 import com.banchojar.handlers.bancho.BanchoHandler;
 import com.banchojar.handlers.osu.OsuAuth;
@@ -53,6 +55,8 @@ public class App {
         private int redisPort;
         private String redisPassword;
         private int redisChannel;
+
+        private String geoProvider;
 
         private String osuApiKey;
     }
@@ -93,6 +97,7 @@ public class App {
             Server.config.redisPort = configResult.getLong("redis.port").intValue();
             Server.config.redisPassword = configResult.getString("redis.password");
             Server.config.redisChannel = configResult.getLong("redis.db").intValue();
+            Server.config.geoProvider = configResult.getString("geo.provider");
 
             TomlParseResult metricsConfigResult = Toml.parse(Paths.get(".config/metrics.toml"));
             Server.metricsConfig.prometheusEnabled = metricsConfigResult.getBoolean("prometheus.enabled");
@@ -104,15 +109,24 @@ public class App {
         }
 
         Provider provider = Providers.fromString(Server.config.dbProvider);
+        GeoLocProvider geoProvider = GeoProviders.fromString(Server.config.geoProvider);
 
         if (provider == null) {
             logger.error("Invalid database provider: " + Server.config.dbProvider);
             return;
         }
+
+        if (geoProvider == null) {
+            logger.error("Invalid geo provider: " + Server.config.geoProvider);
+            return;
+        }
+
         logger.info("Using database provider: <{}>", provider.getClass().getSimpleName());
+        logger.info("Using geo provider: <{}>", geoProvider.getClass().getSimpleName());
         logger.info("Starting bancho.jar v{} <{}>", VersionInfo.getVersion(), VersionInfo.getBuildTimestamp());
 
         Server.provider = provider;
+        Server.geoProvider = geoProvider;
 
         RequestLogger logHandler = (ctx, ms) -> {
             String timeStr;

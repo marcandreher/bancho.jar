@@ -7,6 +7,7 @@ import org.jooq.DSLContext;
 import com.banchojar.App.Config;
 import com.banchojar.App.MetricsConfig;
 import com.banchojar.db.provider.Provider;
+import com.banchojar.geo.GeoLocProvider;
 import com.banchojar.packets.server.BanchoChannel;
 
 import io.prometheus.client.exporter.HTTPServer;
@@ -20,6 +21,8 @@ public class Server {
     public static MetricsConfig metricsConfig = new MetricsConfig();
 
     public static Provider provider;
+    public static GeoLocProvider geoProvider;
+
     public static DSLContext dsl;
     public static JedisPooled redis;
 
