@@ -14,6 +14,7 @@ import com.osuserverlist.Server;
 import com.osuserverlist.models.database.DbChannel;
 import com.osuserverlist.models.database.DbUser;
 import com.osuserverlist.models.engine.LoginResponse;
+import com.osuserverlist.models.essentials.ModeStats;
 import com.osuserverlist.models.essentials.Player;
 import com.osuserverlist.modules.geo.GeoRegistry;
 import com.osuserverlist.modules.geo.GeoResponse;
@@ -28,6 +29,8 @@ import com.osuserverlist.packets.server.handlers.channel.ChannelJoinSuccessHandl
 import com.osuserverlist.packets.server.handlers.connect.LoginReplyHandler;
 import com.osuserverlist.packets.server.handlers.connect.PermissionsHandler;
 import com.osuserverlist.packets.server.handlers.connect.SendProtocolVersion;
+import com.osuserverlist.packets.server.handlers.user.UserPresenceHandler;
+import com.osuserverlist.packets.server.handlers.user.UserStatsHandler;
 
 import de.marcandreher.fusionkit.core.database.Database;
 import de.marcandreher.fusionkit.core.database.MySQL;
@@ -102,6 +105,30 @@ public class LoginHandler {
             }
 
             player.sendPacket(new ChannelInfoEndHandler());
+
+            for (int i = 0; i <= 8; i++) {
+                if (i == 7)
+                    continue;
+                
+                ResultSet statsRs = mysql.query("SELECT * FROM `stats` WHERE `id` = ? AND `mode` = ?", player.getId(), i).executeQuery();
+                if(!statsRs.next()) {
+                    logger.warn("Stats not found for player ID={} mode={}", player.getId(), i);
+                    continue;
+                }
+
+                ModeStats modeStats = new ModeStats();
+                modeStats.setPlayCount(statsRs.getInt("plays"));
+                modeStats.setTotalScore(statsRs.getLong("tscore"));
+                modeStats.setRankedScore(statsRs.getLong("rscore"));
+                modeStats.setAccuracy(statsRs.getFloat("acc"));
+                modeStats.setMaxCombo(statsRs.getInt("max_combo"));
+                modeStats.setPp(statsRs.getShort("pp"));
+                modeStats.setTotalHits(statsRs.getInt("total_hits"));
+                player.getModeStats()[i] = modeStats;
+            }
+
+            player.sendPacket(new UserPresenceHandler(player.getId()));
+            player.sendPacket(new UserStatsHandler(player));
 
             logger.info("User {}({}) logged in successfully from IP: {}", dbUser.getName(), player.getId(),
                     loginResponse.getIp());

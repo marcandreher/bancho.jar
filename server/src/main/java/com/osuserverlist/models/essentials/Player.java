@@ -23,7 +23,7 @@ public class Player {
     private int id;
     private boolean isBot = false;
 
-    private ModeStats[] modeStats = new ModeStats[5];
+    private ModeStats[] modeStats = new ModeStats[9];
 
     private String username;
     private String osuToken;

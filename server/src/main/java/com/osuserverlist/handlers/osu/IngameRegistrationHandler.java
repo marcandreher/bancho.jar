@@ -60,7 +60,7 @@ public class IngameRegistrationHandler implements Handler {
         if (check != 0) {
             return;
         }
-        
+
         MessageDigest md = MessageDigest.getInstance("MD5");
         byte[] md5Bytes = md.digest(password.getBytes(StandardCharsets.UTF_8));
 
@@ -77,7 +77,9 @@ public class IngameRegistrationHandler implements Handler {
         // TODO BCrypt
 
         try (MySQL mysql = Database.getConnection()) {
-            ResultSet checkNameEmailRs = mysql.query("SELECT `name`, `email` FROM `users` WHERE `name` = ? OR `email` = ?", username, email).executeQuery();
+            ResultSet checkNameEmailRs = mysql
+                    .query("SELECT `name`, `email` FROM `users` WHERE `name` = ? OR `email` = ?", username, email)
+                    .executeQuery();
             if (checkNameEmailRs.next()) {
                 String existingName = checkNameEmailRs.getString("name");
                 String existingEmail = checkNameEmailRs.getString("email");
@@ -88,7 +90,7 @@ public class IngameRegistrationHandler implements Handler {
                 }
                 if (existingEmail.equalsIgnoreCase(email)) {
                     errors.computeIfAbsent("email", k -> new ArrayList<>())
-                            .add("Email is already registered.");   
+                            .add("Email is already registered.");
                 }
                 if (!errors.isEmpty()) {
                     ctx.status(400).json(Map.of("form_error", Map.of("user", errors)));
@@ -96,11 +98,29 @@ public class IngameRegistrationHandler implements Handler {
                 }
             }
 
+            mysql.exec("INSERT INTO `users`(`name`, `safe_name`, `email`, `pw_bcrypt`) VALUES (?, ?, ?, ?)", username,
+                    username.toLowerCase().replaceAll(" ", "_"), email, md5Hex);
 
-            mysql.exec("INSERT INTO `users`(`name`, `safe_name`, `email`, `pw_bcrypt`) VALUES (?, ?, ?, ?)", username, username.toLowerCase().replaceAll(" ", "_"), email, md5Hex);
+            ResultSet lastInsertId = mysql.query("SELECT `id` FROM `users` WHERE `name` = ?", username).executeQuery();
+
+            if (!lastInsertId.next()) {
+                logger.error("Failed to retrieve last insert ID for user: " + username);
+                ctx.status(500).result("error");
+                return;
+            }
+
+            Integer userId = lastInsertId.getInt("id");
+
+            for (int i = 0; i <= 8; i++) {
+                if (i == 7)
+                    continue;
+
+                mysql.exec("INSERT INTO `stats`(`id`, `mode`) VALUES (?,?)", userId, i);
+            }
+
+            logger.info("Registered new user: {}({})", username, userId);
         }
 
-        logger.info("Registered new user: " + username);
 
         ctx.status(200).result("ok");
 
