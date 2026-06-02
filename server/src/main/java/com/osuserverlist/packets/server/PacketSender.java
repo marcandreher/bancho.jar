@@ -1,6 +1,7 @@
 package com.osuserverlist.packets.server;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import com.osuserverlist.models.essentials.Player;
 
@@ -21,7 +22,7 @@ public class PacketSender {
 
     public void handlePacketHandler(ServerPacketHandler packetHandler) throws IOException {
 
-        packetHandler.handle(null, packetWriter, new Player(-1, false));
+        packetHandler.handle(null, packetWriter, new Player(-1, false, UUID.randomUUID().toString()));
     }
 
     

@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
 import com.osuserverlist.Server;
+import com.osuserverlist.models.database.DbChannel;
 import com.osuserverlist.models.database.DbUser;
 import com.osuserverlist.models.engine.LoginResponse;
 import com.osuserverlist.models.essentials.Player;
@@ -20,7 +21,13 @@ import com.osuserverlist.modules.logger.LoggerFactory;
 import com.osuserverlist.packets.server.BanchoPacketWriter;
 import com.osuserverlist.packets.server.PacketSender;
 import com.osuserverlist.packets.server.ServerPackets;
-import com.osuserverlist.packets.server.handlers.LoginReplyHandler;
+import com.osuserverlist.packets.server.handlers.channel.ChannelAutojoinHandler;
+import com.osuserverlist.packets.server.handlers.channel.ChannelInfoEndHandler;
+import com.osuserverlist.packets.server.handlers.channel.ChannelInfoHandler;
+import com.osuserverlist.packets.server.handlers.channel.ChannelJoinSuccessHandler;
+import com.osuserverlist.packets.server.handlers.connect.LoginReplyHandler;
+import com.osuserverlist.packets.server.handlers.connect.PermissionsHandler;
+import com.osuserverlist.packets.server.handlers.connect.SendProtocolVersion;
 
 import de.marcandreher.fusionkit.core.database.Database;
 import de.marcandreher.fusionkit.core.database.MySQL;
@@ -67,7 +74,7 @@ public class LoginHandler {
 
             GeoResponse geoLocResponse = GeoRegistry.getProvider().getCountryCode(loginResponse.getIp());
 
-            Player player = new Player(dbUser.getId(), false);
+            Player player = new Player(dbUser.getId(), false, loginResponse.getUuid());
             player.setTimezone(Integer.parseInt(loginResponse.getUtcOffset()));
             player.setCountry((short) geoLocResponse.getCountryId());
             player.setLongitude(geoLocResponse.getLongitude());
@@ -75,14 +82,39 @@ public class LoginHandler {
             player.setDisplayCityLocation(loginResponse.isDisplayCityLocation());
             player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
             player.setUsername(dbUser.getName());
-            
+
             Server.getInstance().addOnlinePlayer(player);
 
             player.sendPacket(new LoginReplyHandler(player.getId()));
+            player.sendPacket(new PermissionsHandler(4));
 
-            logger.info("User {}({}) logged in successfully from IP: {}", dbUser.getName(), player.getId(), loginResponse.getIp());
+            player.sendPacket(new SendProtocolVersion());
 
-            
+            ResultSet channelRs = mysql.query("SELECT * FROM `channels`").executeQuery();
+            while (channelRs.next()) {
+                DbChannel defaultChannel = ResultSetMapper.map(channelRs, DbChannel.class);
+                if (defaultChannel.isAutoJoin()) {
+                    player.sendPacket(new ChannelAutojoinHandler(defaultChannel.getName()));
+                    player.sendPacket(new ChannelInfoHandler(defaultChannel.getName(), defaultChannel.getTopic(),
+                            (short) (0 + 1)));
+                    player.sendPacket(new ChannelJoinSuccessHandler(defaultChannel.getName()));
+                }
+            }
+
+            player.sendPacket(new ChannelInfoEndHandler());
+
+            logger.info("User {}({}) logged in successfully from IP: {}", dbUser.getName(), player.getId(),
+                    loginResponse.getIp());
+
+            PacketSender packetSender = new PacketSender();
+
+            ChoHandler.HandlePackets(packetSender.getPacketWriter(), player);
+
+            ctx.header("cho-token", loginResponse.getUuid())
+                    .status(HttpStatus.OK)
+                    .contentType("application/octet-stream")
+                    .result(packetSender.toBytes());
+
         }
 
     }

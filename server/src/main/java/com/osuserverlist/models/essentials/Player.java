@@ -9,9 +9,10 @@ import lombok.Data;
 @Data
 public class Player {
     
-    public Player(int id, boolean isBot) {
+    public Player(int id, boolean isBot, String osuToken) {
         this.id = id;
         this.isBot = isBot;
+        this.osuToken = osuToken;
         if (!isBot)
             for (int i = 0; i < modeStats.length; i++) {
                 modeStats[i] = new ModeStats();
@@ -25,6 +26,7 @@ public class Player {
     private ModeStats[] modeStats = new ModeStats[5];
 
     private String username;
+    private String osuToken;
 
     private byte action = 0; // Idle
     private String actionText = ""; // No action description
@@ -39,6 +41,8 @@ public class Player {
     private float longitude = -122.4194f; // San Francisco
     private float latitude = 37.7749f; // San Francisco
     private final int rank = 0; // Example rank
+
+    private long lastPing = System.currentTimeMillis();
 
     private Stack<ServerPacketHandler> packetStack = new Stack<>();
     private boolean inLobby = false;

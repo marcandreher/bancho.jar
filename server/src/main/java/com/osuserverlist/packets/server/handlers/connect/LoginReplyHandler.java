@@ -1,4 +1,4 @@
-package com.osuserverlist.packets.server.handlers;
+package com.osuserverlist.packets.server.handlers.connect;
 
 import com.osuserverlist.models.essentials.Player;
 import com.osuserverlist.packets.BanchoPacket;

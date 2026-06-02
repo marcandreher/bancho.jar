@@ -3,10 +3,12 @@ package com.osuserverlist.packets.client;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.osuserverlist.packets.client.handlers.PingHandler;
+
 public class ClientPacketRegistry {
     public static final Map<ClientPackets, BanchoPacketHandler> packetHandlers = new HashMap<>();
 
     static {
-        
+        packetHandlers.put(ClientPackets.PING, new PingHandler());
     }
 }

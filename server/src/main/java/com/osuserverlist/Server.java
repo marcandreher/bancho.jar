@@ -16,13 +16,13 @@ public class Server {
         return instance;
     }
 
-    private final Map<Integer, Player> onlinePlayers = new ConcurrentHashMap<>();
+    private final Map<String, Player> onlinePlayers = new ConcurrentHashMap<>();
 
-    public Map<Integer, Player> getOnlinePlayers() {
+    public Map<String, Player> getOnlinePlayers() {
         return onlinePlayers;
     }
 
     public void addOnlinePlayer(Player player) {
-        onlinePlayers.put(player.getId(), player);
+        onlinePlayers.put(player.getOsuToken(), player);
     }
 }
