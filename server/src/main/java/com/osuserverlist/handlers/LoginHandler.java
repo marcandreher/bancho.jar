@@ -1,0 +1,122 @@
+package com.osuserverlist.handlers;
+
+import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+
+import com.osuserverlist.Server;
+import com.osuserverlist.models.database.DbUser;
+import com.osuserverlist.models.engine.LoginResponse;
+import com.osuserverlist.models.essentials.Player;
+import com.osuserverlist.modules.geo.GeoRegistry;
+import com.osuserverlist.modules.geo.GeoResponse;
+import com.osuserverlist.modules.logger.LoggerFactory;
+import com.osuserverlist.packets.server.BanchoPacketWriter;
+import com.osuserverlist.packets.server.PacketSender;
+import com.osuserverlist.packets.server.ServerPackets;
+import com.osuserverlist.packets.server.handlers.LoginReplyHandler;
+
+import de.marcandreher.fusionkit.core.database.Database;
+import de.marcandreher.fusionkit.core.database.MySQL;
+import de.marcandreher.fusionkit.core.database.ResultSetMapper;
+import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
+
+public class LoginHandler {
+    private static final Logger logger = LoggerFactory.getLogger(LoginHandler.class);
+
+    public void handleLogin(Context ctx) throws IOException, SQLException {
+        LoginResponse loginResponse = new LoginResponse(ctx);
+
+        if (!loginResponse.isSuccess()) {
+            sendLoginFailure(ctx, -1);
+            return;
+        }
+
+        try (MySQL mysql = Database.getConnection()) {
+            ResultSet userRs = mysql.query("SELECT * FROM `users` WHERE `name` = ?", loginResponse.getUsername())
+                    .executeQuery();
+            if (!userRs.next()) {
+                sendLoginFailure(ctx, -1);
+                return;
+            }
+
+            DbUser dbUser = ResultSetMapper.map(userRs, DbUser.class);
+            // TODO BCrypt
+            if ((dbUser == null || !dbUser.getPwBcrypt().equals(loginResponse.getPasswordMd5()))) {
+                logger.warn("Failed login attempt for user: {} from IP: {}",
+                        loginResponse.getUsername(), loginResponse.getIp());
+                sendLoginFailure(ctx, -1);
+                return;
+            }
+
+            LocalDate osuVer = parseOsuVersionDate(loginResponse.getBuildName());
+            String osuStream = loginResponse.getBuildName();
+            mysql.exec(
+                    "INSERT INTO `ingame_logins` (`userid`, `ip`, `osu_ver`, `osu_stream`, `datetime`) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
+                    dbUser.getId(),
+                    loginResponse.getIp(),
+                    osuVer.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                    osuStream);
+
+            GeoResponse geoLocResponse = GeoRegistry.getProvider().getCountryCode(loginResponse.getIp());
+
+            Player player = new Player(dbUser.getId(), false);
+            player.setTimezone(Integer.parseInt(loginResponse.getUtcOffset()));
+            player.setCountry((short) geoLocResponse.getCountryId());
+            player.setLongitude(geoLocResponse.getLongitude());
+            player.setLatitude(geoLocResponse.getLatitude());
+            player.setDisplayCityLocation(loginResponse.isDisplayCityLocation());
+            player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
+            player.setUsername(dbUser.getName());
+            
+            Server.getInstance().addOnlinePlayer(player);
+
+            player.sendPacket(new LoginReplyHandler(player.getId()));
+
+            logger.info("User {}({}) logged in successfully from IP: {}", dbUser.getName(), player.getId(), loginResponse.getIp());
+
+            
+        }
+
+    }
+
+    private LocalDate parseOsuVersionDate(String buildName) {
+        if (buildName == null) {
+            return LocalDate.now();
+        }
+
+        Matcher matcher = Pattern.compile("(\\d{4})(\\d{2})(\\d{2})").matcher(buildName);
+        if (!matcher.find()) {
+            return LocalDate.now();
+        }
+
+        int year = Integer.parseInt(matcher.group(1));
+        int month = Integer.parseInt(matcher.group(2));
+        int day = Integer.parseInt(matcher.group(3));
+        try {
+            return LocalDate.of(year, month, day);
+        } catch (RuntimeException ex) {
+            return LocalDate.now();
+        }
+    }
+
+    private void sendLoginFailure(Context ctx, int loginState) throws IOException {
+        PacketSender packetSender = new PacketSender();
+        BanchoPacketWriter writer = packetSender.getPacketWriter();
+        writer.startPacket(ServerPackets.LOGIN_REPLY.getValue());
+        writer.writeInt(loginState);
+        writer.endPacket();
+
+        ctx.status(HttpStatus.OK)
+                .header("cho-token", "")
+                .contentType("application/octet-stream")
+                .result(packetSender.toBytes());
+    }
+}

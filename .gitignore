@@ -1,0 +1,11 @@
+# Server
+/server/target
+
+# Monorepo
+/.data
+/.env
+
+# IDEs
+/.idea
+/.vscode
+/.github
