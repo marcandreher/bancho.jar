@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 
-import com.osuserverlist.Server;
+import com.osuserverlist.main.Server;
 import com.osuserverlist.models.database.DbChannel;
 import com.osuserverlist.models.database.DbUser;
 import com.osuserverlist.models.engine.LoginResponse;
@@ -29,7 +29,9 @@ import com.osuserverlist.packets.server.handlers.channel.ChannelJoinSuccessHandl
 import com.osuserverlist.packets.server.handlers.connect.LoginReplyHandler;
 import com.osuserverlist.packets.server.handlers.connect.PermissionsHandler;
 import com.osuserverlist.packets.server.handlers.connect.SendProtocolVersion;
+import com.osuserverlist.packets.server.handlers.user.UserPresenceBundle;
 import com.osuserverlist.packets.server.handlers.user.UserPresenceHandler;
+import com.osuserverlist.packets.server.handlers.user.UserPresenceSingle;
 import com.osuserverlist.packets.server.handlers.user.UserStatsHandler;
 
 import de.marcandreher.fusionkit.core.database.Database;
@@ -86,7 +88,7 @@ public class LoginHandler {
             player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
             player.setUsername(dbUser.getName());
 
-            Server.getInstance().addOnlinePlayer(player);
+            Server.getInstance().playerManager.add(player);
 
             player.sendPacket(new LoginReplyHandler(player.getId()));
             player.sendPacket(new PermissionsHandler(4));
@@ -109,9 +111,10 @@ public class LoginHandler {
             for (int i = 0; i <= 8; i++) {
                 if (i == 7)
                     continue;
-                
-                ResultSet statsRs = mysql.query("SELECT * FROM `stats` WHERE `id` = ? AND `mode` = ?", player.getId(), i).executeQuery();
-                if(!statsRs.next()) {
+
+                ResultSet statsRs = mysql
+                        .query("SELECT * FROM `stats` WHERE `id` = ? AND `mode` = ?", player.getId(), i).executeQuery();
+                if (!statsRs.next()) {
                     logger.warn("Stats not found for player ID={} mode={}", player.getId(), i);
                     continue;
                 }
@@ -129,6 +132,16 @@ public class LoginHandler {
 
             player.sendPacket(new UserPresenceHandler(player.getId()));
             player.sendPacket(new UserStatsHandler(player));
+
+            player.sendPacket(new UserPresenceBundle());
+
+            for (Player p : Server.getInstance().playerManager.getAll()) {
+                if (p.getId() == player.getId())
+                    continue;
+                if (p.isBot())
+                    continue;
+                p.sendPacket(new UserPresenceSingle(player.getId()));
+            }
 
             logger.info("User {}({}) logged in successfully from IP: {}", dbUser.getName(), player.getId(),
                     loginResponse.getIp());

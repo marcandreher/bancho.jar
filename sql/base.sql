@@ -84,7 +84,7 @@ create table ingame_logins
 	userid int not null,
 	ip varchar(45) not null comment 'maxlen for ipv6',
 	osu_ver date not null,
-	osu_stream varchar(11) not null,
+	osu_stream varchar(25) not null,
 	datetime datetime not null
 );
 

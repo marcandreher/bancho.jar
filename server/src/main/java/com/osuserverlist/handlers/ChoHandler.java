@@ -7,11 +7,10 @@ import java.util.Deque;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import com.osuserverlist.App;
-import com.osuserverlist.Server;
 import com.osuserverlist.handlers.engine.Host;
 import com.osuserverlist.handlers.engine.HttpMethod;
 import com.osuserverlist.handlers.engine.Path;
+import com.osuserverlist.main.Server;
 import com.osuserverlist.models.essentials.Player;
 import com.osuserverlist.modules.logger.LoggerFactory;
 import com.osuserverlist.packets.client.BanchoPacketReader;
@@ -51,13 +50,13 @@ public class ChoHandler implements Handler {
         PacketSender packetSender = new PacketSender();
         BanchoPacketWriter packetWriter = packetSender.getPacketWriter();
 
-        if (!Server.getInstance().getOnlinePlayers().containsKey(osuToken)) {
+        if (Server.getInstance().playerManager.get(osuToken) == null) {
             packetSender.getPacketWriter().startPacket(ServerPackets.SWITCH_SERVER.getValue());
             packetSender.getPacketWriter().endPacket();
             ctx.status(HttpStatus.OK).result(packetSender.toBytes());
             return;
         }
-        Player player = Server.getInstance().getOnlinePlayers().get(osuToken);
+        Player player = Server.getInstance().playerManager.get(osuToken);
 
         // if (player.getLoginState() == LoginState.LOGGED_IN) {
             byte[] requestBody = ctx.bodyAsBytes();

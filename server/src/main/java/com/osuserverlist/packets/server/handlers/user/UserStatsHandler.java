@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 
-import com.osuserverlist.Server;
+import com.osuserverlist.main.Server;
 import com.osuserverlist.models.essentials.ModeStats;
 import com.osuserverlist.models.essentials.Player;
 import com.osuserverlist.modules.logger.LoggerFactory;
@@ -20,14 +20,9 @@ public class UserStatsHandler implements ServerPacketHandler {
     private String userId;
 
     public UserStatsHandler(int userId) {
-
-        Player player = Server.getInstance().getOnlinePlayers().values().stream()
-                .filter(p -> p.getId() == userId)
-                .findFirst()
-                .orElse(null);
+        Player player = Server.getInstance().playerManager.getById(userId);
         this.userId = String.valueOf(userId);
         this.player = player;
-
     }
 
     public UserStatsHandler(Player player) {

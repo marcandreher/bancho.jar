@@ -1,6 +1,6 @@
 package com.osuserverlist.packets.server.handlers.user;
 
-import com.osuserverlist.Server;
+import com.osuserverlist.main.Server;
 import com.osuserverlist.models.essentials.Player;
 import com.osuserverlist.packets.BanchoPacket;
 import com.osuserverlist.packets.server.BanchoPacketWriter;
@@ -19,11 +19,8 @@ public class UserPresenceHandler implements ServerPacketHandler {
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws java.io.IOException {
-        Player player = Server.getInstance().getOnlinePlayers().values().stream()
-                .filter(p -> p.getId() == userId)
-                .findFirst()
-                .orElse(null);
-    
+        Player player = Server.getInstance().playerManager.getById(userId);
+
         if (player == null) return false;
     
         writer.startPacket(type.getValue());

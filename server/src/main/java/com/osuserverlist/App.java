@@ -1,25 +1,22 @@
 package com.osuserverlist;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.UUID;
 
-
-import com.moandjiezana.toml.Toml;
-import com.moandjiezana.toml.TomlWriter;
+import com.osuserverlist.main.Server;
+import com.osuserverlist.models.essentials.ModeStats;
+import com.osuserverlist.models.essentials.Player;
+import com.osuserverlist.modules.geo.Country;
 import com.osuserverlist.modules.logger.LoggerConfiguration;
-import com.osuserverlist.modules.logger.LoggerFactory;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
 import de.marcandreher.fusionkit.core.FusionKit;
 import de.marcandreher.fusionkit.core.config.WebAppConfig;
 import de.marcandreher.fusionkit.core.database.Database;
 import de.marcandreher.fusionkit.core.database.Database.ServerTimezone;
+import de.marcandreher.fusionkit.core.database.MySQL;
 import de.marcandreher.fusionkit.core.javalin.ProductionLevel;
 import io.github.cdimascio.dotenv.Dotenv;
-import org.slf4j.Logger;
 
 /**
  * FusionKit based bancho server application.
@@ -58,5 +55,30 @@ public class App {
 
         LoggerConfiguration loggerConfig = new LoggerConfiguration();
         loggerConfig.reload();
+
+        // Load bot
+        // TODO: Move code
+
+        try (MySQL mysql = Database.getConnection()) {
+            ResultSet botRs = mysql.query("SELECT * FROM `users` WHERE `id` = 1").executeQuery();
+
+            if (!botRs.next()) {
+                return;
+            }
+
+            Player botPlayer = new Player(1, true, UUID.randomUUID().toString());
+            botPlayer.setUsername(botRs.getString("name"));
+            botPlayer.setCountry((short) Country.getIndexByCode(botRs.getString("country")));
+            botPlayer.setTimezone(2);
+            botPlayer.setActionText("Bancho.jar yeah");
+
+            for(int i = 0; i <= 8; i++) {
+                ModeStats modeStats = new ModeStats();
+                botPlayer.getModeStats()[i] = modeStats;
+            }
+            Server.getInstance().playerManager.add(botPlayer);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
