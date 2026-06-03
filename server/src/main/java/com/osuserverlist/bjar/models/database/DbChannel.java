@@ -1,25 +1,28 @@
 package com.osuserverlist.bjar.models.database;
 
-import de.marcandreher.fusionkit.core.database.Column;
+import java.sql.ResultSet;
+
 import lombok.Data;
 
 @Data
 public class DbChannel {
-    @Column("id")
     private int id;
-
-    @Column("name")
     private String name;
-
-    @Column("topic")
     private String topic;
-
-    @Column("read_priv")
     private int readPriv;
-
-    @Column("write_priv")
     private int writePriv;
-
-    @Column("auto_join")
     private boolean autoJoin;
+
+    public DbChannel(ResultSet channelResult) {
+        try {
+            this.id = channelResult.getInt("id");
+            this.name = channelResult.getString("name");
+            this.topic = channelResult.getString("topic");
+            this.readPriv = channelResult.getInt("read_priv");
+            this.writePriv = channelResult.getInt("write_priv");
+            this.autoJoin = channelResult.getBoolean("auto_join");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    } 
 }

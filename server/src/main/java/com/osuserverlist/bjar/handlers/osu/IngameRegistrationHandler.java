@@ -11,13 +11,13 @@ import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.modules.database.Database;
+import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
 
-import de.marcandreher.fusionkit.core.database.Database;
-import de.marcandreher.fusionkit.core.database.MySQL;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 

@@ -10,24 +10,20 @@ import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
 
-import de.marcandreher.fusionkit.core.WebApp;
-import de.marcandreher.fusionkit.core.config.WebAppConfig;
 import io.github.classgraph.ClassGraph;
+import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 
-public class ServerWebApp extends WebApp {
+public class ServerWebApp {
 
-    private static final String HANDLER_PACKAGE = "com.osuserverlist.handlers";
+    private static final String HANDLER_PACKAGE = "com.osuserverlist.bjar.handlers";
 
-    public ServerWebApp(WebAppConfig config) {
-        super(config);
-
-        registerAnnotatedHandlers();
+    public static void registerRoutes(Javalin app) {
+        registerAnnotatedHandlers(app);
     }
 
-    private void registerAnnotatedHandlers() {
-        var app = getApp();
+    private static void registerAnnotatedHandlers(Javalin app) {
         Map<RouteKey, List<HostHandler>> routesByPath = new HashMap<>();
 
         try (var scan = new ClassGraph()
@@ -70,7 +66,7 @@ public class ServerWebApp extends WebApp {
         }
     }
 
-    private void registerRoute(io.javalin.Javalin app, String method, String path, List<HostHandler> handlers) {
+    private static void registerRoute(io.javalin.Javalin app, String method, String path, List<HostHandler> handlers) {
         switch (method) {
             case "POST":
                 app.post(path, ctx -> dispatchByHost(ctx, handlers));
@@ -84,7 +80,7 @@ public class ServerWebApp extends WebApp {
         }
     }
 
-    private void dispatchByHost(Context ctx, List<HostHandler> handlers) throws Exception {
+    private static void dispatchByHost(Context ctx, List<HostHandler> handlers) throws Exception {
         String host = extractHost(ctx);
         for (HostHandler hostHandler : handlers) {
             if (matchesHost(host, hostHandler.hosts)) {

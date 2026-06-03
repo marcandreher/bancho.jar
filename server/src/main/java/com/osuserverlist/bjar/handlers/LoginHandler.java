@@ -15,6 +15,8 @@ import com.osuserverlist.bjar.models.engine.LoginResponse;
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.modules.database.Database;
+import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.geo.GeoRegistry;
 import com.osuserverlist.bjar.modules.geo.GeoResponse;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
@@ -34,9 +36,6 @@ import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceSingle;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsHandler;
 import com.osuserverlist.bjar.server.Server;
 
-import de.marcandreher.fusionkit.core.database.Database;
-import de.marcandreher.fusionkit.core.database.MySQL;
-import de.marcandreher.fusionkit.core.database.ResultSetMapper;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 
@@ -59,7 +58,7 @@ public class LoginHandler {
                 return;
             }
 
-            DbUser dbUser = ResultSetMapper.map(userRs, DbUser.class);
+            DbUser dbUser = new DbUser(userRs);
             // TODO BCrypt
             if ((dbUser == null || !dbUser.getPwBcrypt().equals(loginResponse.getPasswordMd5()))) {
                 logger.warn("Failed login attempt for user: {} from IP: {}",

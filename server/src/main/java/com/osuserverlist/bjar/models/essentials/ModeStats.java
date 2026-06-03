@@ -1,26 +1,18 @@
 package com.osuserverlist.bjar.models.essentials;
 
-import de.marcandreher.fusionkit.core.database.Column;
 import lombok.Data;
 
 @Data
 public class ModeStats {
-    @Column("mode")
+
     private int mode = 0;
-    @Column("rscore")
     private long rankedScore = 0;
-    @Column("acc")
     private float accuracy = 0;
-    @Column("plays")
     private int playCount = 0;
-    @Column("tscore")
     private long totalScore = 0;
-    @Column("max_combo")
     private int maxCombo = 0;
     private long globalRank = 0;
-    @Column("pp")
     private short pp = 0;
-    @Column("total_hits")
     private int totalHits = 0;
 
     public ModeStats() {

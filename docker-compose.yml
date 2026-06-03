@@ -24,6 +24,8 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+    tty: true
+    stdin_open: true
     container_name: ${CONTAINER_PREFIX}-server
     depends_on:
       mysql:

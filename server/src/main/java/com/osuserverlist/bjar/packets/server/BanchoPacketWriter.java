@@ -68,7 +68,7 @@ public class BanchoPacketWriter {
             }
             sb.delete(sb.length() - 1, sb.length());
             sb.append(">");
-            logger.info(sb.toString());
+            logger.debug(sb.toString());
 
             // Add the complete packet to the list
             packets.add(finalPacket.toByteArray());

@@ -98,7 +98,7 @@ public class BanchoPacketReader {
         packetIds.add(currentPacketId);
        
         // Log packet details
-        logger.info("Reading Packet: ID=(" + currentPacketId + ") NAME=<" + 
+        logger.debug("Reading Packet: ID=(" + currentPacketId + ") NAME=<" + 
                     ClientPackets.getNameById(currentPacketId) + 
                     ">, Length=(" + currentPacketLength + 
                     "), Compressed=" + compressionFlag);
