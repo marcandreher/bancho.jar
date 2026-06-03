@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class Score {
     private int id;
-    private int beatmapId = 1;
+    private long beatmapId = 1;
     private int playerId = 1;
     private int n300 = 0;
     private int n100 = 0;

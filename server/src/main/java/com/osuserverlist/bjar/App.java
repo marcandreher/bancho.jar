@@ -1,5 +1,8 @@
 package com.osuserverlist.bjar;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.SQLException;
 
 import org.slf4j.Logger;
@@ -17,7 +20,6 @@ import com.osuserverlist.bjar.server.Server;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.javalin.Javalin;
-import io.javalin.http.ExceptionHandler;
 
 /**
  * Bancho.jar - An open-source osu! server implementation in Java.
@@ -74,5 +76,13 @@ public class App {
         } catch (SQLException e) {
             logger.error("Failed to load channels and bot from SQL", e);
         }
+
+        try {
+            Files.createDirectories(Path.of("data/maps"));
+            Files.createDirectories(Path.of("data/replays"));
+        }catch(IOException e) {
+            logger.error("Failed to load beatmap cache", e);
+        }
+        
     }
 }

@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.models.essentials;
+package com.osuserverlist.bjar.models.osu;
 
 import java.util.UUID;
 

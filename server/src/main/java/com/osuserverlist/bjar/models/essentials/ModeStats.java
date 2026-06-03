@@ -12,7 +12,7 @@ public class ModeStats {
     private long totalScore = 0;
     private int maxCombo = 0;
     private long globalRank = 0;
-    private short pp = 0;
+    private double pp = 0;
     private int totalHits = 0;
 
     public ModeStats() {
@@ -39,7 +39,7 @@ public class ModeStats {
         this.totalHits = stats.totalHits;
     }
 
-    public void addScore(Score s, short pp) {
+    public void addScore(Score s, double pp) {
         totalScore += s.getScore();
         rankedScore += s.getScore();
         playCount++;
