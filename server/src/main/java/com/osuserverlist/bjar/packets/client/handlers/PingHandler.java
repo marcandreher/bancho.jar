@@ -1,0 +1,18 @@
+package com.osuserverlist.bjar.packets.client.handlers;
+
+import java.io.IOException;
+
+import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.packets.BanchoPacket;
+import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
+import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
+
+public class PingHandler implements BanchoPacketHandler {
+
+    @Override
+    public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
+       player.setLastPing(System.currentTimeMillis());
+       return true;
+    }
+    
+}
