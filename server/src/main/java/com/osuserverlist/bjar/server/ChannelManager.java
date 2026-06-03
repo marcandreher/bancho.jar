@@ -1,14 +1,38 @@
 package com.osuserverlist.bjar.server;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+
+import com.osuserverlist.bjar.models.database.DbChannel;
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 
 public class ChannelManager {
     private final Map<String, BanchoChannel> channels = new ConcurrentHashMap<>();
+    private final static Logger logger = LoggerFactory.getLogger(ChannelManager.class);
+
+    public static void populate(MySQL mysql) throws SQLException {
+        ResultSet channelRs = mysql.query("SELECT * FROM `channels`").executeQuery();
+        
+        int channelCount = 0;
+        
+        while (channelRs.next()) {
+            DbChannel defaultChannel = new DbChannel(channelRs);
+
+            BanchoChannel channel = new BanchoChannel(String.valueOf(defaultChannel.getId()), defaultChannel.getName(),
+                    defaultChannel.getTopic(), defaultChannel.isAutoJoin());
+            Server.getInstance().channelManager.add(channel);
+            channelCount++;
+        }
+        logger.info("Loaded <{}> channels from SQL", channelCount);
+    }
 
     public void add(BanchoChannel channel) {
         channels.put(channel.getName(), channel);
@@ -35,7 +59,7 @@ public class ChannelManager {
 
         // TODO: notify players in channel with new channel info packet
     }
-    
+
     public Collection<BanchoChannel> getAll() {
         return channels.values();
     }

@@ -1,12 +1,18 @@
 package com.osuserverlist.bjar.server;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
+import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.geo.Country;
 
 public class PlayerManager {
     private final Map<String, Player> onlinePlayers = new ConcurrentHashMap<>();
@@ -32,12 +38,33 @@ public class PlayerManager {
     }
 
     public void disconnect(Player player) {
-        for(BanchoChannel channel : Server.getInstance().channelManager.getAll()) {
-            if(channel.getPlayers().contains(player)) {
+        for (BanchoChannel channel : Server.getInstance().channelManager.getAll()) {
+            if (channel.getPlayers().contains(player)) {
                 Server.getInstance().channelManager.leaveChannel(channel.getName(), player);
             }
         }
-        
+
         onlinePlayers.remove(player.getOsuToken());
+    }
+
+    public static void connectBot(MySQL mysql, int id) throws SQLException {
+        ResultSet botRs = mysql.query("SELECT * FROM `users` WHERE `id` = ?", id).executeQuery();
+
+        if (!botRs.next()) {
+            return;
+        }
+
+        Player botPlayer = new Player(1, true, UUID.randomUUID().toString());
+        botPlayer.setUsername(botRs.getString("name"));
+        botPlayer.setCountry((short) Country.getIndexByCode(botRs.getString("country")));
+        botPlayer.setTimezone(2);
+        botPlayer.setActionText("Bancho.jar yeah");
+
+        for (int i = 0; i <= 8; i++) {
+            ModeStats modeStats = new ModeStats();
+            botPlayer.getModeStats()[i] = modeStats;
+        }
+        Server.getInstance().playerManager.add(botPlayer);
+        Server.getInstance().botPlayer = botPlayer;
     }
 }

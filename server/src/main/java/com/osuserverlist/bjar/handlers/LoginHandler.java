@@ -7,9 +7,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.management.Notification;
-
 import org.slf4j.Logger;
 
 import com.osuserverlist.bjar.models.config.ServerConfiguration.WelcomeMessage;
@@ -55,6 +52,8 @@ public class LoginHandler {
             sendLoginFailure(ctx, -1);
             return;
         }
+
+        Server server = Server.getInstance();
 
         try (MySQL mysql = Database.getConnection()) {
             ResultSet userRs = mysql.query("SELECT * FROM `users` WHERE `name` = ?", loginResponse.getUsername())
@@ -123,13 +122,13 @@ public class LoginHandler {
             player.sendPacket(new UserPresencePacket(player.getId()));
             player.sendPacket(new UserStatsPacket(player));
 
-            for (BanchoChannel channel : Server.getInstance().channelManager.getAll()) {
+            for (BanchoChannel channel : server.channelManager.getAll()) {
                 if (channel.isAutoJoin()) {
                     player.sendPacket(new ChannelAutojoinPacket(channel.getName()));
                     player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(),
                             (short) (0 + 1)));
                     player.sendPacket(new ChannelJoinSuccessPacket(channel.getName()));
-                    Server.getInstance().channelManager.joinChannel(channel.getName(), player);
+                    server.channelManager.joinChannel(channel.getName(), player);
                 }
             }
 
@@ -137,9 +136,9 @@ public class LoginHandler {
 
             player.sendPacket(new UserPresenceBundlePacket());
 
-            Server.getInstance().playerManager.add(player);
+            server.playerManager.add(player);
 
-            for (Player p : Server.getInstance().playerManager.getAll()) {
+            for (Player p : server.playerManager.getAll()) {
                 if (p.getId() == player.getId())
                     continue;
                 if (p.isBot()) {
@@ -149,12 +148,12 @@ public class LoginHandler {
                 p.sendPacket(new UserPresenceSinglePacket(p.getId()));
             }
 
-            WelcomeMessage welcomeConfig = Server.getInstance().config.getWelcomeMessage();
+            WelcomeMessage welcomeConfig = server.config.getWelcomeMessage();
             if (welcomeConfig.isNotificationEnabled()) {
                 player.sendPacket(new NotificationPacket(welcomeConfig.getNotificationMessage()));
             }
             if (welcomeConfig.isBotEnabled()) {
-                player.sendPacket(new SendMessagePacket(Server.getInstance().botPlayer.getUsername(), welcomeConfig.getBotMessage(), player.getUsername(), Server.getInstance().botPlayer.getId()));
+                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), welcomeConfig.getBotMessage(), player.getUsername(), server.botPlayer.getId()));
             }
 
             player.sendPacket(new MenuIconPacket());

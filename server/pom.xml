@@ -28,6 +28,8 @@
     <mysql.connector.version>9.7.0</mysql.connector.version>
     <hikari.version>7.0.2</hikari.version>
 
+    <ousu-api.version>2.1</ousu-api.version>
+
     <kotlin.version>1.9.24</kotlin.version>
     <classgraph.version>4.8.179</classgraph.version>
     <logback.version>1.5.33</logback.version>
@@ -93,6 +95,11 @@
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
       <version>${javalin.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.marcandreher</groupId>
+      <artifactId>Ousu-Api</artifactId>
+      <version>${ousu-api.version}</version>
     </dependency>
   </dependencies>
 

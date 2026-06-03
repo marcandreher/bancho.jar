@@ -1,20 +1,17 @@
 package com.osuserverlist.bjar;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.UUID;
 
-import com.osuserverlist.bjar.models.database.DbChannel;
-import com.osuserverlist.bjar.models.essentials.BanchoChannel;
-import com.osuserverlist.bjar.models.essentials.ModeStats;
-import com.osuserverlist.bjar.models.essentials.Player;
+import org.slf4j.Logger;
+
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.Database.ServerTimezone;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.modules.geo.Country;
-import com.osuserverlist.bjar.modules.logger.LoggerConfiguration;
+import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.web.BanchoWebLogger;
 import com.osuserverlist.bjar.modules.web.ServerWebApp;
+import com.osuserverlist.bjar.server.ChannelManager;
+import com.osuserverlist.bjar.server.PlayerManager;
 import com.osuserverlist.bjar.server.Server;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -33,8 +30,9 @@ public class App {
 █       █ █▄█  █       █     ▄▄█       █  █ █  █     ▄  █   █ █▄█  █   █▄▄█▄ 
 █  ▄   ██      █  ▄    █    █  █   ▄   █  █▄█  █▄▄▄ █ █▄█   █      █    ▄▄  █
 █ █▄█   █  ▄   █ █ █   █    █▄▄█  █ █  █       █   ██       █  ▄   █   █  █ █
-█▄▄▄▄▄▄▄█▄█ █▄▄█▄█  █▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█▄▄▄▄▄▄▄█▄▄▄██▄▄▄▄▄▄▄█▄█ █▄▄█▄▄▄█  █▄█
-""";
+█▄▄▄▄▄▄▄█▄█ █▄▄█▄█  █▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█▄▄▄▄▄▄▄█▄▄▄██▄▄▄▄▄▄▄█▄█ █▄▄█▄▄▄█  █▄█""";
+
+    public static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
         System.out.println(HEADER);
@@ -54,39 +52,16 @@ public class App {
         ServerWebApp.registerRoutes(app);
 
         app.start(Integer.parseInt(dotenv.get("PORT")));
-        
-        // Load bot
-        // TODO: Move code
+
+        Server.start();
 
         try (MySQL mysql = Database.getConnection()) {
-            ResultSet botRs = mysql.query("SELECT * FROM `users` WHERE `id` = 1").executeQuery();
 
-            if (!botRs.next()) {
-                return;
-            }
+            PlayerManager.connectBot(mysql, 1);
+            ChannelManager.populate(mysql);
 
-            Player botPlayer = new Player(1, true, UUID.randomUUID().toString());
-            botPlayer.setUsername(botRs.getString("name"));
-            botPlayer.setCountry((short) Country.getIndexByCode(botRs.getString("country")));
-            botPlayer.setTimezone(2);
-            botPlayer.setActionText("Bancho.jar yeah");
-
-            for(int i = 0; i <= 8; i++) {
-                ModeStats modeStats = new ModeStats();
-                botPlayer.getModeStats()[i] = modeStats;
-            }
-            Server.getInstance().playerManager.add(botPlayer);
-            Server.getInstance().botPlayer = botPlayer;
-
-            ResultSet channelRs = mysql.query("SELECT * FROM `channels`").executeQuery();
-            while (channelRs.next()) {
-                DbChannel defaultChannel = new DbChannel(channelRs);
-                
-                BanchoChannel channel = new BanchoChannel(String.valueOf(defaultChannel.getId()), defaultChannel.getName(), defaultChannel.getTopic(), defaultChannel.isAutoJoin());
-                Server.getInstance().channelManager.add(channel);
-            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Failed to load channels and bot from SQL", e);
         }
     }
 }
