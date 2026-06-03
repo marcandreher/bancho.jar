@@ -76,6 +76,7 @@ public class App {
                 botPlayer.getModeStats()[i] = modeStats;
             }
             Server.getInstance().playerManager.add(botPlayer);
+            Server.getInstance().botPlayer = botPlayer;
 
             ResultSet channelRs = mysql.query("SELECT * FROM `channels`").executeQuery();
             while (channelRs.next()) {

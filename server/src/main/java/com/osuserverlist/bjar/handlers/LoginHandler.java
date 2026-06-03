@@ -8,11 +8,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.management.Notification;
+
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.models.config.ServerConfiguration.WelcomeMessage;
 import com.osuserverlist.bjar.models.database.DbUser;
-import com.osuserverlist.bjar.models.engine.LoginResponse;
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
+import com.osuserverlist.bjar.models.essentials.LoginResponse;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.database.Database;
@@ -27,13 +30,16 @@ import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelAutojoinHan
 import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoEndHandler;
 import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoHandler;
 import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelJoinSuccessHandler;
+import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessageHandler;
 import com.osuserverlist.bjar.packets.server.handlers.connect.LoginReplyHandler;
+import com.osuserverlist.bjar.packets.server.handlers.connect.MenuIconPacket;
 import com.osuserverlist.bjar.packets.server.handlers.connect.PermissionsHandler;
 import com.osuserverlist.bjar.packets.server.handlers.connect.SendProtocolVersion;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceBundle;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceHandler;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceSingle;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsHandler;
+import com.osuserverlist.bjar.packets.server.handlers.util.NotificationHandler;
 import com.osuserverlist.bjar.server.Server;
 
 import io.javalin.http.Context;
@@ -142,6 +148,16 @@ public class LoginHandler {
                 }
                 p.sendPacket(new UserPresenceSingle(p.getId()));
             }
+
+            WelcomeMessage welcomeConfig = Server.getInstance().config.getWelcomeMessage();
+            if (welcomeConfig.isNotificationEnabled()) {
+                player.sendPacket(new NotificationHandler(welcomeConfig.getNotificationMessage()));
+            }
+            if (welcomeConfig.isBotEnabled()) {
+                player.sendPacket(new SendMessageHandler(Server.getInstance().botPlayer.getUsername(), welcomeConfig.getBotMessage(), player.getUsername(), Server.getInstance().botPlayer.getId()));
+            }
+
+            player.sendPacket(new MenuIconPacket());
 
             logger.info("User {} logged in successfully from IP: {}", player.toString(), loginResponse.getIp());
 
