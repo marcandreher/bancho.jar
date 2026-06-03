@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.packets.server.handlers.chat;
+package com.osuserverlist.bjar.packets.server.handlers.connect;
 
 import java.io.IOException;
 
@@ -8,23 +8,19 @@ import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 
-import lombok.AllArgsConstructor;
+public class PermissionsPacket implements ServerPacketHandler {
 
-@AllArgsConstructor
-public class SendMessageHandler implements ServerPacketHandler {
+    final ServerPackets type = ServerPackets.PRIVILEGES;
+    private int permissions; 
 
-    private String senderName;
-    private String message;
-    private String target;
-    private int senderId;
+    public PermissionsPacket(int permissions) {
+        this.permissions = permissions;
+    }
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
-        writer.startPacket(ServerPackets.SEND_MESSAGE.getValue());
-        writer.writeString(senderName);
-        writer.writeString(message);
-        writer.writeString(target);
-        writer.writeInt(senderId);
+        writer.startPacket(type.getValue());
+        writer.writeInt(permissions);
         writer.endPacket();
         return true;
     }

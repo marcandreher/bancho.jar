@@ -6,10 +6,10 @@ import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
-import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsHandler;
+import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
 import com.osuserverlist.bjar.server.Server;
 
-public class StatusUpdateHandler implements BanchoPacketHandler {
+public class StatusUpdatePacket implements BanchoPacketHandler {
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
@@ -28,7 +28,7 @@ public class StatusUpdateHandler implements BanchoPacketHandler {
         player.setBeatmapId(beatmapId);
 
         for (Player onlinePlayer : Server.getInstance().playerManager.getAll()) {
-            onlinePlayer.sendPacket(new UserStatsHandler(player));
+            onlinePlayer.sendPacket(new UserStatsPacket(player));
         }
 
         return true;

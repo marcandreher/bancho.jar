@@ -6,29 +6,20 @@ import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 
-public class ChannelInfoHandler implements ServerPacketHandler {
+public class ChannelJoinSuccessPacket implements ServerPacketHandler {
 
-    final ServerPackets type = ServerPackets.CHANNEL_INFO;
+    final ServerPackets type = ServerPackets.CHANNEL_JOIN_SUCCESS;
 
-    private String channelName; 
-    private String channelDescription;
-    private short userCount;
+    private String channelName;
 
-    public ChannelInfoHandler(String channelName, String channelDescription, short userCount) {
+    public ChannelJoinSuccessPacket(String channelName) {
         this.channelName = channelName;
-        this.channelDescription = channelDescription;
-        this.userCount = userCount;
-        
     }
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws java.io.IOException {
         writer.startPacket(type.getValue());
-    
-        writer.writeString(channelName);
-        writer.writeString(channelDescription);
-        writer.writeShort((short)userCount);
-    
+        writer.writeString(channelName); 
         writer.endPacket();
         return true;
     }

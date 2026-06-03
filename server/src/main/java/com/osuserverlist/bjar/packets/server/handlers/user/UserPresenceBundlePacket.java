@@ -10,7 +10,7 @@ import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 import com.osuserverlist.bjar.server.Server;
 
-public class UserPresenceBundle implements ServerPacketHandler {
+public class UserPresenceBundlePacket implements ServerPacketHandler {
 
     final ServerPackets type = ServerPackets.USER_PRESENCE_BUNDLE;
 

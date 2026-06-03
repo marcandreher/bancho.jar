@@ -7,13 +7,13 @@ import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 import com.osuserverlist.bjar.server.Server;
 
-public class UserPresenceHandler implements ServerPacketHandler {
+public class UserPresencePacket implements ServerPacketHandler {
 
     final ServerPackets type = ServerPackets.USER_PRESENCE;
 
     private final int userId;
 
-    public UserPresenceHandler(int userId) {
+    public UserPresencePacket(int userId) {
         this.userId = userId;
     }
 

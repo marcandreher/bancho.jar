@@ -8,8 +8,8 @@ import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
 
-public class UnhandledHandler implements BanchoPacketHandler {
-    private static final Logger logger = LoggerFactory.getLogger(UnhandledHandler.class);
+public class UnhandledPacket implements BanchoPacketHandler {
+    private static final Logger logger = LoggerFactory.getLogger(UnhandledPacket.class);
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) {

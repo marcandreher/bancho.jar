@@ -7,28 +7,24 @@ import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
-import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsHandler;
+import com.osuserverlist.bjar.packets.server.handlers.user.UserPresencePacket;
 import com.osuserverlist.bjar.server.Server;
 
-public class StatsRequestHandler implements BanchoPacketHandler {
+public class PresenceRequestPacket implements BanchoPacketHandler {
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         List<Integer> userIds = reader.readIntList();
 
         for (int userId : userIds) {
-
-            if (player.getId() == userId) {
-                continue;
-            }
-
             Player requestedPlayer = Server.getInstance().playerManager.getById(userId);
 
+            // If player is found, send their presence and stats
             if (requestedPlayer != null) {
-                player.sendPacket(new UserStatsHandler(requestedPlayer.getId()));
+                player.sendPacket(new UserPresencePacket(requestedPlayer.getId()));
             }
         }
-
         return true;
     }
+
 }

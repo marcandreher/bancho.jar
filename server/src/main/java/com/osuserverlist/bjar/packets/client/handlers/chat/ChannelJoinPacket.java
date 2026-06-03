@@ -10,7 +10,7 @@ import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
-import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelJoinSuccessHandler;
+import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelJoinSuccessPacket;
 import com.osuserverlist.bjar.server.Server;
 
 public class ChannelJoinPacket implements BanchoPacketHandler {
@@ -26,7 +26,7 @@ public class ChannelJoinPacket implements BanchoPacketHandler {
             logger.warn("Player {} tried to join a not existing channel", player.toString());
             return true;
         }
-        player.sendPacket(new ChannelJoinSuccessHandler(channelName));
+        player.sendPacket(new ChannelJoinSuccessPacket(channelName));
 
         Server.getInstance().channelManager.joinChannel(channelName, player);
         logger.info("Player {} joined channel {}", player.toString(), channelName);

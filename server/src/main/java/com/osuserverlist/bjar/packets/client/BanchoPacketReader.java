@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.BanchoPacket;
-import com.osuserverlist.bjar.packets.client.handlers.UnhandledHandler;
+import com.osuserverlist.bjar.packets.client.handlers.UnhandledPacket;
 
 public class BanchoPacketReader {
     private static final Logger logger = LoggerFactory.getLogger(BanchoPacketReader.class);
@@ -109,7 +109,7 @@ public class BanchoPacketReader {
             return false;
         }
 
-        BanchoPacketHandler handler = ClientPacketRegistry.packetHandlers.getOrDefault(ClientPackets.getById(currentPacketId), new UnhandledHandler());
+        BanchoPacketHandler handler = ClientPacketRegistry.packetHandlers.getOrDefault(ClientPackets.getById(currentPacketId), new UnhandledPacket());
         BanchoPacket packet = new BanchoPacket(currentPacketId, compressionFlag, ClientPackets.getById(currentPacketId));
         
         boolean result = handler.handle(packet, this, player);

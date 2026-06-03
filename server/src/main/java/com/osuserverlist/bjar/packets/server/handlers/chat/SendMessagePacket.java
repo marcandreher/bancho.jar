@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.packets.server.handlers.channel;
+package com.osuserverlist.bjar.packets.server.handlers.chat;
 
 import java.io.IOException;
 
@@ -8,20 +8,23 @@ import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 
-public class ChannelAutojoinHandler implements ServerPacketHandler {
+import lombok.AllArgsConstructor;
 
-    final ServerPackets type = ServerPackets.CHANNEL_AUTO_JOIN;
+@AllArgsConstructor
+public class SendMessagePacket implements ServerPacketHandler {
 
-    private String channel;
-
-    public ChannelAutojoinHandler(String channel) {
-        this.channel = channel;
-    }
+    private String senderName;
+    private String message;
+    private String target;
+    private int senderId;
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
-        writer.startPacket(ServerPackets.CHANNEL_AUTO_JOIN.getValue());  // Start new packet with CHANNEL_AUTO_JOIN packet ID
-        writer.writeString(channel); 
+        writer.startPacket(ServerPackets.SEND_MESSAGE.getValue());
+        writer.writeString(senderName);
+        writer.writeString(message);
+        writer.writeString(target);
+        writer.writeInt(senderId);
         writer.endPacket();
         return true;
     }

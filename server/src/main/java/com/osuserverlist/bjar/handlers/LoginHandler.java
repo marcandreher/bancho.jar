@@ -26,20 +26,20 @@ import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.PacketSender;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
-import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelAutojoinHandler;
-import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoEndHandler;
-import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoHandler;
-import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelJoinSuccessHandler;
-import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessageHandler;
-import com.osuserverlist.bjar.packets.server.handlers.connect.LoginReplyHandler;
+import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelAutojoinPacket;
+import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoEndPacket;
+import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoPacket;
+import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelJoinSuccessPacket;
+import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
+import com.osuserverlist.bjar.packets.server.handlers.connect.LoginReplyPacket;
 import com.osuserverlist.bjar.packets.server.handlers.connect.MenuIconPacket;
-import com.osuserverlist.bjar.packets.server.handlers.connect.PermissionsHandler;
-import com.osuserverlist.bjar.packets.server.handlers.connect.SendProtocolVersion;
-import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceBundle;
-import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceHandler;
-import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceSingle;
-import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsHandler;
-import com.osuserverlist.bjar.packets.server.handlers.util.NotificationHandler;
+import com.osuserverlist.bjar.packets.server.handlers.connect.PermissionsPacket;
+import com.osuserverlist.bjar.packets.server.handlers.connect.ProtocolVersionPacket;
+import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceBundlePacket;
+import com.osuserverlist.bjar.packets.server.handlers.user.UserPresencePacket;
+import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceSinglePacket;
+import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
+import com.osuserverlist.bjar.packets.server.handlers.util.NotificationPacket;
 import com.osuserverlist.bjar.server.Server;
 
 import io.javalin.http.Context;
@@ -93,10 +93,10 @@ public class LoginHandler {
             player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
             player.setUsername(dbUser.getName());
 
-            player.sendPacket(new SendProtocolVersion());
+            player.sendPacket(new ProtocolVersionPacket());
 
-            player.sendPacket(new LoginReplyHandler(player.getId()));
-            player.sendPacket(new PermissionsHandler(4));
+            player.sendPacket(new LoginReplyPacket(player.getId()));
+            player.sendPacket(new PermissionsPacket(4));
 
             for (int i = 0; i <= 8; i++) {
                 if (i == 7)
@@ -120,22 +120,22 @@ public class LoginHandler {
                 player.getModeStats()[i] = modeStats;
             }
 
-            player.sendPacket(new UserPresenceHandler(player.getId()));
-            player.sendPacket(new UserStatsHandler(player));
+            player.sendPacket(new UserPresencePacket(player.getId()));
+            player.sendPacket(new UserStatsPacket(player));
 
             for (BanchoChannel channel : Server.getInstance().channelManager.getAll()) {
                 if (channel.isAutoJoin()) {
-                    player.sendPacket(new ChannelAutojoinHandler(channel.getName()));
-                    player.sendPacket(new ChannelInfoHandler(channel.getName(), channel.getDescription(),
+                    player.sendPacket(new ChannelAutojoinPacket(channel.getName()));
+                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(),
                             (short) (0 + 1)));
-                    player.sendPacket(new ChannelJoinSuccessHandler(channel.getName()));
+                    player.sendPacket(new ChannelJoinSuccessPacket(channel.getName()));
                     Server.getInstance().channelManager.joinChannel(channel.getName(), player);
                 }
             }
 
-            player.sendPacket(new ChannelInfoEndHandler());
+            player.sendPacket(new ChannelInfoEndPacket());
 
-            player.sendPacket(new UserPresenceBundle());
+            player.sendPacket(new UserPresenceBundlePacket());
 
             Server.getInstance().playerManager.add(player);
 
@@ -143,18 +143,18 @@ public class LoginHandler {
                 if (p.getId() == player.getId())
                     continue;
                 if (p.isBot()) {
-                    player.sendPacket(new UserPresenceHandler(p.getId()));
+                    player.sendPacket(new UserPresencePacket(p.getId()));
                     continue;
                 }
-                p.sendPacket(new UserPresenceSingle(p.getId()));
+                p.sendPacket(new UserPresenceSinglePacket(p.getId()));
             }
 
             WelcomeMessage welcomeConfig = Server.getInstance().config.getWelcomeMessage();
             if (welcomeConfig.isNotificationEnabled()) {
-                player.sendPacket(new NotificationHandler(welcomeConfig.getNotificationMessage()));
+                player.sendPacket(new NotificationPacket(welcomeConfig.getNotificationMessage()));
             }
             if (welcomeConfig.isBotEnabled()) {
-                player.sendPacket(new SendMessageHandler(Server.getInstance().botPlayer.getUsername(), welcomeConfig.getBotMessage(), player.getUsername(), Server.getInstance().botPlayer.getId()));
+                player.sendPacket(new SendMessagePacket(Server.getInstance().botPlayer.getUsername(), welcomeConfig.getBotMessage(), player.getUsername(), Server.getInstance().botPlayer.getId()));
             }
 
             player.sendPacket(new MenuIconPacket());

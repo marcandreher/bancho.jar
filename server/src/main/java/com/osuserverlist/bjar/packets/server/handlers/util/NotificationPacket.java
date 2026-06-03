@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.packets.server.handlers.connect;
+package com.osuserverlist.bjar.packets.server.handlers.util;
 
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
@@ -6,21 +6,22 @@ import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 
-public class LoginReplyHandler implements ServerPacketHandler {
-    
-    final ServerPackets type = ServerPackets.LOGIN_REPLY;
+public class NotificationPacket implements ServerPacketHandler {
 
-    private int userId; 
+    final ServerPackets type = ServerPackets.NOTIFICATION;
 
-    public LoginReplyHandler(int userId) {
-        this.userId = userId;
+    private String message; 
+
+    public NotificationPacket(String message) {
+        this.message = message;
     }
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws java.io.IOException {
         writer.startPacket(type.getValue());
-        writer.writeInt(userId);
+        writer.writeString(message);
         writer.endPacket();
         return true;
     }
+    
 }

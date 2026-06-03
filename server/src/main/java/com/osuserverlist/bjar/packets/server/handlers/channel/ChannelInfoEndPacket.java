@@ -1,6 +1,4 @@
-package com.osuserverlist.bjar.packets.server.handlers.connect;
-
-import java.io.IOException;
+package com.osuserverlist.bjar.packets.server.handlers.channel;
 
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
@@ -8,16 +6,14 @@ import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 
-public class SendProtocolVersion implements ServerPacketHandler {
-        
-    final ServerPackets type = ServerPackets.PROTOCOL_VERSION;
+public class ChannelInfoEndPacket implements ServerPacketHandler {
+    final ServerPackets type = ServerPackets.CHANNEL_INFO_END;
 
     @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws java.io.IOException {
         writer.startPacket(type.getValue());
-        writer.writeInt(19); // Protocol version
         writer.endPacket();
         return true;
     }
-
+    
 }

@@ -13,19 +13,19 @@ import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 import com.osuserverlist.bjar.server.Server;
 
-public class UserStatsHandler implements ServerPacketHandler {
+public class UserStatsPacket implements ServerPacketHandler {
 
-    private final static Logger logger = LoggerFactory.getLogger(UserStatsHandler.class);
+    private final static Logger logger = LoggerFactory.getLogger(UserStatsPacket.class);
     private Player player;
     private String userId;
 
-    public UserStatsHandler(int userId) {
+    public UserStatsPacket(int userId) {
         Player player = Server.getInstance().playerManager.getById(userId);
         this.userId = String.valueOf(userId);
         this.player = player;
     }
 
-    public UserStatsHandler(Player player) {
+    public UserStatsPacket(Player player) {
         this.player = player;
         this.userId = String.valueOf(player.getId());
     }

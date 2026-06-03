@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.packets.server.handlers.connect;
+package com.osuserverlist.bjar.packets.server.handlers.user;
 
 import java.io.IOException;
 
@@ -8,21 +8,21 @@ import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 
-public class PermissionsHandler implements ServerPacketHandler {
+public class UserPresenceSinglePacket implements ServerPacketHandler {
+    final ServerPackets type = ServerPackets.USER_PRESENCE_SINGLE;
 
-    final ServerPackets type = ServerPackets.PRIVILEGES;
-    private int permissions; 
+    private final int userId;
 
-    public PermissionsHandler(int permissions) {
-        this.permissions = permissions;
+    public UserPresenceSinglePacket(int userId) {
+        this.userId = userId;
     }
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
         writer.startPacket(type.getValue());
-        writer.writeInt(permissions);
+        writer.writeShort(userId);
         writer.endPacket();
         return true;
     }
-    
+
 }

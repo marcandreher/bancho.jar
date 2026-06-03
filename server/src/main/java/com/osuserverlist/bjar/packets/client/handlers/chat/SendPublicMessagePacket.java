@@ -10,11 +10,11 @@ import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
-import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessageHandler;
+import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
 import com.osuserverlist.bjar.server.Server;
 
-public class SendPublicMessageHandler implements BanchoPacketHandler {
-    private final Logger logger = LoggerFactory.getLogger(SendPublicMessageHandler.class);
+public class SendPublicMessagePacket implements BanchoPacketHandler {
+    private final Logger logger = LoggerFactory.getLogger(SendPublicMessagePacket.class);
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
@@ -32,7 +32,7 @@ public class SendPublicMessageHandler implements BanchoPacketHandler {
         for (Player member : channel.getPlayers()) {
             if(member.isBot()) continue;
             if(member.getId() == player.getId()) continue; // Don't send the message back to the sender
-            member.sendPacket(new SendMessageHandler(player.getUsername(), message, target, player.getId()));
+            member.sendPacket(new SendMessagePacket(player.getUsername(), message, target, player.getId()));
         }
 
         return true;

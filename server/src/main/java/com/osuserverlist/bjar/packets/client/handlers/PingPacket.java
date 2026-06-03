@@ -7,7 +7,7 @@ import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
 
-public class PingHandler implements BanchoPacketHandler {
+public class PingPacket implements BanchoPacketHandler {
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
