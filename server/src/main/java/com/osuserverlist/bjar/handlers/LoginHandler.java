@@ -92,6 +92,8 @@ public class LoginHandler {
             player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
             player.setUsername(dbUser.getName());
 
+            player.setApiIdent(String.format("%s|%s", player.getUsername(), loginResponse.getPasswordMd5()));
+            
             player.sendPacket(new ProtocolVersionPacket());
 
             player.sendPacket(new LoginReplyPacket(player.getId()));

@@ -22,6 +22,7 @@ public class Player {
 
     private int id;
     private boolean isBot = false;
+    private String apiIdent = "";
 
     private ModeStats[] modeStats = new ModeStats[9];
 

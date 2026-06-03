@@ -2,6 +2,9 @@ package com.osuserverlist.bjar.models.database;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 import com.osuserverlist.bjar.modules.database.MySQL;
 
@@ -68,7 +71,9 @@ public class DbMap {
         this.version = beatmap.getVersion();
         this.creator = beatmap.getCreatorName();
         this.filename = getFileName(beatmap);
-        this.lastUpdate = beatmap.getLastUpdateDate().toString();
+        this.lastUpdate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        .withZone(ZoneOffset.UTC)
+        .format(Instant.parse(beatmap.getLastUpdateDate().toString()));
         this.totalLength = beatmap.getTotalLength();
         this.maxCombo = beatmap.getMaxCombo();
         this.frozen = false;

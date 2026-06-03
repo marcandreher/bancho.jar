@@ -8,6 +8,7 @@ import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.Database.ServerTimezone;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
 import com.osuserverlist.bjar.modules.web.BanchoWebLogger;
 import com.osuserverlist.bjar.modules.web.ServerWebApp;
 import com.osuserverlist.bjar.server.ChannelManager;
@@ -16,6 +17,7 @@ import com.osuserverlist.bjar.server.Server;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.javalin.Javalin;
+import io.javalin.http.ExceptionHandler;
 
 /**
  * Bancho.jar - An open-source osu! server implementation in Java.
@@ -53,7 +55,16 @@ public class App {
 
         app.start(Integer.parseInt(dotenv.get("PORT")));
 
-        Server.start();
+        app.exception(Exception.class, (e, ctx) -> {
+            logger.error("Unhandled exception while processing {} {}",
+                    ctx.method(), ctx.path(), e);
+
+            ctx.status(500).result("Internal Server Error");
+        });
+
+        Server server = Server.start();
+
+        server.osuAPIHandler = new OsuAPIHandler(dotenv.get("OSU_API_KEY"));
 
         try (MySQL mysql = Database.getConnection()) {
 

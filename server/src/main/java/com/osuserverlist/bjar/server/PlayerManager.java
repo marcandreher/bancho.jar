@@ -16,13 +16,19 @@ import com.osuserverlist.bjar.modules.geo.Country;
 
 public class PlayerManager {
     private final Map<String, Player> onlinePlayers = new ConcurrentHashMap<>();
+    private final Map<String, Player> apiIdentMap = new ConcurrentHashMap<>();
 
     public void add(Player player) {
         onlinePlayers.put(player.getOsuToken(), player);
+        apiIdentMap.put(player.getApiIdent(), player);
     }
 
     public Player get(String osuToken) {
         return onlinePlayers.get(osuToken);
+    }
+
+    public Player getByApiIdent(String apiIdent) {
+        return apiIdentMap.get(apiIdent);
     }
 
     public Player getByFilter(Predicate<Player> filter) {
@@ -45,6 +51,7 @@ public class PlayerManager {
         }
 
         onlinePlayers.remove(player.getOsuToken());
+        apiIdentMap.remove(player.getApiIdent());
     }
 
     public static void connectBot(MySQL mysql, int id) throws SQLException {
@@ -59,7 +66,7 @@ public class PlayerManager {
         botPlayer.setCountry((short) Country.getIndexByCode(botRs.getString("country")));
         botPlayer.setTimezone(2);
         botPlayer.setActionText("Bancho.jar yeah");
-
+ 
         for (int i = 0; i <= 8; i++) {
             ModeStats modeStats = new ModeStats();
             botPlayer.getModeStats()[i] = modeStats;
