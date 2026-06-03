@@ -34,7 +34,7 @@ public class PlayerManager {
     public void disconnect(Player player) {
         for(BanchoChannel channel : Server.getInstance().channelManager.getAll()) {
             if(channel.getPlayers().contains(player)) {
-                channel.getPlayers().remove(player);
+                Server.getInstance().channelManager.leaveChannel(channel.getName(), player);
             }
         }
         

@@ -23,6 +23,8 @@ public class ChannelManager {
         if (channel != null) {
             channel.getPlayers().add(player);
         }
+
+        // TODO: notify players in channel with new channel info packet
     }
 
     public void leaveChannel(String channelName, Player player) {
@@ -30,6 +32,8 @@ public class ChannelManager {
         if (channel != null) {
             channel.getPlayers().remove(player);
         }
+
+        // TODO: notify players in channel with new channel info packet
     }
     
     public Collection<BanchoChannel> getAll() {
