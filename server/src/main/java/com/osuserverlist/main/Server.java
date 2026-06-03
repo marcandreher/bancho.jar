@@ -12,4 +12,5 @@ public class Server {
     }
 
     public PlayerManager playerManager = new PlayerManager();
+    public ChannelManager channelManager = new ChannelManager();
 }

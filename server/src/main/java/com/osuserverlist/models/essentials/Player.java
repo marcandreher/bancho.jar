@@ -53,4 +53,9 @@ public class Player {
         packetStack.push(handler);
     }
 
+    @Override
+    public String toString() {
+        return String.format("<%s>(%d)", username, id);
+    }
+
 }

@@ -5,15 +5,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 
 import com.osuserverlist.main.Server;
-import com.osuserverlist.models.database.DbChannel;
 import com.osuserverlist.models.database.DbUser;
 import com.osuserverlist.models.engine.LoginResponse;
+import com.osuserverlist.models.essentials.BanchoChannel;
 import com.osuserverlist.models.essentials.ModeStats;
 import com.osuserverlist.models.essentials.Player;
 import com.osuserverlist.modules.geo.GeoRegistry;
@@ -88,25 +89,10 @@ public class LoginHandler {
             player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
             player.setUsername(dbUser.getName());
 
-            Server.getInstance().playerManager.add(player);
+            player.sendPacket(new SendProtocolVersion());
 
             player.sendPacket(new LoginReplyHandler(player.getId()));
             player.sendPacket(new PermissionsHandler(4));
-
-            player.sendPacket(new SendProtocolVersion());
-
-            ResultSet channelRs = mysql.query("SELECT * FROM `channels`").executeQuery();
-            while (channelRs.next()) {
-                DbChannel defaultChannel = ResultSetMapper.map(channelRs, DbChannel.class);
-                if (defaultChannel.isAutoJoin()) {
-                    player.sendPacket(new ChannelAutojoinHandler(defaultChannel.getName()));
-                    player.sendPacket(new ChannelInfoHandler(defaultChannel.getName(), defaultChannel.getTopic(),
-                            (short) (0 + 1)));
-                    player.sendPacket(new ChannelJoinSuccessHandler(defaultChannel.getName()));
-                }
-            }
-
-            player.sendPacket(new ChannelInfoEndHandler());
 
             for (int i = 0; i <= 8; i++) {
                 if (i == 7)
@@ -133,18 +119,33 @@ public class LoginHandler {
             player.sendPacket(new UserPresenceHandler(player.getId()));
             player.sendPacket(new UserStatsHandler(player));
 
+            for (BanchoChannel channel : Server.getInstance().channelManager.getAll()) {
+                if (channel.isAutoJoin()) {
+                    player.sendPacket(new ChannelAutojoinHandler(channel.getName()));
+                    player.sendPacket(new ChannelInfoHandler(channel.getName(), channel.getDescription(),
+                            (short) (0 + 1)));
+                    player.sendPacket(new ChannelJoinSuccessHandler(channel.getName()));
+                    Server.getInstance().channelManager.joinChannel(channel.getName(), player);
+                }
+            }
+
+            player.sendPacket(new ChannelInfoEndHandler());
+
             player.sendPacket(new UserPresenceBundle());
+
+            Server.getInstance().playerManager.add(player);
 
             for (Player p : Server.getInstance().playerManager.getAll()) {
                 if (p.getId() == player.getId())
                     continue;
-                if (p.isBot())
+                if (p.isBot()) {
+                    player.sendPacket(new UserPresenceHandler(p.getId()));
                     continue;
-                p.sendPacket(new UserPresenceSingle(player.getId()));
+                }
+                p.sendPacket(new UserPresenceSingle(p.getId()));
             }
 
-            logger.info("User {}({}) logged in successfully from IP: {}", dbUser.getName(), player.getId(),
-                    loginResponse.getIp());
+            logger.info("User {} logged in successfully from IP: {}", player.toString(), loginResponse.getIp());
 
             PacketSender packetSender = new PacketSender();
 

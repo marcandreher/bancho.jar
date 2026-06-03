@@ -95,7 +95,7 @@ public class BanchoPacketWriter {
         output.write(value & 0xFF);
     }
 
-    public void writeShort(short value) throws IOException {
+    public void writeShort(int value) throws IOException {
         // Changed to little-endian to be consistent with packet format
         writeShortLE(value);
     }
@@ -105,7 +105,7 @@ public class BanchoPacketWriter {
         writeIntLE(value);
     }
 
-    public void writeShortLE(short value) throws IOException {
+    public void writeShortLE(int value) throws IOException {
         output.write(new byte[] {
                 (byte) (value & 0xFF),
                 (byte) ((value >> 8) & 0xFF)

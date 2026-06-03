@@ -20,7 +20,7 @@ public class UserPresenceSingle implements ServerPacketHandler {
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
         writer.startPacket(type.getValue());
-        writer.writeInt(userId);
+        writer.writeShort(userId);
         writer.endPacket();
         return true;
     }

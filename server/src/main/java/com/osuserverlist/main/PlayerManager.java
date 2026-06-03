@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
+import com.osuserverlist.models.essentials.BanchoChannel;
 import com.osuserverlist.models.essentials.Player;
 
 public class PlayerManager {
@@ -28,5 +29,15 @@ public class PlayerManager {
 
     public Collection<Player> getAll() {
         return onlinePlayers.values();
+    }
+
+    public void disconnect(Player player) {
+        for(BanchoChannel channel : Server.getInstance().channelManager.getAll()) {
+            if(channel.getPlayers().contains(player)) {
+                channel.getPlayers().remove(player);
+            }
+        }
+        
+        onlinePlayers.remove(player.getOsuToken());
     }
 }

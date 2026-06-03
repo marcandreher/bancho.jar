@@ -5,6 +5,8 @@ import java.sql.SQLException;
 import java.util.UUID;
 
 import com.osuserverlist.main.Server;
+import com.osuserverlist.models.database.DbChannel;
+import com.osuserverlist.models.essentials.BanchoChannel;
 import com.osuserverlist.models.essentials.ModeStats;
 import com.osuserverlist.models.essentials.Player;
 import com.osuserverlist.modules.geo.Country;
@@ -15,6 +17,7 @@ import de.marcandreher.fusionkit.core.config.WebAppConfig;
 import de.marcandreher.fusionkit.core.database.Database;
 import de.marcandreher.fusionkit.core.database.Database.ServerTimezone;
 import de.marcandreher.fusionkit.core.database.MySQL;
+import de.marcandreher.fusionkit.core.database.ResultSetMapper;
 import de.marcandreher.fusionkit.core.javalin.ProductionLevel;
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -46,7 +49,7 @@ public class App {
                 .name("BJAR")
                 .port(Integer.parseInt(dotenv.get("PORT")))
                 .domain(dotenv.get("DOMAIN"))
-                .debugger(true)
+                .debugger(false)
                 .productionLevel(ProductionLevel.valueOf(dotenv.get("LEVEL")))
                 .build();
 
@@ -77,6 +80,14 @@ public class App {
                 botPlayer.getModeStats()[i] = modeStats;
             }
             Server.getInstance().playerManager.add(botPlayer);
+
+            ResultSet channelRs = mysql.query("SELECT * FROM `channels`").executeQuery();
+            while (channelRs.next()) {
+                DbChannel defaultChannel = ResultSetMapper.map(channelRs, DbChannel.class);
+                
+                BanchoChannel channel = new BanchoChannel(String.valueOf(defaultChannel.getId()), defaultChannel.getName(), defaultChannel.getTopic(), defaultChannel.isAutoJoin());
+                Server.getInstance().channelManager.add(channel);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -1,7 +1,6 @@
 package com.osuserverlist.packets.server.handlers.channel;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import com.osuserverlist.models.essentials.Player;
 import com.osuserverlist.packets.BanchoPacket;
@@ -24,13 +23,6 @@ public class ChannelAutojoinHandler implements ServerPacketHandler {
         writer.startPacket(ServerPackets.CHANNEL_AUTO_JOIN.getValue());  // Start new packet with CHANNEL_AUTO_JOIN packet ID
         writer.writeString(channel); 
         writer.endPacket();
-
-        if (Arrays.asList("#osu", "#lobby").contains(channel)) {
-            return true; 
-        }
-
-        // TODO: Add player to channel's player list
-        //Server.channels.get(channel).getPlayers().add(sender);
         return true;
     }
     

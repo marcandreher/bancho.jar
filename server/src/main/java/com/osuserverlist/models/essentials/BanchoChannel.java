@@ -1,7 +1,7 @@
 package com.osuserverlist.models.essentials;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,7 +13,7 @@ public class BanchoChannel {
     private String name;
     private String description;
     private boolean autoJoin;
-    private final List<Player> players = new ArrayList<>();
+    private final Set<Player> players = ConcurrentHashMap.newKeySet();
 
     public int getPlayerCount() {
         return players.size() + 1; // +1 for the bot

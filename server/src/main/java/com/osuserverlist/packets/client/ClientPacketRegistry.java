@@ -4,6 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.osuserverlist.packets.client.handlers.PingHandler;
+import com.osuserverlist.packets.client.handlers.chat.ChannelJoinPacket;
+import com.osuserverlist.packets.client.handlers.chat.ChannelLeavePacket;
+import com.osuserverlist.packets.client.handlers.chat.SendPrivateMessageHandler;
+import com.osuserverlist.packets.client.handlers.chat.SendPublicMessageHandler;
+import com.osuserverlist.packets.client.handlers.user.LogoutHandler;
 import com.osuserverlist.packets.client.handlers.user.PresenceRequestHandler;
 import com.osuserverlist.packets.client.handlers.user.StatsRequestHandler;
 import com.osuserverlist.packets.client.handlers.user.StatusUpdateHandler;
@@ -18,5 +23,10 @@ public class ClientPacketRegistry {
         packetHandlers.put(ClientPackets.CHANGE_ACTION, new StatusUpdateHandler());
         packetHandlers.put(ClientPackets.USER_STATS_REQUEST, new StatsRequestHandler());
         packetHandlers.put(ClientPackets.REQUEST_STATUS_UPDATE, new UserSelfRequestStatusHandler());
+        packetHandlers.put(ClientPackets.SEND_PUBLIC_MESSAGE, new SendPublicMessageHandler());
+        packetHandlers.put(ClientPackets.SEND_PRIVATE_MESSAGE, new SendPrivateMessageHandler());
+        packetHandlers.put(ClientPackets.CHANNEL_JOIN, new ChannelJoinPacket());
+        packetHandlers.put(ClientPackets.CHANNEL_PART, new ChannelLeavePacket());
+        packetHandlers.put(ClientPackets.LOGOUT, new LogoutHandler());
     }
 }
