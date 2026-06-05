@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.osuserverlist.bjar.models.database.DbMap;
+import com.osuserverlist.bjar.modules.calculations.AccuracyCalculator;
 
 import lombok.Data;
 
@@ -34,6 +35,17 @@ public class Score {
     private double accuracy = 0.0;
     private String checksum = "";
 
+    public static Score fromResultSet(ResultSet scoreResult, DbMap beatmap) throws SQLException {
+        Score s = Score.fromResultSet(scoreResult);
+        
+        s.setBeatmapId(beatmap.getId());
+        s.setMapMd5(beatmap.getMd5());
+        s.setChecksum(scoreResult.getString("online_checksum"));
+        s.setUsername(scoreResult.getString("name"));
+
+        return s;
+    }
+
     public static Score fromSubmission(String[] data, Player p) {
         Score s = new Score();
         s.setPlayerId(p.getId());
@@ -52,32 +64,13 @@ public class Score {
         s.setMode(Integer.parseInt(data[15]));
         s.setPlaytime((System.currentTimeMillis()));
         s.setFlags((int) data[15].chars().filter(c -> c == ' ').count() & ~4);
-        s.setAccuracy(calcAccFromScore(s));
+        s.setAccuracy(AccuracyCalculator.calculateAccuracy(s));
         return s;
     }
 
-    private static float calcAccFromScore(Score s) {
-        int n300 = s.getN300();
-        int n100 = s.getN100();
-        int n50 = s.getN50();
-        int nMiss = s.getNmiss(); // Make sure you have this
-
-        int totalHits = n300 + n100 + n50 + nMiss;
-        if (totalHits == 0)
-            return 0f;
-
-        float acc = (n50 * 50 + n100 * 100 + n300 * 300) / (float) (totalHits * 300);
-        return acc;
-    }
-
-    public int getScore() {
-        return (int) this.score;
-    }
-
-    public static Score fromResultSet(ResultSet scoreResult, DbMap beatmap) throws SQLException {
+    public static Score fromResultSet(ResultSet scoreResult) throws SQLException {
         Score s = new Score();
         s.setId(scoreResult.getInt("id"));
-        s.setBeatmapId(beatmap.getId());
         s.setPlayerId(scoreResult.getInt("userid"));
         s.setN300(scoreResult.getInt("n300"));
         s.setN100(scoreResult.getInt("n100"));
@@ -97,10 +90,8 @@ public class Score {
         );
         s.setFlags(scoreResult.getInt("client_flags"));
         s.setMods(scoreResult.getInt("mods"));
-        s.setUsername(scoreResult.getString("name"));
-        s.setMapMd5(beatmap.getMd5());
-        s.setChecksum(scoreResult.getString("online_checksum"));
-        
+        s.setMapMd5(scoreResult.getString("map_md5"));
+        s.setAccuracy(AccuracyCalculator.calculateAccuracy(s));
         return s;
     }
 

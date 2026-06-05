@@ -115,6 +115,16 @@ public final class MySQL implements AutoCloseable {
 		}
 	}
 
+	public Integer lastInsertId() {
+		try (ResultSet rs = query("SELECT LAST_INSERT_ID()").executeQuery()) {
+			if (rs.next())
+				return rs.getInt(1);
+		} catch (SQLException e) {
+			log.error("Error getting last insert ID: {}", e.getMessage(), e);
+		}
+		return null;
+	}
+
 	// -------------------------------------------------------------------------
 	// Internal helpers
 	// -------------------------------------------------------------------------

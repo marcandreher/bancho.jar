@@ -1,12 +1,14 @@
-package com.osuserverlist.bjar.modules.pp;
+package com.osuserverlist.bjar.modules.calculations;
 
 import com.osuserverlist.bjar.models.essentials.Score;
+import com.osuserverlist.bjar.models.osu.Mods;
 
 import io.github.nanamochi.osu_native.wrapper.attributes.difficulty.DifficultyAttributes;
 import io.github.nanamochi.osu_native.wrapper.attributes.performance.PerformanceAttributes;
 import io.github.nanamochi.osu_native.wrapper.factories.DifficultyCalculatorFactory;
 import io.github.nanamochi.osu_native.wrapper.factories.PerformanceCalculatorFactory;
 import io.github.nanamochi.osu_native.wrapper.objects.Beatmap;
+import io.github.nanamochi.osu_native.wrapper.objects.Mod;
 import io.github.nanamochi.osu_native.wrapper.objects.ModsCollection;
 import io.github.nanamochi.osu_native.wrapper.objects.Ruleset;
 import io.github.nanamochi.osu_native.wrapper.objects.ScoreInfo;
@@ -33,7 +35,8 @@ public class OsuNativePerformanceCalculator implements IPerformanceCalculator {
 
         ModsCollection mods = ModsCollection.create();
 
-        // TODO: Handle mods properly
+        for(String mod : Mods.convertMods(s.getMods()))
+            mods.add(Mod.create(mod));
 
         DifficultyAttributes difficultyAttributes = diffCalculator.calculate(mods);
         PerformanceAttributes attributes = ppCalculator.calculate(ruleset, beatmap, mods, scoreInfo,

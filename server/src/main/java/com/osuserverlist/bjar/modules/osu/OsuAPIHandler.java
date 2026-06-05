@@ -12,7 +12,6 @@ import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import me.skiincraft.api.ousu.OusuAPI;
 import me.skiincraft.api.ousu.entity.beatmap.Beatmap;
 import me.skiincraft.api.ousu.entity.beatmap.BeatmapSet;
-import me.skiincraft.api.ousu.requests.Request;
 
 public class OsuAPIHandler {
 

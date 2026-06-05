@@ -3,7 +3,10 @@ package com.osuserverlist.bjar.packets.client.handlers.user;
 import java.io.IOException;
 import java.util.List;
 
+import org.slf4j.Logger;
+
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
@@ -12,18 +15,26 @@ import com.osuserverlist.bjar.server.Server;
 
 public class PresenceRequestPacket implements BanchoPacketHandler {
 
+    private final static Logger logger = LoggerFactory.getLogger(PresenceRequestPacket.class);
+
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         List<Integer> userIds = reader.readIntList();
 
-        for (int userId : userIds) {
+        logger.debug("Player {} requested presence info for user IDs {}", player.getUsername(), userIds);
+
+        for (Integer userId : userIds) {
+            
             Player requestedPlayer = Server.getInstance().playerManager.getById(userId);
 
-            // If player is found, send their presence and stats
             if (requestedPlayer != null) {
                 player.sendPacket(new UserPresencePacket(requestedPlayer.getId()));
+            } else {
+                logger.warn("Requested player not found for {}", player.toString());
             }
+
         }
+
         return true;
     }
 

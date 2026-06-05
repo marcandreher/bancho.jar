@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.modules.pp;
+package com.osuserverlist.bjar.modules.calculations;
 
 import com.osuserverlist.bjar.models.essentials.Score;
 

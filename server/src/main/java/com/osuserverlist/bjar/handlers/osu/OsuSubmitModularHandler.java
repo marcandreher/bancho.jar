@@ -16,19 +16,20 @@ import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
 import com.osuserverlist.bjar.models.osu.SubmitResponse;
+import com.osuserverlist.bjar.modules.calculations.IPerformanceCalculator;
+import com.osuserverlist.bjar.modules.calculations.OsuNativePerformanceCalculator;
 import com.osuserverlist.bjar.modules.crypt.ChecksumUtil;
 import com.osuserverlist.bjar.modules.crypt.Rijndael32CBC;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuMapDownloader;
-import com.osuserverlist.bjar.modules.pp.IPerformanceCalculator;
-import com.osuserverlist.bjar.modules.pp.OsuNativePerformanceCalculator;
 import com.osuserverlist.bjar.modules.redis.Redis;
 import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
+import com.osuserverlist.bjar.repos.ScoreRepository;
 import com.osuserverlist.bjar.server.Server;
 
 import io.javalin.http.Context;
@@ -92,77 +93,37 @@ public class OsuSubmitModularHandler implements Handler {
             s.setPp(pp);
             s.setChecksum(ChecksumUtil.generateChecksum(s.toString()));
 
-            ResultSet bestScoreResult = mysql.query(
-                    "SELECT id, score, pp, acc, max_combo FROM scores " +
-                    "WHERE userid = ? AND map_md5 = ? AND mode = ? AND status = 1 " +
-                    "ORDER BY score DESC LIMIT 1",
-                    s.getPlayerId(), beatmap.getMd5(), s.getMode()).executeQuery();
+            ScoreRepository scoreRepo = new ScoreRepository(mysql);
 
-            // Snapshot all previous-best values immediately — never re-read the cursor later.
-            boolean hasPreviousBest = bestScoreResult.next();
-            int    prevBestScore = hasPreviousBest ? bestScoreResult.getInt("score")     : 0;
-            double prevBestPp    = hasPreviousBest ? bestScoreResult.getDouble("pp")     : 0.0;
-            double prevBestAcc   = hasPreviousBest ? bestScoreResult.getDouble("acc")    : 0.0;
-            int    prevBestCombo = hasPreviousBest ? bestScoreResult.getInt("max_combo") : 0;
-            int    prevBestId    = hasPreviousBest ? bestScoreResult.getInt("id")        : -1;
+            Score bestScore = scoreRepo.getBestScoreForPlayerOnBeatmap(s.getPlayerId(), beatmap.getMd5(), s.getMode());
 
-            boolean isPersonalBest = !hasPreviousBest || s.getScore() > prevBestScore;
+            boolean hasPreviousBest = bestScore != null;
 
-            // Resolve the player's previous map rank BEFORE inserting the new score,
-            // so the leaderboard is not yet affected by it.
+            boolean isPersonalBest = !hasPreviousBest || s.getScore() > bestScore.getScore();
+
             int prevMapRank = 0;
             if (hasPreviousBest) {
-                ResultSet prevRankResult = mysql.query(
-                        "SELECT COUNT(*) + 1 AS osu_rank " +
-                        "FROM (SELECT MAX(score) AS best_score FROM scores " +
-                        "      WHERE map_md5 = ? AND mode = ? AND userid != ? AND status = 1 " +
-                        "      GROUP BY userid) AS best_scores " +
-                        "WHERE best_score > ?",
-                        beatmap.getMd5(), s.getMode(), s.getPlayerId(), prevBestScore).executeQuery();
-                if (prevRankResult.next()) {
-                    prevMapRank = prevRankResult.getInt("osu_rank");
-                }
+                prevMapRank = scoreRepo.getPreviousMapRank(beatmap.getMd5(), s.getMode(), s.getPlayerId(), bestScore.getScore());
             }
 
-            // Insert the new score. status=1 only when it is a personal best.
             int scoreStatus = isPersonalBest ? 1 : 0;
 
-            mysql.exec(
-                    "INSERT INTO `scores`(`map_md5`, `score`, `pp`, `acc`, `max_combo`, `mods`, " +
-                    "`n300`, `n100`, `n50`, `nmiss`, `ngeki`, `nkatu`, `grade`, `status`, `mode`, " +
-                    "`play_time`, `time_elapsed`, `client_flags`, `userid`, `perfect`, `online_checksum`) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    beatmap.getMd5(), s.getScore(), s.getPp(), s.getAccuracy(), s.getMax_combo(),
-                    s.getMods(), s.getN300(), s.getN100(), s.getN50(), s.getNmiss(), s.getNgeki(),
-                    s.getNkatu(), s.getGrade(), scoreStatus, s.getMode(),
-                    new java.sql.Timestamp(s.getPlaytime()), 0, s.getFlags(), s.getPlayerId(),
-                    s.isPerfect(), s.getChecksum());
-
-            ResultSet scoreIdResult = mysql.query("SELECT LAST_INSERT_ID() AS id").executeQuery();
-            if (!scoreIdResult.next()) {
+            scoreRepo.insertScore(s, beatmap, scoreStatus);
+            
+            Integer newScoreId = mysql.lastInsertId();
+            if (newScoreId == null) {
                 ctx.status(500).result("Failed to retrieve score ID.");
                 return;
             }
-            s.setId(scoreIdResult.getInt("id"));
+
+            s.setId(newScoreId);
 
             // Demote the old personal best
-            if (isPersonalBest && prevBestId != -1) {
-                mysql.exec("UPDATE scores SET status = 0 WHERE id = ?", prevBestId);
+            if (isPersonalBest && bestScore != null && bestScore.getId() != -1) {
+                scoreRepo.updateScoreStatus(bestScore.getId(), 0);
             }
 
-            // Resolve the new map rank AFTER inserting, excluding the player's own
-            // other scores so they don't compete with themselves.
-            int rank = 1;
-            ResultSet rankResult = mysql.query(
-                    "SELECT COUNT(*) + 1 AS osu_rank " +
-                    "FROM (SELECT MAX(score) AS best_score FROM scores " +
-                    "      WHERE map_md5 = ? AND mode = ? AND userid != ? AND status = 1 " +
-                    "      GROUP BY userid) AS best_scores " +
-                    "WHERE best_score > ?",
-                    beatmap.getMd5(), s.getMode(), s.getPlayerId(), s.getScore()).executeQuery();
-            if (rankResult.next()) {
-                rank = rankResult.getInt("osu_rank");
-            }
+            int rank = scoreRepo.getRankOnBeatmap(beatmap.getMd5(), s.getMode(), s.getPlayerId(), s.getScore());
 
             // Weighted PP: only meaningful when this is a new personal best.
             // Using status=1 is safe here because we just finished demoting the old PB.
@@ -226,16 +187,16 @@ public class OsuSubmitModularHandler implements Handler {
 
             if (isPersonalBest) {
                 chart1.add(addChart("rank",     prevMapRank,                        rank));
-                chart1.add(addChart("score",    hasPreviousBest ? prevBestScore : 0, s.getScore()));
-                chart1.add(addChart("maxCombo", hasPreviousBest ? prevBestCombo : 0, s.getMax_combo()));
-                chart1.add(addChart("accuracy", hasPreviousBest ? prevBestAcc * 100 : 0, s.getAccuracy() * 100));
-                chart1.add(addChart("pp",       hasPreviousBest ? (int) Math.ceil(prevBestPp) : 0, (int) Math.ceil(s.getPp())));
+                chart1.add(addChart("score",    hasPreviousBest ? bestScore.getScore() : 0, s.getScore()));
+                chart1.add(addChart("maxCombo", hasPreviousBest ? bestScore.getMax_combo() : 0, s.getMax_combo()));
+                chart1.add(addChart("accuracy", hasPreviousBest ? bestScore.getAccuracy() * 100 : 0, s.getAccuracy() * 100));
+                chart1.add(addChart("pp",       hasPreviousBest ? (int) Math.ceil(bestScore.getPp()) : 0, (int) Math.ceil(s.getPp())));
             } else {
                 chart1.add(addChart("rank",     prevMapRank,                        rank));
-                chart1.add(addChart("score",    prevBestScore,                      s.getScore()));
-                chart1.add(addChart("maxCombo", prevBestCombo,                      s.getMax_combo()));
-                chart1.add(addChart("accuracy", prevBestAcc * 100,                  s.getAccuracy() * 100));
-                chart1.add(addChart("pp",       (int) Math.ceil(prevBestPp),        (int) Math.ceil(s.getPp())));
+                chart1.add(addChart("score",    hasPreviousBest ? bestScore.getScore() : 0, s.getScore()));
+                chart1.add(addChart("maxCombo", hasPreviousBest ? bestScore.getMax_combo() : 0, s.getMax_combo()));
+                chart1.add(addChart("accuracy", hasPreviousBest ? bestScore.getAccuracy() * 100 : 0, s.getAccuracy() * 100));
+                chart1.add(addChart("pp",       hasPreviousBest ? (int) Math.ceil(bestScore.getPp()) : 0, (int) Math.ceil(s.getPp())));
             }
 
             chart1.add("onlineScoreId:" + s.getId());
