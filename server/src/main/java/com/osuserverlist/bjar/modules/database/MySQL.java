@@ -154,6 +154,9 @@ public final class MySQL implements AutoCloseable {
 				stmt.setDouble(pos, d);
 			else if (arg instanceof Float f)
 				stmt.setFloat(pos, f);
+			else if (arg instanceof Timestamp t) {
+				stmt.setTimestamp(pos, t);
+			}
 			else
 				throw new IllegalArgumentException(
 						"Unsupported parameter type: " + arg.getClass().getSimpleName());

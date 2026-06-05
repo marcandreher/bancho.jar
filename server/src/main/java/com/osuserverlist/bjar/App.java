@@ -12,6 +12,7 @@ import com.osuserverlist.bjar.modules.database.Database.ServerTimezone;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
+import com.osuserverlist.bjar.modules.redis.Redis;
 import com.osuserverlist.bjar.modules.web.BanchoWebLogger;
 import com.osuserverlist.bjar.modules.web.ServerWebApp;
 import com.osuserverlist.bjar.server.ChannelManager;
@@ -48,6 +49,8 @@ public class App {
                 dotenv.get("DB_PASS"),
                 dotenv.get("DB_NAME"),
                 ServerTimezone.valueOf(dotenv.get("DB_TIMEZONE")));
+
+        Redis.connect(dotenv);
 
         Javalin app = Javalin.create(config -> {
             config.requestLogger.http(new BanchoWebLogger());

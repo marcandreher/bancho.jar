@@ -20,6 +20,7 @@ import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.geo.GeoRegistry;
 import com.osuserverlist.bjar.modules.geo.GeoResponse;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import com.osuserverlist.bjar.modules.redis.Redis;
 import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.PacketSender;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
@@ -118,6 +119,13 @@ public class LoginHandler {
                 modeStats.setMaxCombo(statsRs.getInt("max_combo"));
                 modeStats.setPp(statsRs.getShort("pp"));
                 modeStats.setTotalHits(statsRs.getInt("total_hits"));
+
+                Long rank = Redis.getClient().zrevrank(
+                    "bjar:leaderboard:" + i,
+                    String.valueOf(player.getId())
+                );
+
+                modeStats.setGlobalRank(rank != null ? Math.toIntExact(rank) + 1 : 0);
                 player.getModeStats()[i] = modeStats;
             }
 

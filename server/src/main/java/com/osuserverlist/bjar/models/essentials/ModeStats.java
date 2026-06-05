@@ -39,12 +39,26 @@ public class ModeStats {
         this.totalHits = stats.totalHits;
     }
 
-    public void addScore(Score s, double pp) {
+    public void addUnrankedScore(Score s) {
         totalScore += s.getScore();
+        playCount++;
+        totalHits += s.getN300()
+        + s.getN100()
+        + s.getN50()
+        + s.getNmiss();
+    }
+
+    public void addRankedScore(Score s, double pp) {
+        totalScore += s.getScore();
+       
         rankedScore += s.getScore();
+        
         playCount++;
         maxCombo = Math.max(maxCombo, s.getMax_combo());
-        totalHits += s.getN300() + s.getN300() + s.getN50() + s.getNmiss();
+        totalHits += s.getN300()
+        + s.getN100()
+        + s.getN50()
+        + s.getNmiss();
         if (accuracy == 0) {
             accuracy = (float) s.getAccuracy();
         } else {

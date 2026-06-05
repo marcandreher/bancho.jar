@@ -14,8 +14,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
+    <maven.compiler.source>25</maven.compiler.source>
+    <maven.compiler.target>25</maven.compiler.target>
 
     <javalin.version>6.7.0</javalin.version>
     <lombok.version>1.18.46</lombok.version>
@@ -27,6 +27,7 @@
     <!-- Database Dependencies -->
     <mysql.connector.version>9.7.0</mysql.connector.version>
     <hikari.version>7.0.2</hikari.version>
+    <jedis.version>7.2.1</jedis.version>
 
     <ousu-api.version>2.1</ousu-api.version>
     <rosupp-jar.version>1.0</rosupp-jar.version>
@@ -109,9 +110,14 @@
       <version>${bcprov.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.github.marcandreher</groupId>
-      <artifactId>rosu-pp-jar</artifactId>
-      <version>${rosupp-jar.version}</version>
+      <groupId>io.github.7mochi</groupId>
+      <artifactId>osu-native-jar</artifactId>
+      <version>0.0.8</version>
+    </dependency>
+    <dependency>
+      <groupId>redis.clients</groupId>
+      <artifactId>jedis</artifactId>
+      <version>${jedis.version}</version>
     </dependency>
   </dependencies>
 

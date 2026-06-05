@@ -1,51 +1,44 @@
 package com.osuserverlist.bjar.modules.osu;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.time.Duration;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class OsuMapDownloader {
-    private static final OkHttpClient client = new OkHttpClient();
+public final class OsuMapDownloader {
 
-    public static void downloadMap(long mapId) {
-        // TODO: fix hardcoded
-        String url = "https://osu.direct/api/osu/" + mapId;
-        String savePath = "data/maps/" + mapId + ".osu";
+    private static final Path MAP_DIRECTORY = Path.of("data", "maps");
 
-        try {
-            if (Files.exists(Paths.get(savePath))) {
-                return;
+    private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
+            .connectTimeout(Duration.ofSeconds(10))
+            .readTimeout(Duration.ofSeconds(30))
+            .build();
+
+    public static byte[] downloadMap(long mapId) throws IOException {
+        Path mapFile = MAP_DIRECTORY.resolve(mapId + ".osu");
+
+        if (Files.exists(mapFile)) {
+            return Files.readAllBytes(mapFile);
+        }
+
+        Request request = new Request.Builder()
+                .url("https://osu.direct/api/osu/" + mapId)
+                .build();
+
+        try (Response response = CLIENT.newCall(request).execute()) {
+            if (!response.isSuccessful() || response.body() == null) {
+                return null;
             }
 
-            Request request = new Request.Builder()
-                    .url(url)
-                    .build();
+            byte[] data = response.body().bytes();
 
-            Response response = client.newCall(request).execute();
+            Files.write(mapFile, data);
 
-            if (!response.isSuccessful()) {
-                return;
-            }
-
-            try (InputStream in = response.body().byteStream();
-                    FileOutputStream out = new FileOutputStream(savePath)) {
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                while ((bytesRead = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, bytesRead);
-                }
-            } finally {
-                response.body().close();
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            return data;
         }
     }
 }

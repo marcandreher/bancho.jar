@@ -42,6 +42,8 @@ services:
       DB_PASS: ${DB_PASS}
       DB_NAME: ${DB_NAME}
       DB_TIMEZONE: ${DB_TIMEZONE}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       LEVEL: ${SERVER_LEVEL}
       DOMAIN: ${SERVER_DOMAIN}
       PORT: ${SERVER_PORT}

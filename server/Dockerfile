@@ -1,17 +1,30 @@
-FROM maven:3.9-eclipse-temurin-21-alpine
+# Build stage
+FROM maven:3.9-eclipse-temurin-25 AS build
+
 WORKDIR /app
 
 ENV MAVEN_OPTS="-Djava.net.preferIPv4Stack=true -Xmx512m"
 
-# Cache dependencies and plugins (only re-runs if pom.xml changes)
 COPY pom.xml .
 RUN mvn -B dependency:go-offline
 
-# Copy source and build JAR (only re-runs if source changes)
 COPY src ./src
 RUN mvn -B package -DskipTests -o
 
-# Runtime dirs
+# Runtime stage
+FROM eclipse-temurin:25-jre
+
+WORKDIR /app
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    libicu78 \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN mkdir -p /app/logs /app/.config /app/data
 
-ENTRYPOINT ["java", "-jar", "target/server.jar"]
+COPY --from=build /app/target/server.jar ./target/server.jar
+
+ENV JAVA_OPTS="--enable-native-access=ALL-UNNAMED"
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar target/server.jar"]
