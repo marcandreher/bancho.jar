@@ -3,6 +3,8 @@ package com.osuserverlist.bjar.packets.client.handlers.user;
 import java.io.IOException;
 
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.models.osu.GameMode;
+import com.osuserverlist.bjar.models.osu.Mods;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
@@ -20,6 +22,14 @@ public class StatusUpdatePacket implements BanchoPacketHandler {
         byte gameMode = reader.readByte();
         int beatmapId = reader.readInt();
 
+        GameMode realGameMode = GameMode.fromValue(gameMode, mods);
+        boolean newRelax =
+            (mods & Mods.Relax.getValue()) != 0 ||
+            (mods & Mods.Relax2.getValue()) != 0;
+
+        player.setRelaxEnabled(newRelax);
+        player.setRealGameMode(realGameMode.getValue());
+
         player.setAction(status);
         player.setActionText(statusText);
         player.setBeatmapMd5(beatmapMd5);
@@ -33,4 +43,5 @@ public class StatusUpdatePacket implements BanchoPacketHandler {
 
         return true;
     }
+
 }

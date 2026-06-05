@@ -13,6 +13,7 @@ import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.geo.Country;
+import com.osuserverlist.bjar.packets.server.handlers.user.UserQuitPacket;
 
 public class PlayerManager {
     private final Map<String, Player> onlinePlayers = new ConcurrentHashMap<>();
@@ -48,6 +49,10 @@ public class PlayerManager {
             if (channel.getPlayers().contains(player)) {
                 Server.getInstance().channelManager.leaveChannel(channel.getName(), player);
             }
+        }
+
+        for(Player p : onlinePlayers.values()) {
+            p.sendPacket(new UserQuitPacket(player.getId()));
         }
 
         onlinePlayers.remove(player.getOsuToken());

@@ -29,13 +29,13 @@ import io.javalin.Javalin;
 public class App {
 
     public static final String HEADER = """
- ▄▄▄▄▄▄▄ ▄▄▄▄▄▄ ▄▄    ▄ ▄▄▄▄▄▄▄ ▄▄   ▄▄ ▄▄▄▄▄▄▄          ▄▄▄ ▄▄▄▄▄▄ ▄▄▄▄▄▄   
-█  ▄    █      █  █  █ █       █  █ █  █       █        █   █      █   ▄  █  
-█ █▄█   █  ▄   █   █▄█ █       █  █▄█  █   ▄   █        █   █  ▄   █  █ █ █  
-█       █ █▄█  █       █     ▄▄█       █  █ █  █     ▄  █   █ █▄█  █   █▄▄█▄ 
-█  ▄   ██      █  ▄    █    █  █   ▄   █  █▄█  █▄▄▄ █ █▄█   █      █    ▄▄  █
-█ █▄█   █  ▄   █ █ █   █    █▄▄█  █ █  █       █   ██       █  ▄   █   █  █ █
-█▄▄▄▄▄▄▄█▄█ █▄▄█▄█  █▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█▄▄▄▄▄▄▄█▄▄▄██▄▄▄▄▄▄▄█▄█ █▄▄█▄▄▄█  █▄█""";
+             ▄▄▄▄▄▄▄ ▄▄▄▄▄▄ ▄▄    ▄ ▄▄▄▄▄▄▄ ▄▄   ▄▄ ▄▄▄▄▄▄▄          ▄▄▄ ▄▄▄▄▄▄ ▄▄▄▄▄▄
+            █  ▄    █      █  █  █ █       █  █ █  █       █        █   █      █   ▄  █
+            █ █▄█   █  ▄   █   █▄█ █       █  █▄█  █   ▄   █        █   █  ▄   █  █ █ █
+            █       █ █▄█  █       █     ▄▄█       █  █ █  █     ▄  █   █ █▄█  █   █▄▄█▄
+            █  ▄   ██      █  ▄    █    █  █   ▄   █  █▄█  █▄▄▄ █ █▄█   █      █    ▄▄  █
+            █ █▄█   █  ▄   █ █ █   █    █▄▄█  █ █  █       █   ██       █  ▄   █   █  █ █
+            █▄▄▄▄▄▄▄█▄█ █▄▄█▄█  █▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█▄▄▄▄▄▄▄█▄▄▄██▄▄▄▄▄▄▄█▄█ █▄▄█▄▄▄█  █▄█""";
 
     public static final Logger logger = LoggerFactory.getLogger(App.class);
 
@@ -52,20 +52,12 @@ public class App {
 
         Redis.connect(dotenv);
 
-        Javalin app = Javalin.create(config -> {
-            config.requestLogger.http(new BanchoWebLogger());
-        });
-
-        ServerWebApp.registerRoutes(app);
-
-        app.start(Integer.parseInt(dotenv.get("PORT")));
-
-        app.exception(Exception.class, (e, ctx) -> {
-            logger.error("Unhandled exception while processing {} {}",
-                    ctx.method(), ctx.path(), e);
-
-            ctx.status(500).result("Internal Server Error");
-        });
+        try {
+            Files.createDirectories(Path.of("data/maps"));
+            Files.createDirectories(Path.of("data/replays"));
+        } catch (IOException e) {
+            logger.error("Failed to load beatmap cache", e);
+        }
 
         Server server = Server.start();
 
@@ -80,12 +72,18 @@ public class App {
             logger.error("Failed to load channels and bot from SQL", e);
         }
 
-        try {
-            Files.createDirectories(Path.of("data/maps"));
-            Files.createDirectories(Path.of("data/replays"));
-        }catch(IOException e) {
-            logger.error("Failed to load beatmap cache", e);
-        }
-        
+        Javalin app = Javalin.create(config -> {
+            config.requestLogger.http(new BanchoWebLogger());
+            ServerWebApp.registerRoutes(config);
+
+            config.routes.exception(Exception.class, (e, ctx) -> {
+                logger.error("Unhandled exception while processing {} {}",
+                        ctx.method(), ctx.path(), e);
+
+                ctx.status(500).result("Internal Server Error");
+            });
+        });
+
+        app.start(Integer.parseInt(dotenv.get("PORT")));
     }
 }

@@ -15,6 +15,7 @@ import com.osuserverlist.bjar.models.database.DbMap;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
+import com.osuserverlist.bjar.models.osu.GameMode;
 import com.osuserverlist.bjar.models.osu.SubmitResponse;
 import com.osuserverlist.bjar.modules.calculations.IPerformanceCalculator;
 import com.osuserverlist.bjar.modules.calculations.OsuNativePerformanceCalculator;
@@ -78,6 +79,7 @@ public class OsuSubmitModularHandler implements Handler {
         }
 
         Score s = Score.fromSubmission(data, p);
+        GameMode realGameMode = GameMode.fromValue(s.getMode(), s.getMods());
 
         try (MySQL mysql = Database.getConnection()) {
             DbMap beatmap = server.osuAPIHandler.getBeatmapByHash(mysql, submitResponse.getUpdatedBeatmapHash());
@@ -95,7 +97,7 @@ public class OsuSubmitModularHandler implements Handler {
 
             ScoreRepository scoreRepo = new ScoreRepository(mysql);
 
-            Score bestScore = scoreRepo.getBestScoreForPlayerOnBeatmap(s.getPlayerId(), beatmap.getMd5(), s.getMode());
+            Score bestScore = scoreRepo.getBestScoreForPlayerOnBeatmap(s.getPlayerId(), beatmap.getMd5(), realGameMode.getValue());
 
             boolean hasPreviousBest = bestScore != null;
 
@@ -103,12 +105,12 @@ public class OsuSubmitModularHandler implements Handler {
 
             int prevMapRank = 0;
             if (hasPreviousBest) {
-                prevMapRank = scoreRepo.getPreviousMapRank(beatmap.getMd5(), s.getMode(), s.getPlayerId(), bestScore.getScore());
+                prevMapRank = scoreRepo.getPreviousMapRank(beatmap.getMd5(), realGameMode.getValue(), s.getPlayerId(), bestScore.getScore());
             }
 
             int scoreStatus = isPersonalBest ? 1 : 0;
 
-            scoreRepo.insertScore(s, beatmap, scoreStatus);
+            scoreRepo.insertScore(s, beatmap, scoreStatus, realGameMode.getValue());
             
             Integer newScoreId = mysql.lastInsertId();
             if (newScoreId == null) {
@@ -123,20 +125,15 @@ public class OsuSubmitModularHandler implements Handler {
                 scoreRepo.updateScoreStatus(bestScore.getId(), 0);
             }
 
-            int rank = scoreRepo.getRankOnBeatmap(beatmap.getMd5(), s.getMode(), s.getPlayerId(), s.getScore());
+            int rank = scoreRepo.getRankOnBeatmap(beatmap.getMd5(), realGameMode.getValue(), s.getPlayerId(), s.getScore());
 
             // Weighted PP: only meaningful when this is a new personal best.
             // Using status=1 is safe here because we just finished demoting the old PB.
             double totalPp = 0.0;
             if (isPersonalBest) {
                 ResultSet bestUserScoresResult = mysql.query(
-                        "SELECT SUM(pp * POW(0.95, rn - 1)) AS weighted_pp " +
-                        "FROM (SELECT s.pp, ROW_NUMBER() OVER (ORDER BY s.pp DESC) AS rn " +
-                        "      FROM scores s " +
-                        "      JOIN maps m ON s.map_md5 = m.md5 " +
-                        "      WHERE s.userid = ? AND s.mode = ? " +
-                        "        AND m.status IN (1, 8) AND s.status = 1) ranked",
-                        s.getPlayerId(), s.getMode()).executeQuery();
+                        "SELECT SUM(pp * POW(0.95, rn - 1)) AS weighted_pp FROM ( SELECT pp, ROW_NUMBER() OVER (ORDER BY pp DESC) AS rn FROM ( SELECT MAX(s.pp) AS pp FROM scores s JOIN maps m ON s.map_md5 = m.md5 WHERE s.userid = ? AND s.mode = ? AND m.status = 1 AND s.status = 1 GROUP BY s.map_md5 ) best_scores ) ranked;",
+                        s.getPlayerId(), realGameMode.getValue()).executeQuery();
                 if (bestUserScoresResult.next()) {
                     totalPp = bestUserScoresResult.getDouble("weighted_pp");
                 }
@@ -146,13 +143,13 @@ public class OsuSubmitModularHandler implements Handler {
             byte[] fileBytes = fileUpload.content().readAllBytes();
             Files.write(Paths.get("data/replays").resolve(s.getId() + ".osr"), fileBytes);
 
-            ModeStats playerStats = p.getModeStats()[s.getMode()];
+            ModeStats playerStats = p.getModeStats()[realGameMode.getValue()];
             ModeStats oldStats = new ModeStats(playerStats); // deep-copy before mutation
 
             if (isPersonalBest) {
                 playerStats.addRankedScore(s, totalPp);
-                Redis.getClient().zadd("bjar:leaderboard:" + s.getMode(), totalPp, String.valueOf(p.getId()));
-                Long redisRank = Redis.getClient().zrevrank("bjar:leaderboard:" + s.getMode(), String.valueOf(p.getId()));
+                Redis.getClient().zadd("bjar:leaderboard:" + realGameMode.getValue(), totalPp, String.valueOf(p.getId()));
+                Long redisRank = Redis.getClient().zrevrank("bjar:leaderboard:" + realGameMode.getValue(), String.valueOf(p.getId()));
                 playerStats.setGlobalRank((redisRank != null ? Math.toIntExact(redisRank) : -1) + 1);
             } else {
                 playerStats.addUnrankedScore(s);
@@ -164,7 +161,7 @@ public class OsuSubmitModularHandler implements Handler {
                     playerStats.getPlayCount(), playerStats.getTotalScore(), playerStats.getRankedScore(),
                     playerStats.getAccuracy(), playerStats.getMaxCombo(),
                     (int) Math.ceil(playerStats.getPp()), playerStats.getTotalHits(),
-                    p.getId(), s.getMode());
+                    p.getId(), realGameMode.getValue());
 
             p.sendPacket(new UserStatsPacket(p));
 

@@ -8,19 +8,20 @@ import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 
-public class UserPresenceSinglePacket implements ServerPacketHandler {
-    final ServerPackets type = ServerPackets.USER_PRESENCE_SINGLE;
+public class UserQuitPacket implements ServerPacketHandler {
 
-    private final int userId;
+    private static final ServerPackets type = ServerPackets.USER_LOGOUT;
 
-    public UserPresenceSinglePacket(int userId) {
-        this.userId = userId;
+    private final int id;
+
+    public UserQuitPacket(int id) {
+        this.id = id;
     }
 
     @Override
     public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
         writer.startPacket(type.getValue());
-        writer.writeInt(userId);
+        writer.writeInt(id);
         writer.endPacket();
         return true;
     }

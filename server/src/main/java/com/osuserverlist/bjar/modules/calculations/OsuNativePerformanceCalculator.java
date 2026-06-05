@@ -38,6 +38,8 @@ public class OsuNativePerformanceCalculator implements IPerformanceCalculator {
         for(String mod : Mods.convertMods(s.getMods()))
             mods.add(Mod.create(mod));
 
+        mods.add(Mod.create("CL"));
+
         DifficultyAttributes difficultyAttributes = diffCalculator.calculate(mods);
         PerformanceAttributes attributes = ppCalculator.calculate(ruleset, beatmap, mods, scoreInfo,
                 difficultyAttributes);

@@ -116,4 +116,20 @@ public enum Mods {
 
         return result.toArray(String[]::new);
     }
+
+    public static Mods[] fromBitmask(int mods) {
+        ArrayList<Mods> result = new ArrayList<>(8);
+
+        for (Mods mod : Mods.values()) {
+            if ((mods & mod.getValue()) != 0) {
+                result.add(mod);
+            }
+        }
+
+        return result.toArray(Mods[]::new);
+    }
+
+    public static boolean hasMod(int mods, Mods mod) {
+        return (mods & mod.getValue()) != 0;
+    }
 }

@@ -10,13 +10,16 @@ import org.slf4j.Logger;
 import com.osuserverlist.bjar.models.database.DbMap;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
+import com.osuserverlist.bjar.models.osu.GameMode;
 import com.osuserverlist.bjar.models.osu.MapWebRankedStatus;
+import com.osuserverlist.bjar.models.osu.Mods;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
+import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
 import com.osuserverlist.bjar.server.Server;
 
 import io.javalin.http.Context;
@@ -39,8 +42,6 @@ public class Osz2GetScoresHandler implements Handler {
             return;
         }
 
-        int mode = Integer.parseInt(modeStr);
-
         String username = ctx.queryParam("us");
         String passwordHash = ctx.queryParam("ha");
 
@@ -51,7 +52,24 @@ public class Osz2GetScoresHandler implements Handler {
             ctx.status(401).result("Invalid credentials.");
             return;
         }
+        int modeVn = Integer.parseInt(ctx.queryParam("m"));
+        int modsInt = Integer.parseInt(ctx.queryParam("mods"));
 
+        GameMode gameMode = GameMode.fromValue(modeVn, modsInt);
+
+        boolean oldRelax = player.isRelaxEnabled();
+        boolean newRelax =
+            (modsInt & Mods.Relax.getValue()) != 0 ||
+            (modsInt & Mods.Relax2.getValue()) != 0;
+
+        if (oldRelax != newRelax) {
+            player.sendPacket(new UserStatsPacket(player));
+        }
+
+        player.setRelaxEnabled(newRelax);
+        player.setRealGameMode(gameMode.getValue());
+
+        
         DbMap beatmap;
         try (MySQL mysql = Database.getConnection()) {
             beatmap = server.osuAPIHandler.getBeatmapByHash(mysql, ctx.queryParam("c"));
@@ -68,7 +86,7 @@ public class Osz2GetScoresHandler implements Handler {
                             "WHERE s.map_md5 = ? AND s.mode = ? AND s.userid = ? AND s.status = 1 " +
                             "ORDER BY s.score DESC LIMIT 1",
                     beatmap.getMd5(),
-                    mode,
+                    gameMode.getValue(),
                     player.getId()).executeQuery();
 
             Score ownScore = null;
@@ -90,7 +108,7 @@ public class Osz2GetScoresHandler implements Handler {
                             "ORDER BY score DESC, name " +
                             "LIMIT 100",
                     beatmap.getMd5(),
-                    mode).executeQuery();
+                    gameMode.getValue()).executeQuery();
 
             while (leaderboardResult.next()) {
                 Score score = Score.fromResultSet(leaderboardResult, beatmap);

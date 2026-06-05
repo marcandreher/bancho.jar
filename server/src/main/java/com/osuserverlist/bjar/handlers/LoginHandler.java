@@ -155,7 +155,7 @@ public class LoginHandler {
                     player.sendPacket(new UserPresencePacket(p.getId()));
                     continue;
                 }
-                p.sendPacket(new UserPresenceSinglePacket(p.getId()));
+                p.sendPacket(new UserPresenceSinglePacket(player.getId()));
             }
 
             WelcomeMessage welcomeConfig = server.config.getWelcomeMessage();

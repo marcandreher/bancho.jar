@@ -6,7 +6,8 @@ WORKDIR /app
 ENV MAVEN_OPTS="-Djava.net.preferIPv4Stack=true -Xmx512m"
 
 COPY pom.xml .
-RUN mvn -B dependency:go-offline
+RUN mvn -B dependency:resolve
+RUN mvn -B dependency:resolve-plugins
 
 COPY src ./src
 RUN mvn -B package -DskipTests -o

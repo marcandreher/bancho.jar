@@ -23,6 +23,7 @@ public class Player {
     private int id;
     private boolean isBot = false;
     private String apiIdent = "";
+    private boolean relaxEnabled = false;
 
     private ModeStats[] modeStats = new ModeStats[9];
 
@@ -34,6 +35,7 @@ public class Player {
     private String beatmapMd5 = ""; // No beatmap loaded
     private int mods = 0; // No mods
     private byte gameMode = 0; // osu! standard
+    private int realGameMode = 0;
     private int beatmapId = 0; // No beatmap
 
     private int timezone = 3; // UTC+3

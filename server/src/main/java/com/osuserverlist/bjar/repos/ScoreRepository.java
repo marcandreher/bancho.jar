@@ -42,10 +42,10 @@ public class ScoreRepository {
         return 1;
     }
 
-    public void insertScore(Score s, DbMap beatmap, int scoreStatus) throws SQLException {
+    public void insertScore(Score s, DbMap beatmap, int scoreStatus, int mode) throws SQLException {
         mysql.exec(INSERT_SCORE_QUERY, beatmap.getMd5(), s.getScore(), s.getPp(), s.getAccuracy(), s.getMax_combo(),
             s.getMods(), s.getN300(), s.getN100(), s.getN50(), s.getNmiss(), s.getNgeki(),
-            s.getNkatu(), s.getGrade(), scoreStatus, s.getMode(),
+            s.getNkatu(), s.getGrade(), scoreStatus, mode,
             new java.sql.Timestamp(s.getPlaytime()), 0, s.getFlags(), s.getPlayerId(),
             s.isPerfect(), s.getChecksum());
     }
@@ -54,7 +54,7 @@ public class ScoreRepository {
         mysql.exec(UPDATE_SCORE_STATUS_QUERY, newStatus, scoreId);
     }
 
-    private final static String GET_BEST_SCORE_FOR_PLAYER_ON_BEATMAP_QUERY = "SELECT id, score, pp, acc, max_combo FROM scores "+
+    private final static String GET_BEST_SCORE_FOR_PLAYER_ON_BEATMAP_QUERY = "SELECT * FROM scores "+
             "WHERE userid = ? AND map_md5 = ? AND mode = ? AND status = 1 " +
             "ORDER BY score DESC LIMIT 1";
 
@@ -75,5 +75,5 @@ public class ScoreRepository {
             "`play_time`, `time_elapsed`, `client_flags`, `userid`, `perfect`, `online_checksum`) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    private final static String UPDATE_SCORE_STATUS_QUERY = "UPDATE scores SET status = ? WHERE id = ?";
+    private final static String UPDATE_SCORE_STATUS_QUERY = "UPDATE scores SET status = ? WHERE id = ?;";
 }

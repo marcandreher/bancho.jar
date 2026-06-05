@@ -38,7 +38,7 @@ public class UserStatsPacket implements ServerPacketHandler {
             return false;
         }
 
-        ModeStats playerStats = player.getModeStats()[player.getGameMode()];
+        ModeStats playerStats = player.getModeStats()[player.getRealGameMode()];
         String beatmapMd5 = player.getBeatmapMd5() != null ? player.getBeatmapMd5() : "";
         float accuracy = playerStats.getAccuracy();
         if (accuracy > 1.0f) {

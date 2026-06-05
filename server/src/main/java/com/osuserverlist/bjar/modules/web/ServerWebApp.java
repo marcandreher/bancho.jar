@@ -11,7 +11,7 @@ import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
 
 import io.github.classgraph.ClassGraph;
-import io.javalin.Javalin;
+import io.javalin.config.JavalinConfig;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 
@@ -19,11 +19,11 @@ public class ServerWebApp {
 
     private static final String HANDLER_PACKAGE = "com.osuserverlist.bjar.handlers";
 
-    public static void registerRoutes(Javalin app) {
+    public static void registerRoutes(JavalinConfig app) {
         registerAnnotatedHandlers(app);
     }
 
-    private static void registerAnnotatedHandlers(Javalin app) {
+    private static void registerAnnotatedHandlers(JavalinConfig app) {
         Map<RouteKey, List<HostHandler>> routesByPath = new HashMap<>();
 
         try (var scan = new ClassGraph()
@@ -66,16 +66,16 @@ public class ServerWebApp {
         }
     }
 
-    private static void registerRoute(io.javalin.Javalin app, String method, String path, List<HostHandler> handlers) {
+    private static void registerRoute(JavalinConfig app, String method, String path, List<HostHandler> handlers) {
         switch (method) {
             case "POST":
-                app.post(path, ctx -> dispatchByHost(ctx, handlers));
+                app.routes.post(path, ctx -> dispatchByHost(ctx, handlers));
                 break;
             case "DELETE":
-                app.delete(path, ctx -> dispatchByHost(ctx, handlers));
+                app.routes.delete(path, ctx -> dispatchByHost(ctx, handlers));
                 break;
             default:
-                app.get(path, ctx -> dispatchByHost(ctx, handlers));
+                app.routes.get(path, ctx -> dispatchByHost(ctx, handlers));
                 break;
         }
     }
