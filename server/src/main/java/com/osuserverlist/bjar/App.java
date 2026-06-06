@@ -3,20 +3,15 @@ package com.osuserverlist.bjar;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 
 import org.slf4j.Logger;
 
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.Database.ServerTimezone;
-import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
-import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
 import com.osuserverlist.bjar.modules.redis.Redis;
 import com.osuserverlist.bjar.modules.web.BanchoWebLogger;
 import com.osuserverlist.bjar.modules.web.ServerWebApp;
-import com.osuserverlist.bjar.server.ChannelManager;
-import com.osuserverlist.bjar.server.PlayerManager;
 import com.osuserverlist.bjar.server.Server;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -59,18 +54,8 @@ public class App {
             logger.error("Failed to load beatmap cache", e);
         }
 
-        Server server = Server.start();
-
-        server.osuAPIHandler = new OsuAPIHandler(dotenv.get("OSU_API_KEY"));
-
-        try (MySQL mysql = Database.getConnection()) {
-
-            PlayerManager.connectBot(mysql, 1);
-            ChannelManager.populate(mysql);
-
-        } catch (SQLException e) {
-            logger.error("Failed to load channels and bot from SQL", e);
-        }
+        // Main bjar entrypoint
+        Server.start(dotenv);
 
         Javalin app = Javalin.create(config -> {
             config.requestLogger.http(new BanchoWebLogger());

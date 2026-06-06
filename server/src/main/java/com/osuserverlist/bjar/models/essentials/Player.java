@@ -13,6 +13,7 @@ public class Player {
         this.id = id;
         this.isBot = isBot;
         this.osuToken = osuToken;
+        this.lastPing = System.currentTimeMillis();
         if (!isBot)
             for (int i = 0; i < modeStats.length; i++) {
                 modeStats[i] = new ModeStats();

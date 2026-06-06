@@ -18,7 +18,7 @@ public class ChannelManager {
     private final Map<String, BanchoChannel> channels = new ConcurrentHashMap<>();
     private final static Logger logger = LoggerFactory.getLogger(ChannelManager.class);
 
-    public static void populate(MySQL mysql) throws SQLException {
+    public void populate(MySQL mysql) throws SQLException {
         ResultSet channelRs = mysql.query("SELECT * FROM `channels`").executeQuery();
         
         int channelCount = 0;
@@ -28,7 +28,7 @@ public class ChannelManager {
 
             BanchoChannel channel = new BanchoChannel(String.valueOf(defaultChannel.getId()), defaultChannel.getName(),
                     defaultChannel.getTopic(), defaultChannel.isAutoJoin());
-            Server.getInstance().channelManager.add(channel);
+            this.add(channel);
             channelCount++;
         }
         logger.info("Loaded <{}> channels from SQL", channelCount);

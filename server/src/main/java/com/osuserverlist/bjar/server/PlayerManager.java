@@ -44,6 +44,11 @@ public class PlayerManager {
         return onlinePlayers.values();
     }
 
+    public void forceRemove(Player player) {
+        onlinePlayers.remove(player.getOsuToken());
+        apiIdentMap.remove(player.getApiIdent());
+    }
+
     public void disconnect(Player player) {
         for (BanchoChannel channel : Server.getInstance().channelManager.getAll()) {
             if (channel.getPlayers().contains(player)) {
@@ -59,11 +64,11 @@ public class PlayerManager {
         apiIdentMap.remove(player.getApiIdent());
     }
 
-    public static void connectBot(MySQL mysql, int id) throws SQLException {
+    public Player getBotPlayer(MySQL mysql, int id) throws SQLException {
         ResultSet botRs = mysql.query("SELECT * FROM `users` WHERE `id` = ?", id).executeQuery();
 
         if (!botRs.next()) {
-            return;
+            return null;
         }
 
         Player botPlayer = new Player(1, true, UUID.randomUUID().toString());
@@ -76,7 +81,7 @@ public class PlayerManager {
             ModeStats modeStats = new ModeStats();
             botPlayer.getModeStats()[i] = modeStats;
         }
-        Server.getInstance().playerManager.add(botPlayer);
-        Server.getInstance().botPlayer = botPlayer;
+
+        return botPlayer;
     }
 }

@@ -83,6 +83,11 @@ public class LoginHandler {
                     osuStream);
 
             GeoResponse geoLocResponse = GeoRegistry.getProvider().getCountryCode(loginResponse.getIp());
+            
+            Player existingPlayer = server.playerManager.getById(dbUser.getId());
+            if(existingPlayer != null) {
+                server.playerManager.forceRemove(existingPlayer);
+            }
 
             Player player = new Player(dbUser.getId(), false, loginResponse.getUuid());
             player.setTimezone(Integer.parseInt(loginResponse.getUtcOffset()));
