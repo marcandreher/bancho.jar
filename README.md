@@ -1,5 +1,8 @@
 ## Roadmap
 
+> [!WARNING]  
+> At the moment the server is not recommended to use in production
+
 - [x] Authentication (Partially)
 - [x] Leaderboards (Partially) (Only global)
 - [x] Score Submission
@@ -9,15 +12,15 @@
 - [x] Player Handling
     - [x] Presence, Auto Disconnect
     - [x] Private Messages
-    - [] Friends
-    - [] Silence Info
-    - [] Permissions
+    - [ ] Friends
+    - [ ] Silence Info
+    - [ ] Permissions
 - [x] Bots
     - [x] Bot online Handling
-    - [] Commands
-    - [] Announce on #1
-- [] Multiplayer
-- [] Spectating
-- [] Web Redirects
-- [] osu!Direct
-- [] Tourney Client
+    - [ ] Commands
+    - [ ] Announce on #1
+- [ ] Multiplayer
+- [ ] Spectating
+- [ ] Web Redirects
+- [ ] osu!Direct
+- [ ] Tourney Client
