@@ -4,9 +4,13 @@ import java.util.Stack;
 
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(of = "id")
 public class Player {
     
     public Player(int id, boolean isBot, String osuToken) {
@@ -54,6 +58,7 @@ public class Player {
     private boolean friendOnlyDms = false;
 
     public void sendPacket(ServerPacketHandler handler) {
+        if(isBot) return;
         packetStack.push(handler);
     }
 

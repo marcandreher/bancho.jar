@@ -140,10 +140,9 @@ public class LoginHandler {
             for (BanchoChannel channel : server.channelManager.getAll()) {
                 if (channel.isAutoJoin()) {
                     player.sendPacket(new ChannelAutojoinPacket(channel.getName()));
-                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(),
-                            (short) (0 + 1)));
+                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(), (short)(channel.getPlayerCount() + 1)));
                     player.sendPacket(new ChannelJoinSuccessPacket(channel.getName()));
-                    server.channelManager.joinChannel(channel.getName(), player);
+                    server.channelManager.forceJoinChannel(channel.getName(), player);
                 }
             }
 

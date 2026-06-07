@@ -27,7 +27,7 @@ public class ChannelManager {
             DbChannel defaultChannel = new DbChannel(channelRs);
 
             BanchoChannel channel = new BanchoChannel(String.valueOf(defaultChannel.getId()), defaultChannel.getName(),
-                    defaultChannel.getTopic(), defaultChannel.isAutoJoin());
+                    defaultChannel.getTopic(), defaultChannel.isAutoJoin(), false);
             this.add(channel);
             channelCount++;
         }
@@ -48,7 +48,14 @@ public class ChannelManager {
             channel.getPlayers().add(player);
         }
 
-        // TODO: notify players in channel with new channel info packet
+        channel.setDirty(true);
+    }
+
+    public void forceJoinChannel(String channelName, Player player) {
+        BanchoChannel channel = channels.get(channelName);
+        if (channel != null) {
+            channel.getPlayers().add(player);
+        }
     }
 
     public void leaveChannel(String channelName, Player player) {
@@ -57,7 +64,7 @@ public class ChannelManager {
             channel.getPlayers().remove(player);
         }
 
-        // TODO: notify players in channel with new channel info packet
+        channel.setDirty(true);
     }
 
     public Collection<BanchoChannel> getAll() {

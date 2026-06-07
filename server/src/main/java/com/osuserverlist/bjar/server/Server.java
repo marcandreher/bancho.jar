@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.handlers.scheudler.AutoDisconnectTask;
+import com.osuserverlist.bjar.handlers.scheudler.SendChannelInfoTask;
 import com.osuserverlist.bjar.models.config.ServerConfiguration;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.database.Database;
@@ -39,6 +40,7 @@ public class Server {
         instance.osuAPIHandler = new OsuAPIHandler(config.get("OSU_API_KEY"));
 
         instance.scheduler.scheduleAtFixedRate(new AutoDisconnectTask(), 0, 60, TimeUnit.SECONDS);
+        instance.scheduler.scheduleAtFixedRate(new SendChannelInfoTask(), 0, 8, TimeUnit.SECONDS);
 
         try (MySQL mysql = Database.getConnection()) {
 
