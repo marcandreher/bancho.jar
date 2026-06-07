@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.handlers.scheudler;
+package com.osuserverlist.bjar.server.scheudler;
 
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
 import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoPacket;

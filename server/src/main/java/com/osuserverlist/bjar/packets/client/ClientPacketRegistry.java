@@ -8,6 +8,8 @@ import com.osuserverlist.bjar.packets.client.handlers.chat.ChannelJoinPacket;
 import com.osuserverlist.bjar.packets.client.handlers.chat.ChannelLeavePacket;
 import com.osuserverlist.bjar.packets.client.handlers.chat.SendPrivateMessagePacket;
 import com.osuserverlist.bjar.packets.client.handlers.chat.SendPublicMessagePacket;
+import com.osuserverlist.bjar.packets.client.handlers.friend.AddFriendPacket;
+import com.osuserverlist.bjar.packets.client.handlers.friend.RemoveFriendPacket;
 import com.osuserverlist.bjar.packets.client.handlers.user.LogoutPacket;
 import com.osuserverlist.bjar.packets.client.handlers.user.PresenceRequestPacket;
 import com.osuserverlist.bjar.packets.client.handlers.user.StatsRequestPacket;
@@ -28,5 +30,8 @@ public class ClientPacketRegistry {
         packetHandlers.put(ClientPackets.CHANNEL_JOIN, new ChannelJoinPacket());
         packetHandlers.put(ClientPackets.CHANNEL_PART, new ChannelLeavePacket());
         packetHandlers.put(ClientPackets.LOGOUT, new LogoutPacket());
+
+        packetHandlers.put(ClientPackets.FRIEND_ADD, new AddFriendPacket());
+        packetHandlers.put(ClientPackets.FRIEND_REMOVE, new RemoveFriendPacket());
     }
 }

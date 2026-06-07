@@ -33,11 +33,13 @@ import com.osuserverlist.bjar.packets.server.handlers.connect.LoginReplyPacket;
 import com.osuserverlist.bjar.packets.server.handlers.connect.MenuIconPacket;
 import com.osuserverlist.bjar.packets.server.handlers.connect.PermissionsPacket;
 import com.osuserverlist.bjar.packets.server.handlers.connect.ProtocolVersionPacket;
+import com.osuserverlist.bjar.packets.server.handlers.user.UserFriendListPacket;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceBundlePacket;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserPresencePacket;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceSinglePacket;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
 import com.osuserverlist.bjar.packets.server.handlers.util.NotificationPacket;
+import com.osuserverlist.bjar.repos.UserRepository;
 import com.osuserverlist.bjar.server.Server;
 
 import io.javalin.http.Context;
@@ -57,6 +59,8 @@ public class LoginHandler {
         Server server = Server.getInstance();
 
         try (MySQL mysql = Database.getConnection()) {
+            UserRepository userRepository = new UserRepository(mysql);
+
             ResultSet userRs = mysql.query("SELECT * FROM `users` WHERE `name` = ?", loginResponse.getUsername())
                     .executeQuery();
             if (!userRs.next()) {
@@ -136,6 +140,8 @@ public class LoginHandler {
 
             player.sendPacket(new UserPresencePacket(player.getId()));
             player.sendPacket(new UserStatsPacket(player));
+
+            player.sendPacket(new UserFriendListPacket(userRepository.getFriendIds(player.getId())));
 
             for (BanchoChannel channel : server.channelManager.getAll()) {
                 if (channel.isAutoJoin()) {

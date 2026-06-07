@@ -8,14 +8,14 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 
 import com.osuserverlist.bjar.App;
-import com.osuserverlist.bjar.handlers.scheudler.AutoDisconnectTask;
-import com.osuserverlist.bjar.handlers.scheudler.SendChannelInfoTask;
 import com.osuserverlist.bjar.models.config.ServerConfiguration;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
+import com.osuserverlist.bjar.server.scheudler.AutoDisconnectTask;
+import com.osuserverlist.bjar.server.scheudler.SendChannelInfoTask;
 
 import io.github.cdimascio.dotenv.Dotenv;
 

@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.handlers.scheudler;
+package com.osuserverlist.bjar.server.scheudler;
 
 import org.slf4j.Logger;
 

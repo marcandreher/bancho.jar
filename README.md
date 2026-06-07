@@ -15,7 +15,7 @@
 - [x] Player Handling
     - [x] Presence, Auto Disconnect
     - [x] User Stats (Also RX & AP)
-    - [ ] Friends
+    - [x] Friends
     - [ ] Silence Info
     - [ ] Permissions
 - [x] Bots
@@ -27,3 +27,13 @@
 - [ ] Web Redirects
 - [ ] osu!Direct
 - [ ] Tourney Client
+
+### Backend
+
+- [ ] API
+- [ ] Plugin Framework
+- [ ] Asset downloading
+- [x] Configuration
+    - [x] Welcome message and metadata
+    - [x] Seasonal & Main Menu Icon
+    - [x] .env for Secrets
