@@ -9,9 +9,12 @@
     - [x] All Modes Supported
     - [x] RX & AP Support
     - [x] PP Calculation (Only Osu-Native supported rn)
+- [x] Chat
+    - [x] Disconnect and Join propagation
+    - [x] Sending messages (global/private)
 - [x] Player Handling
     - [x] Presence, Auto Disconnect
-    - [x] Private Messages
+    - [x] User Stats (Also RX & AP)
     - [ ] Friends
     - [ ] Silence Info
     - [ ] Permissions
