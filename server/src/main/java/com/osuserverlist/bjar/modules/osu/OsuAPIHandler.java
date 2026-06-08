@@ -5,7 +5,7 @@ import java.sql.SQLException;
 
 import org.slf4j.Logger;
 
-import com.osuserverlist.bjar.models.database.DbMap;
+import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 
@@ -22,28 +22,28 @@ public class OsuAPIHandler {
         this.osuAPI = new OusuAPI(apiKey);
     }
 
-    public DbMap getBeatmapBySetId(MySQL mysql, long beatmapSetId) throws SQLException {
+    public BeatmapEntity getBeatmapBySetId(MySQL mysql, long beatmapSetId) throws SQLException {
         ResultSet mapResult = mysql.query("SELECT * FROM `maps` WHERE `set_id` = ?", beatmapSetId).executeQuery();
 
         if (!mapResult.next()) {
             Beatmap osuBeatmap = osuAPI.getBeatmap(beatmapSetId).get();
-            DbMap map = new DbMap(osuBeatmap);
+            BeatmapEntity map = BeatmapEntity.fromBeatmap(osuBeatmap);
 
             insertInDb(mysql, map);
             return map;
         }
 
-        DbMap map = new DbMap(mapResult);
+        BeatmapEntity map = BeatmapEntity.fromResultSet(mapResult);
 
         return map;
     }
 
-    public DbMap getBeatmapByHash(MySQL mysql, String beatmapHash) throws SQLException {
+    public BeatmapEntity getBeatmapByHash(MySQL mysql, String beatmapHash) throws SQLException {
         ResultSet mapResult = mysql.query("SELECT * FROM `maps` WHERE `md5` = ?", beatmapHash).executeQuery();
 
         if (!mapResult.next()) {
             Beatmap osuBeatmap = osuAPI.getBeatmapByChecksum(beatmapHash).get();
-            DbMap map = new DbMap(osuBeatmap);
+            BeatmapEntity map = BeatmapEntity.fromBeatmap(osuBeatmap);
 
             ResultSet mapSetQuery = mysql.query("SELECT * FROM `mapsets` WHERE `id` = ?", map.getSetId()).executeQuery();
 
@@ -52,7 +52,7 @@ public class OsuAPIHandler {
                 int beatmapCount = 0;
                 BeatmapSet beatmapSetRequest = osuAPI.getBeatmapSet(map.getSetId()).get();
                 for(Beatmap beatmap : beatmapSetRequest.getAsList()) {
-                    DbMap beatmapSetMap = new DbMap(beatmap);
+                    BeatmapEntity beatmapSetMap = BeatmapEntity.fromBeatmap(beatmap);
                     insertInDb(mysql, beatmapSetMap);
                     beatmapCount++;
                 }
@@ -65,12 +65,12 @@ public class OsuAPIHandler {
             return map;
         }
 
-        DbMap map = new DbMap(mapResult);
+        BeatmapEntity map = BeatmapEntity.fromResultSet(mapResult);
 
         return map;
     }
 
-    private void insertInDb(MySQL mysql, DbMap map) throws SQLException {
+    private void insertInDb(MySQL mysql, BeatmapEntity map) throws SQLException {
         mysql.exec(
                 "INSERT INTO `maps` (`id`, `set_id`, `status`, `md5`, `artist`, `title`, `version`, `creator`, `filename`, `last_update`, `total_length`, `max_combo`, `frozen`, `plays`, `passes`, `mode`, `bpm`, `cs`, `ar`, `od`, `hp`, `diff`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 map.getId(), map.getSetId(), map.getStatus(), map.getMd5(), map.getArtist(), map.getTitle(),

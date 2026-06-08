@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
 import com.osuserverlist.bjar.models.config.ServerConfiguration.WelcomeMessage;
-import com.osuserverlist.bjar.models.database.DbUser;
+import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
@@ -68,7 +68,7 @@ public class LoginHandler {
                 return;
             }
 
-            DbUser dbUser = new DbUser(userRs);
+            UserEntity dbUser = UserEntity.fromResultSet(userRs);
             // TODO BCrypt
             if ((dbUser == null || !dbUser.getPwBcrypt().equals(loginResponse.getPasswordMd5()))) {
                 logger.warn("Failed login attempt for user: {} from IP: {}",

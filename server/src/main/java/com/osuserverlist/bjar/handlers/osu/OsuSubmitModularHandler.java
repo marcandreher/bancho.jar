@@ -11,7 +11,7 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import com.osuserverlist.bjar.models.database.DbMap;
+import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
@@ -82,7 +82,7 @@ public class OsuSubmitModularHandler implements Handler {
         GameMode realGameMode = GameMode.fromValue(s.getMode(), s.getMods());
 
         try (MySQL mysql = Database.getConnection()) {
-            DbMap beatmap = server.osuAPIHandler.getBeatmapByHash(mysql, submitResponse.getUpdatedBeatmapHash());
+            BeatmapEntity beatmap = server.osuAPIHandler.getBeatmapByHash(mysql, submitResponse.getUpdatedBeatmapHash());
             if (beatmap == null) {
                 ctx.status(400).result("Beatmap not found.");
                 return;

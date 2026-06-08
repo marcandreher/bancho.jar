@@ -3,7 +3,7 @@ package com.osuserverlist.bjar.models.essentials;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.osuserverlist.bjar.models.database.DbMap;
+import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.modules.calculations.AccuracyCalculator;
 
 import lombok.Data;
@@ -35,7 +35,7 @@ public class Score {
     private double accuracy = 0.0;
     private String checksum = "";
 
-    public static Score fromResultSet(ResultSet scoreResult, DbMap beatmap) throws SQLException {
+    public static Score fromResultSet(ResultSet scoreResult, BeatmapEntity beatmap) throws SQLException {
         Score s = Score.fromResultSet(scoreResult);
         
         s.setBeatmapId(beatmap.getId());

@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 
-import com.osuserverlist.bjar.models.database.DbChannel;
+import com.osuserverlist.bjar.models.database.ChannelEntity;
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.database.MySQL;
@@ -24,7 +24,7 @@ public class ChannelManager {
         int channelCount = 0;
         
         while (channelRs.next()) {
-            DbChannel defaultChannel = new DbChannel(channelRs);
+            ChannelEntity defaultChannel = ChannelEntity.fromResultSet(channelRs);
 
             BanchoChannel channel = new BanchoChannel(String.valueOf(defaultChannel.getId()), defaultChannel.getName(),
                     defaultChannel.getTopic(), defaultChannel.isAutoJoin(), false);

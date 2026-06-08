@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.modules.database;
+package com.osuserverlist.bjar.models.config;
 
 import java.io.File;
 

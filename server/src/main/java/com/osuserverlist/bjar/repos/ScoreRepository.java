@@ -3,7 +3,7 @@ package com.osuserverlist.bjar.repos;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.osuserverlist.bjar.models.database.DbMap;
+import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Score;
 import com.osuserverlist.bjar.modules.database.MySQL;
 
@@ -42,7 +42,7 @@ public class ScoreRepository {
         return 1;
     }
 
-    public void insertScore(Score s, DbMap beatmap, int scoreStatus, int mode) throws SQLException {
+    public void insertScore(Score s, BeatmapEntity beatmap, int scoreStatus, int mode) throws SQLException {
         mysql.exec(INSERT_SCORE_QUERY, beatmap.getMd5(), s.getScore(), s.getPp(), s.getAccuracy(), s.getMax_combo(),
             s.getMods(), s.getN300(), s.getN100(), s.getN50(), s.getNmiss(), s.getNgeki(),
             s.getNkatu(), s.getGrade(), scoreStatus, mode,

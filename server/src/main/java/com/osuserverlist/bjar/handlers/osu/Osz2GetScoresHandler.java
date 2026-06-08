@@ -7,7 +7,7 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import com.osuserverlist.bjar.models.database.DbMap;
+import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
 import com.osuserverlist.bjar.models.osu.GameMode;
@@ -70,7 +70,7 @@ public class Osz2GetScoresHandler implements Handler {
         player.setRealGameMode(gameMode.getValue());
 
         
-        DbMap beatmap;
+        BeatmapEntity beatmap;
         try (MySQL mysql = Database.getConnection()) {
             beatmap = server.osuAPIHandler.getBeatmapByHash(mysql, ctx.queryParam("c"));
 

@@ -36,15 +36,15 @@ public class ChoHandler implements Handler {
         String osuToken = ctx.header("osu-token");
 
         if (osuToken == null) {
-            // If token is missing, handle login
             loginHandler.handleLogin(ctx);
-        } else {
-            // Handle other packets
-            handlePackets(ctx);
-        }
+            return;
+        } 
+            
+        handlePackets(ctx);
+        
     }
 
-     private static void handlePackets(Context ctx) {
+    private static void handlePackets(Context ctx) {
         String osuToken = ctx.header("osu-token");
 
         PacketSender packetSender = new PacketSender();
@@ -56,32 +56,29 @@ public class ChoHandler implements Handler {
             ctx.status(HttpStatus.OK).result(packetSender.toBytes());
             return;
         }
+
         Player player = Server.getInstance().playerManager.get(osuToken);
 
-        // if (player.getLoginState() == LoginState.LOGGED_IN) {
-            byte[] requestBody = ctx.bodyAsBytes();
-            if (requestBody.length > 0) {
+        byte[] requestBody = ctx.bodyAsBytes();
+        if (requestBody.length > 0) {
+            try {
+                BanchoPacketReader reader = new BanchoPacketReader(requestBody, player);
 
-                try {
-                    BanchoPacketReader reader = new BanchoPacketReader(requestBody, player);
-
-                    while (reader.hasMorePackets()) {
-                        try {
-                            boolean success = reader.nextPacket();
-                            if (!success) {
-                                logger.warn("Failed to process packet for player ID={}", player.getId());
-                            }
-                        } catch (IOException e) {
-                            logger.error("Error reading packet: {}", e.getMessage());
-                            // Continue processing other packets even if one fails
+                while (reader.hasMorePackets()) {
+                    try {
+                        boolean success = reader.nextPacket();
+                        if (!success) {
+                            logger.warn("Failed to process packet for player ID={}", player.getId());
                         }
+                    } catch (IOException e) {
+                        logger.error("Error reading packet: {}", e.getMessage());
+                        // Continue processing other packets even if one fails
                     }
-
-                } catch (Exception e) {
-                    logger.error("Unexpected error processing packets: {}", e.getMessage(), e);
                 }
-            // }
 
+            } catch (Exception e) {
+                logger.error("Unexpected error processing packets: {}", e.getMessage(), e);
+            }
         }
 
         HandlePackets(packetWriter, player);
