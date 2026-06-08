@@ -17,8 +17,10 @@ import com.osuserverlist.bjar.models.essentials.BanchoChannel;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.LoginResponse;
+import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.geo.Country;
 import com.osuserverlist.bjar.modules.geo.GeoRegistry;
 import com.osuserverlist.bjar.modules.geo.GeoResponse;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
@@ -63,17 +65,17 @@ public class LoginHandler {
         try (MySQL mysql = Database.getConnection()) {
             UserRepository userRepository = new UserRepository(mysql);
 
-            ResultSet userRs = mysql.query("SELECT * FROM `users` WHERE `name` = ?", loginResponse.getUsername())
-                    .executeQuery();
-            if (!userRs.next()) {
+            UserEntity userEntity = userRepository.getUserByName(loginResponse.getUsername());
+            if (userEntity == null) {
                 sendLoginFailure(ctx, -1);
                 return;
             }
 
-            UserEntity dbUser = UserEntity.fromResultSet(userRs);
-            if ((dbUser == null || !OpenBSDBCrypt.checkPassword(
-                dbUser.getPwBcrypt(),
-                loginResponse.getPasswordMd5().toCharArray()))) {
+            boolean passwordMatches = OpenBSDBCrypt.checkPassword(
+                    userEntity.getPwBcrypt(),
+                    loginResponse.getPasswordMd5().toCharArray());
+
+            if (!passwordMatches) {
                 logger.warn("Failed login attempt for user: {} from IP: {}",
                         loginResponse.getUsername(), loginResponse.getIp());
                 sendLoginFailure(ctx, -1);
@@ -82,37 +84,44 @@ public class LoginHandler {
 
             LocalDate osuVer = parseOsuVersionDate(loginResponse.getBuildName());
             String osuStream = loginResponse.getBuildName();
-            mysql.exec(
-                    "INSERT INTO `ingame_logins` (`userid`, `ip`, `osu_ver`, `osu_stream`, `datetime`) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
-                    dbUser.getId(),
-                    loginResponse.getIp(),
-                    osuVer.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                    osuStream);
+
+            userRepository.insertIngameLogin(userEntity.getId(), loginResponse.getIp(),
+                    osuVer.format(DateTimeFormatter.ISO_LOCAL_DATE), osuStream);
 
             GeoResponse geoLocResponse = GeoRegistry.getProvider().getCountryCode(loginResponse.getIp());
-            
-            Player existingPlayer = server.playerManager.getById(dbUser.getId());
-            if(existingPlayer != null) {
+
+            Player existingPlayer = server.playerManager.getById(userEntity.getId());
+            if (existingPlayer != null) {
                 server.playerManager.forceRemove(existingPlayer);
             }
 
-            // TODO: if country = XX then set country to current login country
+            // Set country if missing (XX)
+            if (userEntity.getCountry().equalsIgnoreCase("XX")) {
+                Country country = Country.getById(geoLocResponse.getCountryId());
+                userRepository.updateUserCountry(userEntity.getId(), country.name().toLowerCase());
+            }
 
-            Player player = new Player(dbUser.getId(), false, loginResponse.getUuid());
+            Player player = new Player(userEntity.getId(), false, loginResponse.getUuid());
             player.setTimezone(Integer.parseInt(loginResponse.getUtcOffset()));
             player.setCountry((short) geoLocResponse.getCountryId());
             player.setLongitude(geoLocResponse.getLongitude());
             player.setLatitude(geoLocResponse.getLatitude());
             player.setDisplayCityLocation(loginResponse.isDisplayCityLocation());
             player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
-            player.setUsername(dbUser.getName());
+            player.setUsername(userEntity.getName());
+            player.setRealPrivileges(userEntity.getPriv());
+            int newPrivs = Privileges.addPrivilege(userEntity.getPriv(), Privileges.SUPPORTER);
+            player.setPrivileges(Privileges.toClientPrivileges(newPrivs));
 
             player.setApiIdent(String.format("%s|%s", player.getUsername(), loginResponse.getPasswordMd5()));
-            
+
             player.sendPacket(new ProtocolVersionPacket());
 
             player.sendPacket(new LoginReplyPacket(player.getId()));
-            player.sendPacket(new PermissionsPacket(4));
+            player.sendPacket(new PermissionsPacket(player.getPrivileges()));
+
+            logger.debug("User {} privs: {} realprivs: {}", player.getUsername(), player.getPrivileges(),
+                    player.getRealPrivileges());
 
             for (int i = 0; i <= 8; i++) {
                 if (i == 7)
@@ -135,9 +144,8 @@ public class LoginHandler {
                 modeStats.setTotalHits(statsRs.getInt("total_hits"));
 
                 Long rank = Redis.getClient().zrevrank(
-                    "bjar:leaderboard:" + i,
-                    String.valueOf(player.getId())
-                );
+                        "bjar:leaderboard:" + i,
+                        String.valueOf(player.getId()));
 
                 modeStats.setGlobalRank(rank != null ? Math.toIntExact(rank) + 1 : 0);
                 player.getModeStats()[i] = modeStats;
@@ -149,11 +157,19 @@ public class LoginHandler {
             player.sendPacket(new UserFriendListPacket(userRepository.getFriendIds(player.getId())));
 
             for (BanchoChannel channel : server.channelManager.getAll()) {
+                if ((channel.getReadPriv() > player.getPrivileges())) {
+                    continue; // Skip channels the player doesn't have access to
+                }
                 if (channel.isAutoJoin()) {
                     player.sendPacket(new ChannelAutojoinPacket(channel.getName()));
-                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(), (short)(channel.getPlayerCount() + 1)));
+                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(),
+                            (short) (channel.getPlayerCount() + 1)));
                     player.sendPacket(new ChannelJoinSuccessPacket(channel.getName()));
                     server.channelManager.forceJoinChannel(channel.getName(), player);
+                } else {
+                    if(channel.getName().equals("#lobby")) continue;
+                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(),
+                            (short) (channel.getPlayerCount() + 1)));
                 }
             }
 
@@ -178,7 +194,8 @@ public class LoginHandler {
                 player.sendPacket(new NotificationPacket(welcomeConfig.getNotificationMessage()));
             }
             if (welcomeConfig.isBotEnabled()) {
-                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), welcomeConfig.getBotMessage(), player.getUsername(), server.botPlayer.getId()));
+                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), welcomeConfig.getBotMessage(),
+                        player.getUsername(), server.botPlayer.getId()));
             }
 
             player.sendPacket(new MenuIconPacket());

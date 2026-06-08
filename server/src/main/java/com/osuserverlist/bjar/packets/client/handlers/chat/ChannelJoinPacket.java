@@ -26,6 +26,12 @@ public class ChannelJoinPacket implements BanchoPacketHandler {
             logger.warn("Player {} tried to join a not existing channel", player.toString());
             return true;
         }
+        
+        if(channel.getReadPriv() > player.getPrivileges()) {
+            logger.warn("Player {} tried to join channel {} without sufficient privileges", player.toString(), channelName);
+            return true;
+        }
+
         player.sendPacket(new ChannelJoinSuccessPacket(channelName));
 
         Server.getInstance().channelManager.joinChannel(channelName, player);

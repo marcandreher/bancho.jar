@@ -284,4 +284,14 @@ public enum Country {
         }
         return -1;
     }
+
+    public static Country getById(int id) {
+        Country[] values = Country.values();
+
+        if (id < 0 || id >= values.length) {
+            return Country.XX; // or null
+        }
+
+        return values[id];
+    }
 }

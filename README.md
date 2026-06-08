@@ -17,13 +17,15 @@
     - [x] User Stats (Also RX & AP)
     - [x] Friends
     - [ ] Silence Info
-    - [ ] Permissions
+    - [x] Privileges
 - [x] Bots
     - [x] Bot online Handling
     - [ ] Commands
     - [ ] Announce on #1
 - [ ] Multiplayer
 - [ ] Spectating
+- [ ] Restriction
+- [ ] Achievements
 - [ ] Web Redirects
 - [ ] osu!Direct
 - [ ] Tourney Client
@@ -33,7 +35,13 @@
 - [ ] API
 - [ ] Plugin Framework
 - [ ] Asset downloading
+- [ ] Webhooks
 - [x] Configuration
     - [x] Welcome message and metadata
     - [x] Seasonal & Main Menu Icon
     - [x] .env for Secrets
+
+## Shoutouts
+
+- [Lekuruu](https://github.com/Lekuruu) for the awesome [bancho-documentation](https://github.com/Lekuruu/bancho-documentation)
+- [bancho.py](https://github.com/osuAkatsuki/bancho.py) we are using the bancho.py database structure (modified)

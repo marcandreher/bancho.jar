@@ -15,6 +15,8 @@ public class BanchoChannel {
     private boolean autoJoin;
     private final Set<Player> players = ConcurrentHashMap.newKeySet();
     private volatile boolean dirty;
+    private int readPriv = 1;
+    private int writePriv = 1;
 
     public int getPlayerCount() {
         return players.size() + 1; // +1 for the bot

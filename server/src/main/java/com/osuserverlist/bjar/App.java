@@ -16,7 +16,6 @@ import com.osuserverlist.bjar.server.Server;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.javalin.Javalin;
-import io.javalin.http.Context;
 
 /**
  * Bancho.jar - An open-source osu! server implementation in Java.

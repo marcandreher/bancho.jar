@@ -25,9 +25,9 @@ public class ChannelManager {
         
         while (channelRs.next()) {
             ChannelEntity defaultChannel = ChannelEntity.fromResultSet(channelRs);
-
+        
             BanchoChannel channel = new BanchoChannel(String.valueOf(defaultChannel.getId()), defaultChannel.getName(),
-                    defaultChannel.getTopic(), defaultChannel.isAutoJoin(), false);
+                    defaultChannel.getTopic(), defaultChannel.isAutoJoin(), false, defaultChannel.getReadPriv(), defaultChannel.getWritePriv());
             this.add(channel);
             channelCount++;
         }
