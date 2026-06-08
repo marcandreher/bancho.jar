@@ -10,17 +10,19 @@
   <version>1.0-SNAPSHOT</version>
 
   <name>bancho-server</name>
-  <url>http://www.example.com</url>
+  <url>http://osu-server-list.com</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>25</maven.compiler.source>
     <maven.compiler.target>25</maven.compiler.target>
 
+    <!-- Main Dependencies -->
     <javalin.version>7.2.2</javalin.version>
     <lombok.version>1.18.46</lombok.version>
     <okhttp.version>5.3.0</okhttp.version>
 
+    <!-- Config Dependencies -->
     <dotenv.version>5.2.2</dotenv.version>
     <toml4j.version>0.7.3</toml4j.version>
 
@@ -29,13 +31,18 @@
     <hikari.version>7.0.2</hikari.version>
     <jedis.version>7.5.2</jedis.version>
 
+    <!-- Osu Dependencies -->
     <ousu-api.version>2.1</ousu-api.version>
-    <bcprov.version>1.80</bcprov.version>
+    <osu-native-jar.version>0.0.8</osu-native-jar.version>
 
+    <!-- Utility Dependencies -->
+    <bcprov.version>1.80</bcprov.version>
     <kotlin.version>1.9.24</kotlin.version>
     <classgraph.version>4.8.184</classgraph.version>
     <logback.version>1.5.33</logback.version>
+    <jackson.version>2.21.2</jackson.version>
 
+    <!-- Plugin Dependencies -->
     <shade-plugin.version>3.5.1</shade-plugin.version>
     <compiler-plugin.version>3.10.1</compiler-plugin.version>
   </properties>
@@ -112,12 +119,17 @@
     <dependency>
       <groupId>io.github.7mochi</groupId>
       <artifactId>osu-native-jar</artifactId>
-      <version>0.0.8</version>
+      <version>${osu-native-jar.version}</version>
     </dependency>
     <dependency>
       <groupId>redis.clients</groupId>
       <artifactId>jedis</artifactId>
       <version>${jedis.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
     </dependency>
   </dependencies>
 

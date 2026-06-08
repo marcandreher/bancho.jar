@@ -16,6 +16,7 @@ import com.osuserverlist.bjar.server.Server;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.javalin.Javalin;
+import io.javalin.http.Context;
 
 /**
  * Bancho.jar - An open-source osu! server implementation in Java.
@@ -58,15 +59,15 @@ public class App {
         Server.start(dotenv);
 
         Javalin app = Javalin.create(config -> {
-            config.requestLogger.http(new BanchoWebLogger());
-            ServerWebApp.registerRoutes(config);
-
             config.routes.exception(Exception.class, (e, ctx) -> {
                 logger.error("Unhandled exception while processing {} {}",
                         ctx.method(), ctx.path(), e);
 
                 ctx.status(500).result("Internal Server Error");
             });
+
+            config.requestLogger.http(new BanchoWebLogger());
+            ServerWebApp.registerRoutes(config);
         });
 
         app.start(Integer.parseInt(dotenv.get("PORT")));

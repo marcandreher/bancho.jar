@@ -7,6 +7,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import org.slf4j.Logger;
 
 import com.osuserverlist.bjar.models.config.ServerConfiguration.WelcomeMessage;
@@ -69,8 +71,9 @@ public class LoginHandler {
             }
 
             UserEntity dbUser = UserEntity.fromResultSet(userRs);
-            // TODO BCrypt
-            if ((dbUser == null || !dbUser.getPwBcrypt().equals(loginResponse.getPasswordMd5()))) {
+            if ((dbUser == null || !OpenBSDBCrypt.checkPassword(
+                dbUser.getPwBcrypt(),
+                loginResponse.getPasswordMd5().toCharArray()))) {
                 logger.warn("Failed login attempt for user: {} from IP: {}",
                         loginResponse.getUsername(), loginResponse.getIp());
                 sendLoginFailure(ctx, -1);
@@ -92,6 +95,8 @@ public class LoginHandler {
             if(existingPlayer != null) {
                 server.playerManager.forceRemove(existingPlayer);
             }
+
+            // TODO: if country = XX then set country to current login country
 
             Player player = new Player(dbUser.getId(), false, loginResponse.getUuid());
             player.setTimezone(Integer.parseInt(loginResponse.getUtcOffset()));

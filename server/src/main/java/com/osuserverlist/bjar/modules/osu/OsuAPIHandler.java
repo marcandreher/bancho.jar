@@ -12,6 +12,7 @@ import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import me.skiincraft.api.ousu.OusuAPI;
 import me.skiincraft.api.ousu.entity.beatmap.Beatmap;
 import me.skiincraft.api.ousu.entity.beatmap.BeatmapSet;
+import me.skiincraft.api.ousu.exceptions.BeatmapException;
 
 public class OsuAPIHandler {
 
@@ -42,7 +43,12 @@ public class OsuAPIHandler {
         ResultSet mapResult = mysql.query("SELECT * FROM `maps` WHERE `md5` = ?", beatmapHash).executeQuery();
 
         if (!mapResult.next()) {
-            Beatmap osuBeatmap = osuAPI.getBeatmapByChecksum(beatmapHash).get();
+            Beatmap osuBeatmap;
+            try {
+                osuBeatmap = osuAPI.getBeatmapByChecksum(beatmapHash).get();
+            }catch(BeatmapException e) {
+                return null;
+            }
             BeatmapEntity map = BeatmapEntity.fromBeatmap(osuBeatmap);
 
             ResultSet mapSetQuery = mysql.query("SELECT * FROM `mapsets` WHERE `id` = ?", map.getSetId()).executeQuery();

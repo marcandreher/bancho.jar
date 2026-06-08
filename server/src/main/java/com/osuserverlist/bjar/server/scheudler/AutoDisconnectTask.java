@@ -13,10 +13,12 @@ public class AutoDisconnectTask implements Runnable {
     public void run() {
         Server server = Server.getInstance();
 
+        long timeout = 140 * 1000; // 2 minutes
+
         server.playerManager.getAll().forEach(player -> {
             if (player.isBot())
                 return;
-            if (player.getLastPing() != 0 && System.currentTimeMillis() - player.getLastPing() > 1 * 120 * 1000) {
+            if (player.getLastPing() != 0 && System.currentTimeMillis() - player.getLastPing() > timeout) {
                 logger.info("Auto disconnected {} cause of inactivity", player.toString());
                 server.playerManager.disconnect(player);
             }
