@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.handlers;
+package com.osuserverlist.bjar.handlers.bancho;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
