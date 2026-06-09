@@ -131,6 +131,8 @@ public class OsuSubmitModularHandler implements Handler {
 
             int rank = scoreRepo.getRankOnBeatmap(beatmap.getMd5(), realGameMode.getValue(), s.getPlayerId(), s.getScore());
 
+            // TODO: Announce on #1
+
             // Weighted PP: only meaningful when this is a new personal best.
             // Using status=1 is safe here because we just finished demoting the old PB.
             double totalPp = 0.0;

@@ -12,7 +12,7 @@ import lombok.Data;
 public class ServerConfiguration {
 
     private String serverName = "bancho.jar";
-    private List<String> seasonalBackgrounds = List.of("");
+    private List<String> seasonalBackgrounds = List.of("https://i.ibb.co/Gfhch3nW/wp4048636.jpg");
 
     private MenuIcon menuIcon = new MenuIcon();
     private WelcomeMessage welcomeMessage = new WelcomeMessage();

@@ -34,9 +34,9 @@ public class App {
             █ █▄█   █  ▄   █ █ █   █    █▄▄█  █ █  █       █   ██       █  ▄   █   █  █ █
             █▄▄▄▄▄▄▄█▄█ █▄▄█▄█  █▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█▄▄▄▄▄▄▄█▄▄▄██▄▄▄▄▄▄▄█▄█ █▄▄█▄▄▄█  █▄█""";
 
-    public static final Logger logger = LoggerFactory.getLogger(App.class);
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-    public static void main(String[] args) {
+    public void main() {
         System.out.println(HEADER);
         Dotenv dotenv = Dotenv.configure().systemProperties().ignoreIfMissing().load();
 

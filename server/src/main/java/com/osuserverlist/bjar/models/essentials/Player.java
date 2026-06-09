@@ -46,13 +46,13 @@ public class Player {
     private int realGameMode = 0;
     private int beatmapId = 0; // No beatmap
 
-    private int timezone = 3; // UTC+3
-    private short country = 2; // Country ID (1 = US)
+    private int timezone = 0; // UTC+3
+    private short country = 1; // Country ID (1 = US)
     private int privileges = 1; // Example privilege flags
     private int realPrivileges = 1; // Example privilege flags
-    private float longitude = -122.4194f; // San Francisco
-    private float latitude = 37.7749f; // San Francisco
-    private final int rank = 0; // Example rank
+    private float longitude = 1234; // San Francisco
+    private float latitude = 4321;
+    private int rank = 0;
 
     private long lastPing = System.currentTimeMillis();
 
