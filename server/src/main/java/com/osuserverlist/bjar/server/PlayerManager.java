@@ -76,7 +76,6 @@ public class PlayerManager {
         botPlayer.setUsername(botRs.getString("name"));
         botPlayer.setCountry((short) Country.getIndexByCode(botRs.getString("country")));
         botPlayer.setTimezone(2);
-        botPlayer.setActionText("Bancho.jar yeah");
  
         for (int i = 0; i <= 8; i++) {
             ModeStats modeStats = new ModeStats();

@@ -15,6 +15,7 @@ import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
 import com.osuserverlist.bjar.server.scheudler.AutoDisconnectTask;
+import com.osuserverlist.bjar.server.scheudler.BotPresenceTask;
 import com.osuserverlist.bjar.server.scheudler.SendChannelInfoTask;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -55,6 +56,9 @@ public class Server {
             instance.playerManager.add(botPlayer);
 
             instance.botPlayer = botPlayer;
+
+            instance.scheduler.scheduleAtFixedRate(new BotPresenceTask(), 0, 60, TimeUnit.SECONDS);
+
 
             instance.channelManager.populate(mysql);
             instance.achievementManager.populate(mysql);
