@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 
 import com.osuserverlist.bjar.modules.assets.AchievementDownloader;
+import com.osuserverlist.bjar.modules.assets.DefaultAssetsDownloader;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.Database.ServerTimezone;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
@@ -56,7 +57,10 @@ public class App {
             Files.createDirectories(Path.of("data/assets/medals/client"));
 
             AchievementDownloader downloader = new AchievementDownloader();
+            DefaultAssetsDownloader defaultAssetsDownloader = new DefaultAssetsDownloader();
+            defaultAssetsDownloader.run();
             downloader.run();
+
         } catch (IOException e) {
             logger.error("Failed to initialize data structures", e);
         }

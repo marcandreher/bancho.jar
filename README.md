@@ -34,7 +34,7 @@
 
 - [ ] API
 - [ ] Plugin Framework
-- [ ] Asset downloading
+- [x] Asset downloading
 - [ ] Webhooks
 - [x] Configuration
     - [x] Welcome message and metadata
