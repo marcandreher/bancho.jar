@@ -18,6 +18,7 @@ import com.osuserverlist.bjar.server.scheudler.AutoDisconnectTask;
 import com.osuserverlist.bjar.server.scheudler.SendChannelInfoTask;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import lombok.Data;
 
 public class Server {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
@@ -34,11 +35,15 @@ public class Server {
     public ChannelManager channelManager = new ChannelManager();
     public AchievementManager achievementManager = new AchievementManager();
     public ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
+    public OsuDirectAPI osuDirectAPI = new OsuDirectAPI();
 
     public static Server start(Dotenv config) {
         instance = new Server();
 
         instance.osuAPIHandler = new OsuAPIHandler(config.get("OSU_API_KEY"));
+
+        instance.osuDirectAPI.setSearchEndpoint(config.get("DIRECT_SEARCH"));
+        instance.osuDirectAPI.setDlEndpoint(config.get("DIRECT_DL"));
 
         instance.scheduler.scheduleAtFixedRate(new AutoDisconnectTask(), 0, 60, TimeUnit.SECONDS);
         instance.scheduler.scheduleAtFixedRate(new SendChannelInfoTask(), 0, 8, TimeUnit.SECONDS);
@@ -59,5 +64,11 @@ public class Server {
         }
 
         return instance;
+    }
+
+    @Data
+    public static class OsuDirectAPI {
+        private String searchEndpoint;
+        private String dlEndpoint;
     }
 }

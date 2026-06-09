@@ -112,7 +112,7 @@ public class OsuSubmitModularHandler implements Handler {
                 prevMapRank = scoreRepo.getPreviousMapRank(beatmap.getMd5(), realGameMode.getValue(), s.getPlayerId(), bestScore.getScore());
             }
 
-            int scoreStatus = isPersonalBest ? 1 : 0;
+            int scoreStatus = (isPersonalBest && s.isPassed()) ? 1 : 0;
 
             scoreRepo.insertScore(s, beatmap, scoreStatus, realGameMode.getValue());
             
@@ -134,7 +134,7 @@ public class OsuSubmitModularHandler implements Handler {
             // Weighted PP: only meaningful when this is a new personal best.
             // Using status=1 is safe here because we just finished demoting the old PB.
             double totalPp = 0.0;
-            if (isPersonalBest) {
+            if (isPersonalBest && s.isPassed()) {
                 ResultSet bestUserScoresResult = mysql.query(
                         "SELECT SUM(pp * POW(0.95, rn - 1)) AS weighted_pp FROM ( SELECT pp, ROW_NUMBER() OVER (ORDER BY pp DESC) AS rn FROM ( SELECT MAX(s.pp) AS pp FROM scores s JOIN maps m ON s.map_md5 = m.md5 WHERE s.userid = ? AND s.mode = ? AND m.status = 1 AND s.status = 1 GROUP BY s.map_md5 ) best_scores ) ranked;",
                         s.getPlayerId(), realGameMode.getValue()).executeQuery();
@@ -150,7 +150,7 @@ public class OsuSubmitModularHandler implements Handler {
             ModeStats playerStats = p.getModeStats()[realGameMode.getValue()];
             ModeStats oldStats = new ModeStats(playerStats); // deep-copy before mutation
 
-            if (isPersonalBest) {
+            if (isPersonalBest && s.isPassed()) {
                 playerStats.addRankedScore(s, totalPp);
                 Redis.getClient().zadd("bjar:leaderboard:" + realGameMode.getValue(), totalPp, String.valueOf(p.getId()));
                 Long redisRank = Redis.getClient().zrevrank("bjar:leaderboard:" + realGameMode.getValue(), String.valueOf(p.getId()));
@@ -229,6 +229,7 @@ public class OsuSubmitModularHandler implements Handler {
             AchievementRepository achievementRepo = new AchievementRepository(mysql);
 
             for (AchievementEntity achievement : server.achievementManager.getAll()) {
+                if(!s.isPassed()) break;
                 if (p.getUnlockedAchievements().contains(achievement.getId()))
                     continue;
 

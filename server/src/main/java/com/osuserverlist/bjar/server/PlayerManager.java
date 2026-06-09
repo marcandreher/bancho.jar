@@ -57,6 +57,7 @@ public class PlayerManager {
         }
 
         for(Player p : onlinePlayers.values()) {
+            if(p.equals(player)) continue;
             p.sendPacket(new UserQuitPacket(player.getId()));
         }
 

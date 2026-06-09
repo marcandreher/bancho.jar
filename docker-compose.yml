@@ -47,6 +47,8 @@ services:
       LEVEL: ${SERVER_LEVEL}
       DOMAIN: ${SERVER_DOMAIN}
       PORT: ${SERVER_PORT}
+      DIRECT_SEARCH: ${SERVER_DIRECT_SEARCH}
+      DIRECT_DL: ${SERVER_DIRECT_DL}
       OSU_API_KEY: ${SERVER_OSU_API_KEY}
     healthcheck:
       test: ["CMD-SHELL", "nc -z localhost ${SERVER_PORT} || exit 1"]

@@ -27,7 +27,7 @@
 - [ ] Restriction
 - [x] Achievements
 - [ ] Web Redirects
-- [ ] osu!Direct
+- [x] osu!Direct
 - [ ] Tourney Client
 
 ### Backend
