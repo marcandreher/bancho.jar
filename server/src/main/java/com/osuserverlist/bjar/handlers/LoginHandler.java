@@ -154,7 +154,7 @@ public class LoginHandler {
             player.sendPacket(new UserFriendListPacket(userRepository.getFriendIds(player.getId())));
 
             for (BanchoChannel channel : server.channelManager.getAll()) {
-                if ((channel.getReadPriv() > player.getPrivileges())) {
+                if ((channel.getReadPriv() > player.getRealPrivileges())) {
                     continue; // Skip channels the player doesn't have access to
                 }
                 if (channel.isAutoJoin()) {
