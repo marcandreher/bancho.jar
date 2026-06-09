@@ -11,12 +11,14 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.models.database.AchievementEntity;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
 import com.osuserverlist.bjar.models.osu.GameMode;
 import com.osuserverlist.bjar.models.osu.SubmitResponse;
+import com.osuserverlist.bjar.modules.achievements.MevlEvaluator;
 import com.osuserverlist.bjar.modules.calculations.IPerformanceCalculator;
 import com.osuserverlist.bjar.modules.calculations.OsuNativePerformanceCalculator;
 import com.osuserverlist.bjar.modules.crypt.ChecksumUtil;
@@ -30,6 +32,7 @@ import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
+import com.osuserverlist.bjar.repos.AchievementRepository;
 import com.osuserverlist.bjar.repos.ScoreRepository;
 import com.osuserverlist.bjar.server.Server;
 
@@ -44,6 +47,7 @@ public class OsuSubmitModularHandler implements Handler {
 
     private final static Logger logger = LoggerFactory.getLogger(OsuSubmitModularHandler.class);
     private final static IPerformanceCalculator ppCalculator = new OsuNativePerformanceCalculator();
+    private final static MevlEvaluator jexlEvaluator = new MevlEvaluator();
 
     @Override
     public void handle(@NotNull Context ctx) throws Exception {
@@ -221,17 +225,51 @@ public class OsuSubmitModularHandler implements Handler {
                 chart2.add(addChart("totalScore",  playerStats.getTotalScore(),                 playerStats.getTotalScore()));
                 chart2.add(addChart("pp",          (int) Math.ceil(playerStats.getPp()),        (int) Math.ceil(playerStats.getPp())));
             }
+            List<String> achievementStr = new ArrayList<>();
+            AchievementRepository achievementRepo = new AchievementRepository(mysql);
 
-            // TODO: Achievements parsing
-            chart2.add("achievements-new:");
+            for (AchievementEntity achievement : server.achievementManager.getAll()) {
+                if (p.getUnlockedAchievements().contains(achievement.getId()))
+                    continue;
 
-            logger.info("Player {} submitted a score on {} ({}pp, PB={})",
-                    p, beatmap.getArtist() + " - " + beatmap.getTitle(),
-                    (int) Math.ceil(s.getPp()), isPersonalBest);
+                if (jexlEvaluator.evaluate(achievement.getCondition(), s, beatmap)) {
+                    achievementRepo.addAchievementToPlayer(p.getId(), achievement.getId());
+                    p.getUnlockedAchievements().add(achievement.getId());
 
-            ret.add(String.join("|", chart2));
-            ctx.result(String.join("\n", ret));
+                    achievementStr.add(
+                        achievement.getFile()
+                        + "+"
+                        + achievement.getName()
+                        + "+"
+                        + achievement.getDescription()
+                    );
+                }
+            }
 
+            chart2.add("achievements-new:" + String.join("/", achievementStr));
+
+            logger.info(
+                "Player {} submitted a score on {} ({}pp, PB={})",
+                p,
+                beatmap.getArtist() + " - " + beatmap.getTitle(),
+                (int) Math.ceil(s.getPp()),
+                isPersonalBest
+            );
+
+            List<String> responseLines = new ArrayList<>();
+
+            responseLines.add(String.join("|",
+                    "beatmapId:" + beatmap.getId(),
+                    "beatmapSetId:" + beatmap.getSetId(),
+                    "beatmapPlaycount:" + beatmap.getPlays(),
+                    "beatmapPasscount:" + beatmap.getPasses(),
+                    "approvedDate:" + beatmap.getLastUpdate()
+            ));
+
+            responseLines.add(String.join("|", chart1));
+            responseLines.add(String.join("|", chart2));
+
+            ctx.result(String.join("\n", responseLines));
         } catch (SQLException e) {
             ctx.status(500).result("An error occurred while processing the score.");
             logger.error("Error processing score submission", e);

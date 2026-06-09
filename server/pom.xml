@@ -42,6 +42,7 @@
     <logback.version>1.5.33</logback.version>
     <jackson.version>2.21.2</jackson.version>
     <jexl.version>3.6.2</jexl.version>
+    <mevl.version>2.5.2.Final</mevl.version>
 
     <!-- Plugin Dependencies -->
     <shade-plugin.version>3.5.1</shade-plugin.version>
@@ -133,11 +134,11 @@
       <version>${jackson.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-jexl3</artifactId>
-      <version>${jexl.version}</version>
+      <groupId>org.mvel</groupId>
+      <artifactId>mvel2</artifactId>
+      <version>${mevl.version}</version>
       <scope>compile</scope>
-    </dependency>
+  </dependency>
   </dependencies>
 
   <dependencyManagement>

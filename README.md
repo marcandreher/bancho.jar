@@ -3,7 +3,7 @@
 > [!WARNING]  
 > At the moment the server is not recommended to use in production
 
-- [x] Authentication (Partially)
+- [x] Authentication
 - [x] Leaderboards (Partially) (Only global)
 - [x] Score Submission
     - [x] All Modes Supported
@@ -25,7 +25,7 @@
 - [ ] Multiplayer
 - [ ] Spectating
 - [ ] Restriction
-- [ ] Achievements
+- [x] Achievements
 - [ ] Web Redirects
 - [ ] osu!Direct
 - [ ] Tourney Client

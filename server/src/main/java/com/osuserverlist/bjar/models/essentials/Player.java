@@ -1,5 +1,7 @@
 package com.osuserverlist.bjar.models.essentials;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Stack;
 
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
@@ -31,6 +33,7 @@ public class Player {
     private boolean relaxEnabled = false;
 
     private ModeStats[] modeStats = new ModeStats[9];
+    private Set<Integer> unlockedAchievements = new HashSet<>();
 
     private String username;
     private String osuToken;

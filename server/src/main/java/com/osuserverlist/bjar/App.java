@@ -6,6 +6,7 @@ import java.nio.file.Path;
 
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.modules.assets.AchievementDownloader;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.Database.ServerTimezone;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
@@ -50,8 +51,13 @@ public class App {
         try {
             Files.createDirectories(Path.of("data/maps"));
             Files.createDirectories(Path.of("data/replays"));
+            Files.createDirectories(Path.of("data/assets/avatars"));
+            Files.createDirectories(Path.of("data/assets/medals/client"));
+
+            AchievementDownloader downloader = new AchievementDownloader();
+            downloader.run();
         } catch (IOException e) {
-            logger.error("Failed to load beatmap cache", e);
+            logger.error("Failed to initialize data structures", e);
         }
 
         // Main bjar entrypoint

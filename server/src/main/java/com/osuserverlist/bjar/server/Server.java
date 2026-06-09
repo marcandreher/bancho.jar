@@ -32,6 +32,7 @@ public class Server {
     public ServerConfiguration config = ServerConfiguration.load();
     public PlayerManager playerManager = new PlayerManager();
     public ChannelManager channelManager = new ChannelManager();
+    public AchievementManager achievementManager = new AchievementManager();
     public ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
 
     public static Server start(Dotenv config) {
@@ -51,9 +52,10 @@ public class Server {
             instance.botPlayer = botPlayer;
 
             instance.channelManager.populate(mysql);
+            instance.achievementManager.populate(mysql);
 
         } catch (SQLException e) {
-            logger.error("Failed to load channels and bot from SQL", e);
+            logger.error("Failed to initialize server", e);
         }
 
         return instance;

@@ -119,10 +119,7 @@ public class LoginHandler {
 
             player.sendPacket(new LoginReplyPacket(player.getId()));
             player.sendPacket(new PermissionsPacket(player.getPrivileges()));
-
-            logger.debug("User {} privs: {} realprivs: {}", player.getUsername(), player.getPrivileges(),
-                    player.getRealPrivileges());
-
+            
             for (int i = 0; i <= 8; i++) {
                 if (i == 7)
                     continue;
@@ -188,6 +185,8 @@ public class LoginHandler {
                 }
                 p.sendPacket(new UserPresenceSinglePacket(player.getId()));
             }
+
+            server.achievementManager.loadForPlayer(player, mysql);
 
             WelcomeMessage welcomeConfig = server.config.getWelcomeMessage();
             if (welcomeConfig.isNotificationEnabled()) {
