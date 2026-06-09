@@ -51,6 +51,7 @@ public class App {
         try {
             Files.createDirectories(Path.of("data/maps"));
             Files.createDirectories(Path.of("data/replays"));
+            Files.createDirectories(Path.of("data/ss"));
             Files.createDirectories(Path.of("data/assets/avatars"));
             Files.createDirectories(Path.of("data/assets/medals/client"));
 
