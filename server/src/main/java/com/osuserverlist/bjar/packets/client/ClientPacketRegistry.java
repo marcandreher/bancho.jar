@@ -12,6 +12,7 @@ import com.osuserverlist.bjar.packets.client.handlers.friend.AddFriendPacket;
 import com.osuserverlist.bjar.packets.client.handlers.friend.RemoveFriendPacket;
 import com.osuserverlist.bjar.packets.client.handlers.user.LogoutPacket;
 import com.osuserverlist.bjar.packets.client.handlers.user.PresenceRequestPacket;
+import com.osuserverlist.bjar.packets.client.handlers.user.RecieveUpdatesPacket;
 import com.osuserverlist.bjar.packets.client.handlers.user.StatsRequestPacket;
 import com.osuserverlist.bjar.packets.client.handlers.user.StatusUpdatePacket;
 import com.osuserverlist.bjar.packets.client.handlers.user.UserSelfRequestStatusPacket;
@@ -30,6 +31,7 @@ public class ClientPacketRegistry {
         packetHandlers.put(ClientPackets.CHANNEL_JOIN, new ChannelJoinPacket());
         packetHandlers.put(ClientPackets.CHANNEL_PART, new ChannelLeavePacket());
         packetHandlers.put(ClientPackets.LOGOUT, new LogoutPacket());
+        packetHandlers.put(ClientPackets.RECEIVE_UPDATES, new RecieveUpdatesPacket());
 
         packetHandlers.put(ClientPackets.FRIEND_ADD, new AddFriendPacket());
         packetHandlers.put(ClientPackets.FRIEND_REMOVE, new RemoveFriendPacket());

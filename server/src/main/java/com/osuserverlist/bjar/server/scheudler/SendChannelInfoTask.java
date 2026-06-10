@@ -10,6 +10,7 @@ public class SendChannelInfoTask implements Runnable {
 
         for(BanchoChannel channel : Server.getInstance().channelManager.getAll()) {
             if(channel.isDirty()) {
+                if(channel.getName() == "#lobby") continue; // don't send channel info for the lobby
                 Server.getInstance().playerManager.getAll().forEach(player -> {
                     player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(), (short) channel.getPlayerCount()));
                 });

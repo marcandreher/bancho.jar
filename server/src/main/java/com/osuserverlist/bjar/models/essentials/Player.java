@@ -54,6 +54,8 @@ public class Player {
     private float latitude = 4321;
     private int rank = 0;
 
+    private int presenceFilter = 0;
+
     private long lastPing = System.currentTimeMillis();
 
     private Stack<ServerPacketHandler> packetStack = new Stack<>();

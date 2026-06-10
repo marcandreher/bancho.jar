@@ -1,6 +1,8 @@
 package com.osuserverlist.bjar.handlers.bancho;
 
-import java.util.ArrayDeque;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -17,21 +19,32 @@ import io.javalin.http.Handler;
 @Path("/")
 @HttpMethod("GET")
 public class HomePageHandler implements Handler {
-    
-    @Override
-    public void handle(@NotNull Context ctx) throws Exception {
-        String indexResource = new String(getClass().getResource("/web/index.html").openStream().readAllBytes());
-        
-        indexResource = indexResource.replace("%players%", String.valueOf(Server.getInstance().playerManager.getAll().size()));
 
-        ArrayDeque<String> packets = new ArrayDeque<>();
+    private final String indexTemplate;
+    private final String packetList;
 
-        ClientPacketRegistry.packetHandlers.forEach((id, handler) -> {
-            packets.add(String.format("%s(%d) - %s\n", id.name(), id.getValue(), handler.getClass().getSimpleName()));
-        });
-        indexResource = indexResource.replace("%packets%", String.join("", packets));
+    public HomePageHandler() throws IOException {
+        this.indexTemplate = new String(
+            getClass().getResourceAsStream("/web/index.html").readAllBytes()
+        );
 
-        ctx.contentType("text/html").result(indexResource);
+        this.packetList = ClientPacketRegistry.packetHandlers.entrySet()
+            .stream()
+            .sorted(Comparator.comparing(entry -> entry.getKey().name()))
+            .map(entry ->
+                entry.getKey().name() +
+                "(" + entry.getKey().getValue() + ") - " +
+                entry.getValue().getClass().getSimpleName()
+            )
+            .collect(Collectors.joining("\n"));
     }
 
+    @Override
+    public void handle(@NotNull Context ctx) {
+        String html = indexTemplate
+            .replace("%players%", String.valueOf(Server.getInstance().playerManager.getAll().size()))
+            .replace("%packets%", packetList);
+
+        ctx.contentType("text/html").result(html);
+    }
 }
