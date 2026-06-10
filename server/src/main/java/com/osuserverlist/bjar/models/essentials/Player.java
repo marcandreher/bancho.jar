@@ -34,6 +34,9 @@ public class Player {
 
     private ModeStats[] modeStats = new ModeStats[9];
     private Set<Integer> unlockedAchievements = new HashSet<>();
+    private Set<Player> spectators = new HashSet<>();
+    private Player spectating = null;
+    private boolean stealth = false;
 
     private String username;
     private String osuToken;

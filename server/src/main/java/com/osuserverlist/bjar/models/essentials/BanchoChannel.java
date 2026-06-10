@@ -17,6 +17,7 @@ public class BanchoChannel {
     private volatile boolean dirty;
     private int readPriv = 1;
     private int writePriv = 1;
+    private boolean visible = true;
 
     public int getPlayerCount() {
         return players.size() + 1; // +1 for the bot

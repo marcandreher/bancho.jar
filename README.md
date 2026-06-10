@@ -23,7 +23,7 @@
     - [ ] Commands
     - [ ] Announce on #1
 - [ ] Multiplayer
-- [ ] Spectating
+- [x] Spectating
 - [ ] Restriction
 - [x] Achievements
 - [ ] Web Redirects

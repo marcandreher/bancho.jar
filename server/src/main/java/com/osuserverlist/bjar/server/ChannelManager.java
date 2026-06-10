@@ -27,7 +27,10 @@ public class ChannelManager {
             ChannelEntity defaultChannel = ChannelEntity.fromResultSet(channelRs);
         
             BanchoChannel channel = new BanchoChannel(String.valueOf(defaultChannel.getId()), defaultChannel.getName(),
-                    defaultChannel.getTopic(), defaultChannel.isAutoJoin(), false, defaultChannel.getReadPriv(), defaultChannel.getWritePriv());
+                    defaultChannel.getTopic(), defaultChannel.isAutoJoin(), false, defaultChannel.getReadPriv(), defaultChannel.getWritePriv(), true);
+            if(channel.getName().equalsIgnoreCase("#lobby")) {
+                channel.setVisible(false);
+            }
             this.add(channel);
             channelCount++;
         }
@@ -58,6 +61,13 @@ public class ChannelManager {
         }
     }
 
+    public void forceLeaveChannel(String channelName, Player player) {
+        BanchoChannel channel = channels.get(channelName);
+        if (channel != null) {
+            channel.getPlayers().remove(player);
+        }
+    }
+
     public void leaveChannel(String channelName, Player player) {
         BanchoChannel channel = channels.get(channelName);
         if (channel != null) {
@@ -65,6 +75,10 @@ public class ChannelManager {
         }
 
         channel.setDirty(true);
+    }
+
+    public void removeChannel(String channelName) {
+        channels.remove(channelName);
     }
 
     public Collection<BanchoChannel> getAll() {

@@ -9,279 +9,332 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.models.osu.replay.ReplayAction;
+import com.osuserverlist.bjar.models.osu.replay.ReplayFrame;
+import com.osuserverlist.bjar.models.osu.replay.ReplayFrameBundle;
+import com.osuserverlist.bjar.models.osu.replay.ScoreFrame;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.handlers.UnhandledPacket;
 
 public class BanchoPacketReader {
+
     private static final Logger logger = LoggerFactory.getLogger(BanchoPacketReader.class);
-    private ByteArrayInputStream data;
+
+    private final ByteArrayInputStream data;
+    private final Player player;
+
+    private final List<Integer> packetIds = new ArrayList<>();
+
+    private ByteArrayInputStream packetData;
+    private byte[] currentPacketBody;
+
     private int currentPacketId;
     private int currentPacketLength;
-    private int bytesReadInCurrentPacket;
     private boolean compressionFlag;
-    private List<Integer> packetIds = new ArrayList<>();
-    private Player player;
 
     public BanchoPacketReader(byte[] packetData, Player player) {
         this.data = new ByteArrayInputStream(packetData);
         this.player = player;
-        this.bytesReadInCurrentPacket = 0;
     }
 
-    /**
-     * Checks if there are more packets available to read
-     * @return true if there are more packets, false otherwise
-     */
     public boolean hasMorePackets() {
-        return data.available() >= 7; // Minimum packet size: 2 (id) + 1 (compression) + 4 (length)
+        return data.available() >= 7;
     }
 
-    public List<Integer> readIntList() throws IOException {
-        // Read the length (2 bytes, short)
-        int lenLow = data.read() & 0xFF;
-        int lenHigh = data.read() & 0xFF;
-        int length = lenLow | (lenHigh << 8);
-        bytesReadInCurrentPacket += 2;
-        
-        // Create list to hold the integers
-        List<Integer> intList = new ArrayList<>(length);
-        
-        // Read each integer (4 bytes each)
-        for (int i = 0; i < length; i++) {
-            int byte0 = data.read() & 0xFF;
-            int byte1 = data.read() & 0xFF;
-            int byte2 = data.read() & 0xFF;
-            int byte3 = data.read() & 0xFF;
-            bytesReadInCurrentPacket += 4;
-            
-            // Combine bytes to form integer (little-endian)
-            int value = byte0 | (byte1 << 8) | (byte2 << 16) | (byte3 << 24);
-            intList.add(value);
-        }
-        
-        return intList;
-    }
-
-    /**
-     * Begins reading the next packet in the stream
-     * @return true if the packet was handled successfully, false otherwise
-     * @throws IOException if there's an error reading the packet
-     */
     public boolean nextPacket() throws IOException {
         if (!hasMorePackets()) {
-            logger.warn("No more packets available to read");
             return false;
         }
 
-        // Make sure we've read all data from the previous packet before moving on
-        skipRemainingPacketData();
-
-        // Read packet ID (2 bytes, little-endian)
         int idLow = data.read() & 0xFF;
         int idHigh = data.read() & 0xFF;
         currentPacketId = idLow | (idHigh << 8);
-        
-        // Read compression flag (1 byte)
+
         compressionFlag = (data.read() & 0xFF) != 0;
-        
-        // Read content length (4 bytes, little-endian)
-        int lengthByte0 = data.read() & 0xFF;
-        int lengthByte1 = data.read() & 0xFF;
-        int lengthByte2 = data.read() & 0xFF;
-        int lengthByte3 = data.read() & 0xFF;
-        currentPacketLength = lengthByte0 | (lengthByte1 << 8) | (lengthByte2 << 16) | (lengthByte3 << 24);
-        
-        // Reset the bytes read counter for this new packet
-        bytesReadInCurrentPacket = 0;
-        
-        packetIds.add(currentPacketId);
-       
-        // Log packet details
-        logger.debug("Reading Packet: ID=(" + currentPacketId + ") NAME=<" + 
-                    ClientPackets.getNameById(currentPacketId) + 
-                    ">, Length=(" + currentPacketLength + 
-                    "), Compressed=" + compressionFlag);
+
+        int b0 = data.read() & 0xFF;
+        int b1 = data.read() & 0xFF;
+        int b2 = data.read() & 0xFF;
+        int b3 = data.read() & 0xFF;
+
+        currentPacketLength = b0 |
+                (b1 << 8) |
+                (b2 << 16) |
+                (b3 << 24);
 
         if (currentPacketLength < 0 || currentPacketLength > 100000) {
-            logger.error("Invalid packet length: " + currentPacketLength);
-            // Skip this packet entirely to avoid potential infinite loops
+            logger.error("Invalid packet length {}", currentPacketLength);
             return false;
         }
 
-        BanchoPacketHandler handler = ClientPacketRegistry.packetHandlers.getOrDefault(ClientPackets.getById(currentPacketId), new UnhandledPacket());
-        BanchoPacket packet = new BanchoPacket(currentPacketId, compressionFlag, ClientPackets.getById(currentPacketId));
-        
-        boolean result = handler.handle(packet, this, player);
-        
-        // After handling, if we haven't read all the data for this packet, skip the rest
-        skipRemainingPacketData();
-        
-        return result;
-    }
+        currentPacketBody = new byte[currentPacketLength];
 
-    /**
-     * Skip any remaining unread data in the current packet
-     */
-    private void skipRemainingPacketData() {
-        if (currentPacketLength > 0 && bytesReadInCurrentPacket < currentPacketLength) {
-            int bytesToSkip = currentPacketLength - bytesReadInCurrentPacket;
-            data.skip(bytesToSkip);
-            bytesReadInCurrentPacket = currentPacketLength; // Mark as fully read
+        if (currentPacketLength > 0) {
+            int totalRead = 0;
+
+            while (totalRead < currentPacketLength) {
+                int read = data.read(
+                        currentPacketBody,
+                        totalRead,
+                        currentPacketLength - totalRead);
+
+                if (read == -1) {
+                    logger.error(
+                            "Unexpected EOF while reading packet body. Expected {} bytes, got {}.",
+                            currentPacketLength,
+                            totalRead);
+                    return false;
+                }
+
+                totalRead += read;
+            }
         }
+
+        packetData = new ByteArrayInputStream(currentPacketBody);
+
+        packetIds.add(currentPacketId);
+
+        logger.debug(
+                "Reading Packet: ID=({}) NAME=<{}>, Length=({}), Compressed={}",
+                currentPacketId,
+                ClientPackets.getNameById(currentPacketId),
+                currentPacketLength,
+                compressionFlag);
+
+        BanchoPacketHandler handler = ClientPacketRegistry.packetHandlers.getOrDefault(
+                ClientPackets.getById(currentPacketId),
+                new UnhandledPacket());
+
+        BanchoPacket packet = new BanchoPacket(
+                currentPacketId,
+                compressionFlag,
+                ClientPackets.getById(currentPacketId));
+
+        return handler.handle(packet, this, player);
     }
 
-    /**
-     * Reads a byte from the current packet
-     * @return the byte value
-     */
+    public byte[] getCurrentPacketBody() {
+        return currentPacketBody;
+    }
+
+    public int getPacketPosition() {
+        return currentPacketLength - packetData.available();
+    }
+
+    public int remainingInPacket() {
+        return packetData.available();
+    }
+
     public byte readByte() {
-        bytesReadInCurrentPacket++;
-        return (byte) (data.read() & 0xFF);
+        return (byte) packetData.read();
     }
 
-    /**
-     * Reads a short (16-bit) value from the current packet
-     * @return the short value
-     */
+    public int readUnsignedByte() {
+        return packetData.read() & 0xFF;
+    }
+
     public short readShort() {
-        // Little-endian
-        int low = data.read() & 0xFF;
-        int high = data.read() & 0xFF;
-        bytesReadInCurrentPacket += 2;
+        int low = packetData.read() & 0xFF;
+        int high = packetData.read() & 0xFF;
+
         return (short) (low | (high << 8));
     }
 
-    /**
-     * Reads an int (32-bit) value from the current packet
-     * @return the int value
-     */
+    public int readUnsignedShort() {
+        int low = packetData.read() & 0xFF;
+        int high = packetData.read() & 0xFF;
+
+        return low | (high << 8);
+    }
+
     public int readInt() {
-        // Little-endian
-        int value = 0;
-        for (int i = 0; i < 4; i++) {
-            value |= (data.read() & 0xFF) << (8 * i);
-        }
-        bytesReadInCurrentPacket += 4;
-        return value;
+        return (packetData.read() & 0xFF) |
+                ((packetData.read() & 0xFF) << 8) |
+                ((packetData.read() & 0xFF) << 16) |
+                ((packetData.read() & 0xFF) << 24);
     }
 
-    /**
-     * Reads a long (64-bit) value from the current packet
-     * @return the long value
-     */
     public long readLong() {
-        // Little-endian
-        long value = 0;
-        for (int i = 0; i < 8; i++) {
-            value |= ((long)(data.read() & 0xFF)) << (8 * i);
-        }
-        bytesReadInCurrentPacket += 8;
-        return value;
+        return ((long) (packetData.read() & 0xFF)) |
+                (((long) (packetData.read() & 0xFF)) << 8) |
+                (((long) (packetData.read() & 0xFF)) << 16) |
+                (((long) (packetData.read() & 0xFF)) << 24) |
+                (((long) (packetData.read() & 0xFF)) << 32) |
+                (((long) (packetData.read() & 0xFF)) << 40) |
+                (((long) (packetData.read() & 0xFF)) << 48) |
+                (((long) (packetData.read() & 0xFF)) << 56);
     }
 
-    /**
-     * Reads a float value from the current packet
-     * @return the float value
-     */
     public float readFloat() {
-        int intBits = readInt();
-        return Float.intBitsToFloat(intBits);
+        return Float.intBitsToFloat(readInt());
     }
 
-    /**
-     * Reads a boolean value from the current packet
-     * @return the boolean value
-     */
+    public double readDouble() {
+        return Double.longBitsToDouble(readLong());
+    }
+
     public boolean readBoolean() {
         return readByte() != 0;
     }
 
-    /**
-     * Reads a string from the current packet
-     * @return the string value, or null if the string indicator is 0
-     * @throws IOException if there's an error reading the string
-     */
     public String readString() throws IOException {
-        int indicator = readByte() & 0xFF;
-        
+        int indicator = readUnsignedByte();
+
         if (indicator == 0x00) {
-            // Null or empty string
             return "";
         }
-        
-        if (indicator != 0x0b) {
-            logger.warn("Unexpected string indicator: " + indicator);
+
+        if (indicator != 0x0B) {
+            logger.warn("Unexpected string indicator: {}", indicator);
             return "";
         }
-        
-        // Read the string length (ULEB128)
+
         int length = readUleb128();
-        
-        // Read the string bytes
+
         byte[] stringBytes = new byte[length];
-        int bytesRead = data.read(stringBytes, 0, length);
-        bytesReadInCurrentPacket += bytesRead;
-        
+
+        int read = packetData.read(stringBytes);
+
+        if (read != length) {
+            throw new IOException(
+                    "Failed to read complete string. Expected "
+                            + length
+                            + " bytes, got "
+                            + read);
+        }
+
         return new String(stringBytes, StandardCharsets.UTF_8);
     }
 
-    /**
-     * Reads an unsigned LEB128 encoded integer
-     * @return the decoded integer value
-     */
     private int readUleb128() {
         int value = 0;
         int shift = 0;
-        byte b;
-        
-        do {
-            b = readByte();
-            value |= ((b & 0x7F) << shift);
+
+        while (true) {
+            int b = readUnsignedByte();
+
+            value |= (b & 0x7F) << shift;
+
+            if ((b & 0x80) == 0) {
+                break;
+            }
+
             shift += 7;
-        } while ((b & 0x80) != 0);
-        
+        }
+
         return value;
     }
-    
-    /**
-     * Skips a number of bytes in the current packet
-     * @param count number of bytes to skip
-     */
-    public void skip(int count) {
-        data.skip(count);
-        bytesReadInCurrentPacket += count;
+
+    public List<Integer> readIntList() {
+        int length = readUnsignedShort();
+
+        List<Integer> values = new ArrayList<>(length);
+
+        for (int i = 0; i < length; i++) {
+            values.add(readInt());
+        }
+
+        return values;
     }
-    
-    /**
-     * Returns the ID of the current packet
-     * @return the current packet ID
-     */
+
+    public ReplayFrameBundle readReplayFrameBundle() {
+        ReplayFrameBundle bundle = new ReplayFrameBundle();
+
+        bundle.setRawData(currentPacketBody);
+
+        bundle.setExtra(readInt());
+
+        int frameCount = readUnsignedShort();
+
+        List<ReplayFrame> frames = new ArrayList<>(frameCount);
+
+        for (int i = 0; i < frameCount; i++) {
+            frames.add(readReplayFrame());
+        }
+
+        bundle.setFrames(frames);
+
+        bundle.setAction(
+            ReplayAction.fromId(readUnsignedByte())
+        );
+
+        bundle.setScoreFrame(readScoreFrame());
+
+        bundle.setSequence(readUnsignedShort());
+
+        return bundle;
+    }
+
+    public ScoreFrame readScoreFrame() {
+        ScoreFrame sf = new ScoreFrame();
+
+        sf.setTime(readInt());
+        sf.setId(readUnsignedByte());
+
+        sf.setNum300(readUnsignedShort());
+        sf.setNum100(readUnsignedShort());
+        sf.setNum50(readUnsignedShort());
+
+        sf.setNumGeki(readUnsignedShort());
+        sf.setNumKatu(readUnsignedShort());
+        sf.setNumMiss(readUnsignedShort());
+
+        sf.setTotalScore(readInt());
+
+        sf.setMaxCombo(readUnsignedShort());
+        sf.setCurrentCombo(readUnsignedShort());
+
+        sf.setPerfect(readBoolean());
+
+        sf.setHp(readUnsignedByte());
+        sf.setTagByte(readUnsignedByte());
+
+        sf.setScoreVersion2(readBoolean());
+
+        if (sf.isScoreVersion2()) {
+            sf.setComboPortion(readDouble());
+            sf.setBonusPortion(readDouble());
+        }
+
+        return sf;
+    }
+
+    public ReplayFrame readReplayFrame() {
+        ReplayFrame frame = new ReplayFrame();
+
+        // read_u8
+        frame.setButtonState(readUnsignedByte());
+        frame.setTaikoByte(readUnsignedByte());
+        frame.setX(readFloat());
+        frame.setY(readFloat());
+        frame.setTime(readInt());
+        return frame;
+    }
+
+    public void skip(int count) {
+        packetData.skip(count);
+    }
+
+    public int available() {
+        return packetData != null
+                ? packetData.available()
+                : 0;
+    }
+
     public int getCurrentPacketId() {
         return currentPacketId;
     }
-    
-    /**
-     * Returns the length of the current packet's payload
-     * @return the current packet length
-     */
+
     public int getCurrentPacketLength() {
         return currentPacketLength;
     }
-    
-    /**
-     * Returns a list of all packet IDs encountered so far
-     * @return list of packet IDs
-     */
+
+    public boolean isCompressed() {
+        return compressionFlag;
+    }
+
     public List<Integer> getPacketIds() {
         return packetIds;
-    }
-    
-    /**
-     * Returns the number of bytes remaining in the current packet
-     * @return number of bytes remaining
-     */
-    public int available() {
-        return data.available();
     }
 }

@@ -149,6 +149,14 @@ public class BanchoPacketWriter {
         output.write(bytes);
     }
 
+    public void writeBytes(byte[] data) {
+        try {
+            output.write(data);
+        } catch (IOException e) {
+            logger.error("Error writing bytes: ", e);
+        }
+    }
+
     public void writeBoolean(boolean value) {
         writeByte(value ? 1 : 0);
     }
@@ -189,7 +197,7 @@ public class BanchoPacketWriter {
             writeIntLE(value);
         }
     }
-
+    
     /**
      * Writes an unsigned LEB128 encoded integer.
      * ULEB128 is a variable-length encoding for unsigned integers.

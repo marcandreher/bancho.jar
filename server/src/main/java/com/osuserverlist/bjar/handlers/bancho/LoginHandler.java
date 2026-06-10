@@ -164,7 +164,7 @@ public class LoginHandler {
                     player.sendPacket(new ChannelJoinSuccessPacket(channel.getName()));
                     server.channelManager.forceJoinChannel(channel.getName(), player);
                 } else {
-                    if(channel.getName().equals("#lobby")) continue;
+                    if(!channel.isVisible()) continue;
                     player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(),
                             (short) (channel.getPlayerCount() + 1)));
                 }

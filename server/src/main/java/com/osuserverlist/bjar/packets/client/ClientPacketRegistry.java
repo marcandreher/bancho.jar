@@ -10,6 +10,10 @@ import com.osuserverlist.bjar.packets.client.handlers.chat.SendPrivateMessagePac
 import com.osuserverlist.bjar.packets.client.handlers.chat.SendPublicMessagePacket;
 import com.osuserverlist.bjar.packets.client.handlers.friend.AddFriendPacket;
 import com.osuserverlist.bjar.packets.client.handlers.friend.RemoveFriendPacket;
+import com.osuserverlist.bjar.packets.client.handlers.spectate.ClientsCantSpectatePacket;
+import com.osuserverlist.bjar.packets.client.handlers.spectate.SpecateFramesPacket;
+import com.osuserverlist.bjar.packets.client.handlers.spectate.StartSpectatePacket;
+import com.osuserverlist.bjar.packets.client.handlers.spectate.StopSpectatePacket;
 import com.osuserverlist.bjar.packets.client.handlers.user.LogoutPacket;
 import com.osuserverlist.bjar.packets.client.handlers.user.PresenceRequestPacket;
 import com.osuserverlist.bjar.packets.client.handlers.user.RecieveUpdatesPacket;
@@ -32,6 +36,10 @@ public class ClientPacketRegistry {
         packetHandlers.put(ClientPackets.CHANNEL_PART, new ChannelLeavePacket());
         packetHandlers.put(ClientPackets.LOGOUT, new LogoutPacket());
         packetHandlers.put(ClientPackets.RECEIVE_UPDATES, new RecieveUpdatesPacket());
+        packetHandlers.put(ClientPackets.START_SPECTATING, new StartSpectatePacket());
+        packetHandlers.put(ClientPackets.STOP_SPECTATING, new StopSpectatePacket());
+        packetHandlers.put(ClientPackets.CANT_SPECTATE, new ClientsCantSpectatePacket());
+        packetHandlers.put(ClientPackets.SPECTATE_FRAMES, new SpecateFramesPacket());
 
         packetHandlers.put(ClientPackets.FRIEND_ADD, new AddFriendPacket());
         packetHandlers.put(ClientPackets.FRIEND_REMOVE, new RemoveFriendPacket());
