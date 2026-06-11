@@ -149,9 +149,9 @@ public class LoginHandler {
 
                 if (channel.isAutoJoin()) {
                     player.sendPacket(new ChannelAutojoinPacket(channel.getName()));
-                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(), channel.getPlayerCount()));
+                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(), channel.getPlayerCount() + 1));
                     player.sendPacket(new ChannelJoinSuccessPacket(channel.getName()));
-                    server.channelManager.forceJoinChannel(channel.getName(), player);
+                    server.channelManager.joinChannel(channel.getName(), player);
                 } else {
                     player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(), channel.getPlayerCount()));
                 }

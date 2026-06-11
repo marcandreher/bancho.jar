@@ -13,7 +13,7 @@ public class AutoDisconnectTask implements Runnable {
     public void run() {
         Server server = Server.getInstance();
 
-        long timeout = 140 * 1000; // 2 minutes
+        long timeout = 60 * 3 * 1000; // 3 minutes
 
         server.playerManager.getAll().forEach(player -> {
             if (player.isBot())
