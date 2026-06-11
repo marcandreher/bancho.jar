@@ -59,6 +59,8 @@ public class StopSpectatePacket implements BanchoPacketHandler {
                 host.sendPacket(new ChannelRevokedPacket(channelName));
                 server.channelManager.removeChannel(channelName);
                 player.sendPacket(new ChannelRevokedPacket(channelName));
+
+                // TODO only leaves channel still in channel list
             }
 
         }

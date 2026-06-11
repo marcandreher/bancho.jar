@@ -5,18 +5,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import org.slf4j.Logger;
 
 import com.osuserverlist.bjar.models.config.ServerConfiguration.WelcomeMessage;
 import com.osuserverlist.bjar.models.database.UserEntity;
-import com.osuserverlist.bjar.models.essentials.BanchoChannel;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.LoginResponse;
+import com.osuserverlist.bjar.models.osu.OsuClientParser;
 import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
@@ -24,7 +22,6 @@ import com.osuserverlist.bjar.modules.geo.Country;
 import com.osuserverlist.bjar.modules.geo.GeoRegistry;
 import com.osuserverlist.bjar.modules.geo.GeoResponse;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
-import com.osuserverlist.bjar.modules.redis.Redis;
 import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.PacketSender;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
@@ -82,7 +79,7 @@ public class LoginHandler {
                 return;
             }
 
-            LocalDate osuVer = parseOsuVersionDate(loginResponse.getBuildName());
+            LocalDate osuVer = OsuClientParser.parseOsuVersionDate(loginResponse.getBuildName());
             String osuStream = loginResponse.getBuildName();
 
             userRepository.insertIngameLogin(userEntity.getId(), loginResponse.getIp(),
@@ -109,17 +106,17 @@ public class LoginHandler {
             player.setDisplayCityLocation(loginResponse.isDisplayCityLocation());
             player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
             player.setUsername(userEntity.getName());
-            player.setRealPrivileges(userEntity.getPriv());
+            player.setServerPrivileges(userEntity.getPriv());
             int newPrivs = Privileges.addPrivilege(userEntity.getPriv(), Privileges.SUPPORTER);
-            player.setPrivileges(Privileges.toClientPrivileges(newPrivs));
+            player.setClientPrivileges(Privileges.toClientPrivileges(newPrivs));
 
             player.setApiIdent(String.format("%s|%s", player.getUsername(), loginResponse.getPasswordMd5()));
 
             player.sendPacket(new ProtocolVersionPacket());
 
             player.sendPacket(new LoginReplyPacket(player.getId()));
-            player.sendPacket(new PermissionsPacket(player.getPrivileges()));
-            
+            player.sendPacket(new PermissionsPacket(player.getClientPrivileges()));
+
             for (int i = 0; i <= 8; i++) {
                 if (i == 7)
                     continue;
@@ -131,20 +128,7 @@ public class LoginHandler {
                     continue;
                 }
 
-                ModeStats modeStats = new ModeStats();
-                modeStats.setPlayCount(statsRs.getInt("plays"));
-                modeStats.setTotalScore(statsRs.getLong("tscore"));
-                modeStats.setRankedScore(statsRs.getLong("rscore"));
-                modeStats.setAccuracy(statsRs.getFloat("acc"));
-                modeStats.setMaxCombo(statsRs.getInt("max_combo"));
-                modeStats.setPp(statsRs.getShort("pp"));
-                modeStats.setTotalHits(statsRs.getInt("total_hits"));
-
-                Long rank = Redis.getClient().zrevrank(
-                        "bjar:leaderboard:" + i,
-                        String.valueOf(player.getId()));
-
-                modeStats.setGlobalRank(rank != null ? Math.toIntExact(rank) + 1 : 0);
+                ModeStats modeStats = ModeStats.fromResultSet(statsRs, i, player);
                 player.getModeStats()[i] = modeStats;
             }
 
@@ -153,22 +137,26 @@ public class LoginHandler {
 
             player.sendPacket(new UserFriendListPacket(userRepository.getFriendIds(player.getId())));
 
-            for (BanchoChannel channel : server.channelManager.getAll()) {
-                if ((channel.getReadPriv() > player.getRealPrivileges())) {
-                    continue; // Skip channels the player doesn't have access to
+
+            server.channelManager.getAll().forEach(channel -> {
+                if ((channel.getReadPriv() > player.getServerPrivileges())) {
+                    return; // Skip channels the player doesn't have access to
                 }
+
+                if(!channel.isVisible()) {
+                    return;
+                }
+
                 if (channel.isAutoJoin()) {
                     player.sendPacket(new ChannelAutojoinPacket(channel.getName()));
-                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(),
-                            (short) (channel.getPlayerCount() + 1)));
+                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(), channel.getPlayerCount()));
                     player.sendPacket(new ChannelJoinSuccessPacket(channel.getName()));
                     server.channelManager.forceJoinChannel(channel.getName(), player);
                 } else {
-                    if(!channel.isVisible()) continue;
-                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(),
-                            (short) (channel.getPlayerCount() + 1)));
+                    player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(), channel.getPlayerCount()));
                 }
-            }
+
+            });
 
             player.sendPacket(new ChannelInfoEndPacket());
 
@@ -176,15 +164,15 @@ public class LoginHandler {
 
             server.playerManager.add(player);
 
-            for (Player p : server.playerManager.getAll()) {
+            server.playerManager.getAll().forEach(p -> {
                 if (p.getId() == player.getId())
-                    continue;
+                    return;
                 if (p.isBot()) {
                     player.sendPacket(new UserPresencePacket(p.getId()));
-                    continue;
+                    return;
                 }
                 p.sendPacket(new UserPresenceSinglePacket(player.getId()));
-            }
+            });
 
             server.achievementManager.loadForPlayer(player, mysql);
 
@@ -209,29 +197,8 @@ public class LoginHandler {
                     .status(HttpStatus.OK)
                     .contentType("application/octet-stream")
                     .result(packetSender.toBytes());
-
         }
 
-    }
-
-    private LocalDate parseOsuVersionDate(String buildName) {
-        if (buildName == null) {
-            return LocalDate.now();
-        }
-
-        Matcher matcher = Pattern.compile("(\\d{4})(\\d{2})(\\d{2})").matcher(buildName);
-        if (!matcher.find()) {
-            return LocalDate.now();
-        }
-
-        int year = Integer.parseInt(matcher.group(1));
-        int month = Integer.parseInt(matcher.group(2));
-        int day = Integer.parseInt(matcher.group(3));
-        try {
-            return LocalDate.of(year, month, day);
-        } catch (RuntimeException ex) {
-            return LocalDate.now();
-        }
     }
 
     private void sendLoginFailure(Context ctx, int loginState) throws IOException {

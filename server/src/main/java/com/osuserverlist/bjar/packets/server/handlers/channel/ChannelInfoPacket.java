@@ -14,10 +14,10 @@ public class ChannelInfoPacket implements ServerPacketHandler {
     private String channelDescription;
     private short userCount;
 
-    public ChannelInfoPacket(String channelName, String channelDescription, short userCount) {
+    public ChannelInfoPacket(String channelName, String channelDescription, int userCount) {
         this.channelName = channelName;
         this.channelDescription = channelDescription;
-        this.userCount = userCount;
+        this.userCount = (short) userCount;
         
     }
 

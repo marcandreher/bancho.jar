@@ -51,8 +51,8 @@ public class Player {
 
     private int timezone = 0; // UTC+3
     private short country = 1; // Country ID (1 = US)
-    private int privileges = 1; // Example privilege flags
-    private int realPrivileges = 1; // Example privilege flags
+    private int clientPrivileges = 1; // Example privilege flags
+    private int serverPrivileges = 1; // Example privilege flags
     private float longitude = 1234; // San Francisco
     private float latitude = 4321;
     private int rank = 0;

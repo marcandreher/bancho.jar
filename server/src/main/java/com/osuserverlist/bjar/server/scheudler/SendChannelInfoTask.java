@@ -12,7 +12,7 @@ public class SendChannelInfoTask implements Runnable {
             if(channel.isDirty()) {
                 if(channel.getName() == "#lobby") continue; // don't send channel info for the lobby
                 Server.getInstance().playerManager.getAll().forEach(player -> {
-                    if(channel.getWritePriv() < player.getRealPrivileges()) return; // don't send channel info to players that can't see the channel
+                    if(channel.getWritePriv() < player.getServerPrivileges()) return; // don't send channel info to players that can't see the channel
                     player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(), (short) channel.getPlayerCount()));
                 });
                 channel.setDirty(false);

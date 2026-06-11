@@ -1,5 +1,10 @@
 package com.osuserverlist.bjar.models.essentials;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import com.osuserverlist.bjar.modules.redis.Redis;
+
 import lombok.Data;
 
 @Data
@@ -39,26 +44,43 @@ public class ModeStats {
         this.totalHits = stats.totalHits;
     }
 
+    public static ModeStats fromResultSet(ResultSet modeResult, int i, Player player) throws SQLException {
+        ModeStats stats = new ModeStats();
+        stats.setPlayCount(modeResult.getInt("plays"));
+        stats.setTotalScore(modeResult.getLong("tscore"));
+        stats.setRankedScore(modeResult.getLong("rscore"));
+        stats.setAccuracy(modeResult.getFloat("acc"));
+        stats.setMaxCombo(modeResult.getInt("max_combo"));
+        stats.setPp(modeResult.getShort("pp"));
+        stats.setTotalHits(modeResult.getInt("total_hits"));
+        Long rank = Redis.getClient().zrevrank(
+                "bjar:leaderboard:" + i,
+                String.valueOf(player.getId()));
+
+        stats.setGlobalRank(rank != null ? Math.toIntExact(rank) + 1 : 0);
+        return stats;
+    }
+
     public void addUnrankedScore(Score s) {
         totalScore += s.getScore();
         playCount++;
         totalHits += s.getN300()
-        + s.getN100()
-        + s.getN50()
-        + s.getNmiss();
+                + s.getN100()
+                + s.getN50()
+                + s.getNmiss();
     }
 
     public void addRankedScore(Score s, double pp) {
         totalScore += s.getScore();
-       
+
         rankedScore += s.getScore();
-        
+
         playCount++;
         maxCombo = Math.max(maxCombo, s.getMax_combo());
         totalHits += s.getN300()
-        + s.getN100()
-        + s.getN50()
-        + s.getNmiss();
+                + s.getN100()
+                + s.getN50()
+                + s.getNmiss();
         if (accuracy == 0) {
             accuracy = (float) s.getAccuracy();
         } else {

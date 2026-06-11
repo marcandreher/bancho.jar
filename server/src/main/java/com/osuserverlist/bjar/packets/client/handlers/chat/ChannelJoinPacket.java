@@ -27,7 +27,7 @@ public class ChannelJoinPacket implements BanchoPacketHandler {
             return true;
         }
         
-        if(channel.getReadPriv() > player.getRealPrivileges()) {
+        if(channel.getReadPriv() > player.getServerPrivileges()) {
             logger.warn("Player {} tried to join channel {} without sufficient privileges", player.toString(), channelName);
             return true;
         }

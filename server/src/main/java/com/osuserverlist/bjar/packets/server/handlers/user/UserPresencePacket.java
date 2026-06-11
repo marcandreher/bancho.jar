@@ -30,7 +30,7 @@ public class UserPresencePacket implements ServerPacketHandler {
         writer.writeString(player.getUsername()); // Username (null-terminated string)
         writer.writeByte((byte) (player.getTimezone() + 24)); // Timezone (1 byte)
         writer.writeByte((byte) player.getCountry()); // Country ID (1 byte)
-        writer.writeByte((byte) (player.getPrivileges() | (player.getGameMode()) << 5)); // Permissions | Mode << 5 (1 byte)
+        writer.writeByte((byte) (player.getClientPrivileges() | (player.getGameMode()) << 5)); // Permissions | Mode << 5 (1 byte)
         writer.writeFloat(player.getLongitude()); // Longitude (4 bytes)
         writer.writeFloat(player.getLatitude()); // Latitude (4 bytes)
         writer.writeInt(player.getRank()); // Rank (4 bytes)
