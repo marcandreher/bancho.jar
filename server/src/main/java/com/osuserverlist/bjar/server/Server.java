@@ -14,6 +14,7 @@ import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
+import com.osuserverlist.bjar.packets.client.engine.ClientPacketRegistry;
 import com.osuserverlist.bjar.server.scheudler.AutoDisconnectTask;
 import com.osuserverlist.bjar.server.scheudler.BotPresenceTask;
 import com.osuserverlist.bjar.server.scheudler.SendChannelInfoTask;
@@ -40,6 +41,8 @@ public class Server {
 
     public static Server start(Dotenv config) {
         instance = new Server();
+
+        ClientPacketRegistry.scanAndRegister();
 
         instance.osuAPIHandler = new OsuAPIHandler(config.get("OSU_API_KEY"));
 

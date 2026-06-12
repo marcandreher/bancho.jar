@@ -6,9 +6,12 @@ import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
+import com.osuserverlist.bjar.packets.client.ClientPackets;
+import com.osuserverlist.bjar.packets.client.engine.ClientPacket;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.handlers.spectate.CantSpectatePacket;
 
+@ClientPacket(ClientPackets.CANT_SPECTATE)
 public class ClientsCantSpectatePacket implements BanchoPacketHandler {
     
     @Override

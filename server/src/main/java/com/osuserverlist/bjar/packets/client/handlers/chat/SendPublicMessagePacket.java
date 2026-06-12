@@ -10,9 +10,12 @@ import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
+import com.osuserverlist.bjar.packets.client.ClientPackets;
+import com.osuserverlist.bjar.packets.client.engine.ClientPacket;
 import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
 import com.osuserverlist.bjar.server.Server;
 
+@ClientPacket(ClientPackets.SEND_PUBLIC_MESSAGE)
 public class SendPublicMessagePacket implements BanchoPacketHandler {
     private final Logger logger = LoggerFactory.getLogger(SendPublicMessagePacket.class);
 

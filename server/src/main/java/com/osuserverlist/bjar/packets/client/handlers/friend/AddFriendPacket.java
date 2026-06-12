@@ -12,9 +12,12 @@ import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
+import com.osuserverlist.bjar.packets.client.ClientPackets;
+import com.osuserverlist.bjar.packets.client.engine.ClientPacket;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserFriendListPacket;
 import com.osuserverlist.bjar.repos.UserRepository;
 
+@ClientPacket(ClientPackets.FRIEND_ADD)
 public class AddFriendPacket implements BanchoPacketHandler {
 
     private final static Logger logger = LoggerFactory.getLogger(AddFriendPacket.class);

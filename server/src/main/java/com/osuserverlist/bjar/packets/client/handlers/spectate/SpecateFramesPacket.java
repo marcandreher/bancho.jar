@@ -7,8 +7,11 @@ import com.osuserverlist.bjar.models.osu.replay.ReplayFrameBundle;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
+import com.osuserverlist.bjar.packets.client.ClientPackets;
+import com.osuserverlist.bjar.packets.client.engine.ClientPacket;
 import com.osuserverlist.bjar.packets.server.handlers.spectate.SendSpectateFramesPacket;
 
+@ClientPacket(ClientPackets.SPECTATE_FRAMES)
 public class SpecateFramesPacket implements BanchoPacketHandler {
 
     @Override

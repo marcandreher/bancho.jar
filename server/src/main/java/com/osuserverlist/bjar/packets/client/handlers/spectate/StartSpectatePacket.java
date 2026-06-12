@@ -7,6 +7,8 @@ import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
+import com.osuserverlist.bjar.packets.client.ClientPackets;
+import com.osuserverlist.bjar.packets.client.engine.ClientPacket;
 import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelJoinSuccessPacket;
 import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelRevokedPacket;
 import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoPacket;
@@ -15,6 +17,7 @@ import com.osuserverlist.bjar.packets.server.handlers.spectate.SpectatorJoinedPa
 
 import com.osuserverlist.bjar.server.Server;
 
+@ClientPacket(ClientPackets.START_SPECTATING)
 public class StartSpectatePacket implements BanchoPacketHandler {
 
     @Override

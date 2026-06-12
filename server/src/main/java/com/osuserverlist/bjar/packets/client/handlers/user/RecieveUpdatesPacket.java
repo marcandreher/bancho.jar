@@ -10,7 +10,10 @@ import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
+import com.osuserverlist.bjar.packets.client.ClientPackets;
+import com.osuserverlist.bjar.packets.client.engine.ClientPacket;
 
+@ClientPacket(ClientPackets.RECEIVE_UPDATES)
 public class RecieveUpdatesPacket implements BanchoPacketHandler {
 
     private final static Logger logger = LoggerFactory.getLogger(RecieveUpdatesPacket.class);

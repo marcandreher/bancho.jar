@@ -15,6 +15,7 @@ import com.osuserverlist.bjar.models.osu.replay.ReplayFrameBundle;
 import com.osuserverlist.bjar.models.osu.replay.ScoreFrame;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.BanchoPacket;
+import com.osuserverlist.bjar.packets.client.engine.ClientPacketRegistry;
 import com.osuserverlist.bjar.packets.client.handlers.UnhandledPacket;
 
 public class BanchoPacketReader {
