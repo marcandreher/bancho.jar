@@ -1,84 +1,22 @@
 package com.osuserverlist.bjar.modules.logger;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import com.osuserverlist.bjar.models.engine.ProductionLevel;
 
-import org.slf4j.Logger;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import lombok.AllArgsConstructor;
 
-import com.moandjiezana.toml.Toml;
-import com.moandjiezana.toml.TomlWriter;
-
+@AllArgsConstructor
 public class LoggerConfiguration {
-    private final Logger logger = LoggerFactory.getLogger(LoggerConfiguration.class);
-    private final File logsConfig = new File(".config/loggers.toml");
+    
+    private final ProductionLevel level;
 
-    public LoggerConfiguration() {
-        if (!logsConfig.exists()) {
-            logsConfig.getParentFile().mkdirs();
+    public void apply() {
+        // Get logback root logger
+        Logger rootLogger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        
+        if(level == ProductionLevel.DEVELOPMENT) {
+            rootLogger.setLevel(Level.DEBUG);
         }
-
-        LoggerFactory.setOnNewLogger(this::syncConfig);
-        syncConfig();
-    }
-
-    private void syncConfig() {
-        Map<String, Boolean> loggers = new LinkedHashMap<>();
-
-        if (logsConfig.exists()) {
-            Toml toml = new Toml().read(logsConfig);
-            Map<String, Object> existing = toml.getTable("loggers") != null
-                    ? toml.getTable("loggers").toMap()
-                    : Map.of();
-            for (Map.Entry<String, Object> entry : existing.entrySet()) {
-                String key = normalizeLoggerKey(entry.getKey());
-                if (!key.isEmpty()) {
-                    loggers.put(key, (Boolean) entry.getValue());
-                }
-            }
-        }
-
-        for (Logger logger : LoggerFactory.getAllLoggers()) {
-            String name = logger.getName();
-            loggers.putIfAbsent(name, true);
-        }
-
-        Map<String, Object> root = new LinkedHashMap<>();
-        root.put("loggers", loggers);
-
-        TomlWriter writer = new TomlWriter();
-        try {
-            writer.write(root, logsConfig);
-        } catch (IOException e) {
-            logger.error("Failed to write logger configuration", e);
-        }
-    }
-
-    public void reload() {
-        syncConfig();
-        Toml toml = new Toml().read(logsConfig);
-
-        Map<String, Object> loggers = toml.getTable("loggers").toMap();
-
-        for (Map.Entry<String, Object> entry : loggers.entrySet()) {
-            boolean enabled = (Boolean) entry.getValue();
-
-            String key = normalizeLoggerKey(entry.getKey());
-            if (key.isEmpty()) {
-                continue;
-            }
-
-            ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory
-                    .getLogger(key);
-            logger.setLevel(enabled ? null : ch.qos.logback.classic.Level.OFF);
-        }
-    }
-
-    private String normalizeLoggerKey(String key) {
-        if (key == null) {
-            return "";
-        }
-        return key.replaceAll("^\"+|\"+$", "");
     }
 }

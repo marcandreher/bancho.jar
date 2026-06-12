@@ -42,7 +42,7 @@
     <logger name="io.javalin.Javalin" level="OFF" additivity="false" />
     <logger name="com.zaxxer.hikari" level="ERROR" additivity="true" />
 
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="ROLLING_FILE" />
     </root>

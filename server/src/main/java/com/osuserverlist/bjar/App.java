@@ -6,10 +6,12 @@ import java.nio.file.Path;
 
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.modules.assets.AchievementDownloader;
 import com.osuserverlist.bjar.modules.assets.DefaultAssetsDownloader;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.Database.ServerTimezone;
+import com.osuserverlist.bjar.modules.logger.LoggerConfiguration;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.redis.Redis;
 import com.osuserverlist.bjar.modules.web.BanchoWebLogger;
@@ -38,7 +40,12 @@ public class App {
 
     public void main() {
         System.out.println(HEADER);
+
         Dotenv dotenv = Dotenv.configure().systemProperties().ignoreIfMissing().load();
+
+        ProductionLevel level = ProductionLevel.fromCode(dotenv.get("LEVEL", "PROD"));
+        LoggerConfiguration loggerConfig = new LoggerConfiguration(level);
+        loggerConfig.apply();
 
         Database db = new Database();
         db.connectToMySQL(dotenv.get("DB_HOST"),
@@ -78,6 +85,10 @@ public class App {
 
             config.requestLogger.http(new BanchoWebLogger());
             ServerWebApp.registerRoutes(config);
+
+            if (level == ProductionLevel.DEVELOPMENT) {
+                config.bundledPlugins.enableRouteOverview("/routes");
+            }
         });
 
         app.start(Integer.parseInt(dotenv.get("PORT")));

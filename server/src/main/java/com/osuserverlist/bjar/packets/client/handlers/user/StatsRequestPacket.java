@@ -16,18 +16,15 @@ public class StatsRequestPacket implements BanchoPacketHandler {
     public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         List<Integer> userIds = reader.readIntList();
 
-        for (int userId : userIds) {
+        userIds.forEach(id -> {
+            if(player.getId() == id) return;
 
-            if (player.getId() == userId) {
-                continue;
-            }
-
-            Player requestedPlayer = Server.getInstance().playerManager.getById(userId);
+            Player requestedPlayer = Server.getInstance().playerManager.getById(id);
 
             if (requestedPlayer != null) {
                 player.sendPacket(new UserStatsPacket(requestedPlayer.getId()));
             }
-        }
+        });
 
         return true;
     }

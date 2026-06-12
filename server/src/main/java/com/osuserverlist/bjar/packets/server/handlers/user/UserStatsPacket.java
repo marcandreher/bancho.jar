@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import com.osuserverlist.bjar.modules.redis.Redis;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
@@ -57,7 +58,8 @@ public class UserStatsPacket implements ServerPacketHandler {
         writer.writeFloat(accuracy);
         writer.writeInt(playerStats.getPlayCount());
         writer.writeLong(playerStats.getTotalScore());
-        writer.writeInt((int) playerStats.getGlobalRank());
+        Long redisRank = Redis.getClient().zrevrank("bjar:leaderboard:" + player.getRealGameMode(), String.valueOf(player.getId()));
+        writer.writeInt((redisRank != null ? Math.toIntExact(redisRank) : -1) + 1);
         writer.writeShort((short) Math.ceil(playerStats.getPp()));
         writer.endPacket();
         return true;

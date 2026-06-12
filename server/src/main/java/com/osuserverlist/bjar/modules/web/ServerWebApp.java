@@ -89,7 +89,7 @@ public class ServerWebApp {
             }
         }
 
-        ctx.status(404).result("Unknown host");
+        ctx.status(404);
     }
 
     private static String normalizeMethod(String method) {

@@ -14,18 +14,26 @@ import io.javalin.http.Handler;
 @Path("/d/{id}")
 @HttpMethod("GET")
 public class OsuDownloadHandler implements Handler {
+
     @Override
     public void handle(@NotNull Context ctx) throws Exception {
-        Integer id = ctx.pathParamAsClass("id", Integer.class).required().get();
+        String mapSetId = ctx.pathParam("id");
+
+        boolean noVideo = mapSetId.endsWith("n");
+        if (noVideo) {
+            mapSetId = mapSetId.substring(0, mapSetId.length() - 1);
+        }
 
         Server server = Server.getInstance();
         String dlEndpoint = server.osuDirectAPI.getDlEndpoint();
 
-        if (dlEndpoint == null) {
+        if (dlEndpoint == null || dlEndpoint.isBlank()) {
             ctx.status(503).result("Download endpoint not configured.");
             return;
         }
 
-        ctx.redirect(String.format("%s/%d", dlEndpoint, id));
+        String queryStr = mapSetId + "?n=" + (noVideo ? 0 : 1);
+
+        ctx.redirect(dlEndpoint + "/" + queryStr);
     }
 }
