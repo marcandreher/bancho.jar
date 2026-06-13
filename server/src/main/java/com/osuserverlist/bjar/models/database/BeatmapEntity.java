@@ -2,12 +2,11 @@ package com.osuserverlist.bjar.models.database;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.server.Server;
 
 import lombok.Data;
 import me.skiincraft.api.ousu.entity.beatmap.Beatmap;
@@ -36,6 +35,10 @@ public class BeatmapEntity {
     private float od;
     private float hp;
     private float diff;
+
+    public String toEmbed() {
+        return String.format("[https://%s/b/%s %s - %s [%s]]", Server.getInstance().domain, id, artist, title, version);
+    }
 
     public static BeatmapEntity fromBeatmap(Beatmap beatmap) {
         BeatmapEntity beatmapEntity = new BeatmapEntity();

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.config.ServerConfiguration;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
@@ -30,6 +31,7 @@ public class Server {
         return instance;
     }
 
+    public String domain;
     public Player botPlayer;
     public OsuAPIHandler osuAPIHandler;
     public ServerConfiguration config = ServerConfiguration.load();
@@ -48,6 +50,8 @@ public class Server {
 
         instance.osuDirectAPI.setSearchEndpoint(config.get("DIRECT_SEARCH"));
         instance.osuDirectAPI.setDlEndpoint(config.get("DIRECT_DL"));
+
+        instance.domain = config.get("DOMAIN");
 
         instance.scheduler.scheduleAtFixedRate(new AutoDisconnectTask(), 0, 60, TimeUnit.SECONDS);
         instance.scheduler.scheduleAtFixedRate(new SendChannelInfoTask(), 0, 8, TimeUnit.SECONDS);
@@ -70,6 +74,7 @@ public class Server {
             logger.error("Failed to initialize server", e);
         }
 
+        BanchoCommandRegistry.registerAnnotatedHandlers("com.osuserverlist.bjar.commands");
         return instance;
     }
 

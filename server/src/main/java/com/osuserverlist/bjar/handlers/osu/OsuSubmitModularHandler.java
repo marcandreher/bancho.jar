@@ -17,6 +17,7 @@ import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
 import com.osuserverlist.bjar.models.osu.GameMode;
+import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.models.osu.SubmitResponse;
 import com.osuserverlist.bjar.modules.achievements.MevlEvaluator;
 import com.osuserverlist.bjar.modules.calculations.IPerformanceCalculator;
@@ -31,6 +32,7 @@ import com.osuserverlist.bjar.modules.redis.Redis;
 import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
+import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
 import com.osuserverlist.bjar.repos.AchievementRepository;
 import com.osuserverlist.bjar.repos.ScoreRepository;
@@ -130,8 +132,19 @@ public class OsuSubmitModularHandler implements Handler {
             }
 
             int rank = scoreRepo.getRankOnBeatmap(beatmap.getMd5(), realGameMode.getValue(), s.getPlayerId(), s.getScore());
+            
+            if(rank == 1 && Privileges.fromInt(p.getServerPrivileges()).contains(Privileges.UNRESTRICTED)) {
+                String ann = String.format(
+                    "\u0001ACTION achieved #1 on %s with %.2f%% for %s.",
+                    beatmap.toEmbed(),
+                    s.getAccuracy(),
+                    s.getPp()
+                );
 
-            // TODO: Announce on #1
+                server.channelManager.get("#announce").getPlayers().forEach(pl -> {
+                    pl.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), ann, "#announce", server.botPlayer.getId()));
+                });
+            }
 
             // Weighted PP: only meaningful when this is a new personal best.
             // Using status=1 is safe here because we just finished demoting the old PB.
