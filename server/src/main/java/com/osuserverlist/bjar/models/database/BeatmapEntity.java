@@ -3,6 +3,7 @@ package com.osuserverlist.bjar.models.database;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
@@ -47,9 +48,8 @@ public class BeatmapEntity {
         beatmapEntity.version = beatmap.getVersion();
         beatmapEntity.creator = beatmap.getCreatorName();
         beatmapEntity.filename = getFileName(beatmap);
-        beatmapEntity.lastUpdate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        .withZone(ZoneOffset.UTC)
-        .format(Instant.parse(beatmap.getLastUpdateDate().toString()));
+        beatmapEntity.lastUpdate = OffsetDateTime.parse(beatmap.getLastUpdateDate().toString())
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         beatmapEntity.totalLength = beatmap.getTotalLength();
         beatmapEntity.maxCombo = beatmap.getMaxCombo();
         beatmapEntity.frozen = false;

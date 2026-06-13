@@ -46,6 +46,18 @@ public class UserStatsPacket implements ServerPacketHandler {
             accuracy /= 100.0f;
         }
 
+        int pp = 0;
+        long rankedScore = 0;
+        long totalScore = 0;
+        if(playerStats.getPp() > Short.MAX_VALUE) {
+            rankedScore = (int) playerStats.getPp();
+            totalScore = (int) playerStats.getPp();
+        } else {
+            pp = (int) playerStats.getPp();
+            rankedScore = playerStats.getRankedScore();
+            totalScore = playerStats.getTotalScore();
+        }
+
         writer.startPacket(ServerPackets.USER_STATS.getValue());
         writer.writeInt(player.getId());
         writer.writeByte((byte) (player.getAction() & 0xFF));
@@ -54,13 +66,13 @@ public class UserStatsPacket implements ServerPacketHandler {
         writer.writeInt((short) player.getMods());
         writer.writeByte((byte) (player.getGameMode()));
         writer.writeInt(player.getBeatmapId());
-        writer.writeLong(playerStats.getRankedScore());
+        writer.writeLong(rankedScore);
         writer.writeFloat(accuracy);
         writer.writeInt(playerStats.getPlayCount());
-        writer.writeLong(playerStats.getTotalScore());
+        writer.writeLong(totalScore);
         Long redisRank = Redis.getClient().zrevrank("bjar:leaderboard:" + player.getRealGameMode(), String.valueOf(player.getId()));
         writer.writeInt((redisRank != null ? Math.toIntExact(redisRank) : -1) + 1);
-        writer.writeShort((short) Math.ceil(playerStats.getPp()));
+        writer.writeShort((short) Math.ceil(pp));
         writer.endPacket();
         return true;
     }

@@ -17,7 +17,7 @@ public class ModeStats {
     private long totalScore = 0;
     private int maxCombo = 0;
     private long globalRank = 0;
-    private double pp = 0;
+    private int pp = 0;
     private int totalHits = 0;
 
     public ModeStats() {
@@ -51,7 +51,7 @@ public class ModeStats {
         stats.setRankedScore(modeResult.getLong("rscore"));
         stats.setAccuracy(modeResult.getFloat("acc"));
         stats.setMaxCombo(modeResult.getInt("max_combo"));
-        stats.setPp(modeResult.getShort("pp"));
+        stats.setPp(modeResult.getInt("pp"));
         stats.setTotalHits(modeResult.getInt("total_hits"));
         Long rank = Redis.getClient().zrevrank(
                 "bjar:leaderboard:" + i,
@@ -86,7 +86,7 @@ public class ModeStats {
         } else {
             accuracy = calculateAccuracy((float) s.getAccuracy(), accuracy);
         }
-        this.pp = pp;
+        this.pp = (int) pp;
     }
 
     private float calculateAccuracy(float scoreAcc, float totalAcc) {

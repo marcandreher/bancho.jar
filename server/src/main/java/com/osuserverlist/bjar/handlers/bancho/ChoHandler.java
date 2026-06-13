@@ -50,14 +50,16 @@ public class ChoHandler implements Handler {
         PacketSender packetSender = new PacketSender();
         BanchoPacketWriter packetWriter = packetSender.getPacketWriter();
 
-        if (Server.getInstance().playerManager.get(osuToken) == null) {
+        Server server = Server.getInstance();
+
+        if (server.playerManager.get(osuToken) == null) {
             packetWriter.startPacket(ServerPackets.SWITCH_SERVER.getValue());
             packetWriter.endPacket();
             ctx.status(HttpStatus.OK).result(packetSender.toBytes());
             return;
         }
 
-        Player player = Server.getInstance().playerManager.get(osuToken);
+        Player player = server.playerManager.get(osuToken);
 
         byte[] requestBody = ctx.bodyAsBytes();
         if (requestBody.length > 0) {
