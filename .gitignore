@@ -8,5 +8,5 @@
 # IDEs
 /.idea
 /.vscode
-/.github
+/.github/modernize
 server/dependency-reduced-pom.xml
