@@ -18,7 +18,6 @@ public class OsuNativePerformanceCalculator implements IPerformanceCalculator {
     @Override
     public double calculate(Score s, byte[] mapData) {
         Beatmap beatmap = Beatmap.fromBytes(mapData);
-
         Ruleset ruleset = Ruleset.fromId(s.getMode());
         var ppCalculator = PerformanceCalculatorFactory.create(Ruleset.fromId(s.getMode()));
         var diffCalculator = DifficultyCalculatorFactory.create(ruleset, beatmap);

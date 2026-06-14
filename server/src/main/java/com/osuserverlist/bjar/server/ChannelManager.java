@@ -26,8 +26,16 @@ public class ChannelManager {
         while (channelRs.next()) {
             ChannelEntity defaultChannel = ChannelEntity.fromResultSet(channelRs);
         
-            BanchoChannel channel = new BanchoChannel(String.valueOf(defaultChannel.getId()), defaultChannel.getName(),
-                    defaultChannel.getTopic(), defaultChannel.isAutoJoin(), false, defaultChannel.getReadPriv(), defaultChannel.getWritePriv(), true);
+            BanchoChannel channel = BanchoChannel.builder()
+                    .id(String.valueOf(defaultChannel.getId()))
+                    .name(defaultChannel.getName())
+                    .alias(defaultChannel.getAlias())
+                    .description(defaultChannel.getTopic())
+                    .autoJoin(defaultChannel.isAutoJoin())
+                    .readPriv(defaultChannel.getReadPriv())
+                    .writePriv(defaultChannel.getWritePriv())
+                    .visible(true)
+                    .build();
             if(channel.getName().equalsIgnoreCase("#lobby")) {
                 channel.setVisible(false);
             }

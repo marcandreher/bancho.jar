@@ -45,7 +45,7 @@ public class StartSpectatePacket implements BanchoPacketHandler {
 
             if (oldChannel != null) {
                 server.channelManager.forceLeaveChannel(oldChannelName, player);
-                player.sendPacket(new ChannelRevokedPacket(oldChannelName));
+                player.sendPacket(new ChannelRevokedPacket(oldChannel.getAlias()));
 
                 if (currentHost.getSpectators().isEmpty()) {
                     server.channelManager.forceLeaveChannel(oldChannelName, currentHost);
@@ -60,23 +60,21 @@ public class StartSpectatePacket implements BanchoPacketHandler {
         BanchoChannel channel = server.channelManager.get(channelName);
 
         if (channel == null) {
-            channel = new BanchoChannel(
-                    channelName,
-                    channelName,
-                    "Spectator channel for " + newHost.getUsername(),
-                    false,
-                    false,
-                    0,
-                    0,
-                    false);
+            channel = BanchoChannel.builder().id(channelName).alias("#spectator").name(channelName)
+                    .description("Spectator channel for " + newHost.getUsername())
+                    .autoJoin(false)
+                    .readPriv(0)
+                    .writePriv(0)
+                    .visible(false)
+                    .build();
 
             server.channelManager.add(channel);
 
             server.channelManager.forceJoinChannel(channelName, newHost);
-            newHost.sendPacket(new ChannelJoinSuccessPacket(channelName));
+            newHost.sendPacket(new ChannelJoinSuccessPacket(channel.getAlias()));
             newHost.sendPacket(
                     new ChannelInfoPacket(
-                            channelName,
+                            channel.getAlias(),
                             channel.getDescription(),
                             (short) channel.getPlayerCount()));
 
@@ -85,10 +83,10 @@ public class StartSpectatePacket implements BanchoPacketHandler {
         // Join spectator channel
         server.channelManager.forceJoinChannel(channelName, player);
 
-        player.sendPacket(new ChannelJoinSuccessPacket(channelName));
+        player.sendPacket(new ChannelJoinSuccessPacket(channel.getAlias()));
         player.sendPacket(
                 new ChannelInfoPacket(
-                        channelName,
+                        channel.getAlias(),
                         channel.getDescription(),
                         (short) channel.getPlayerCount()));
 

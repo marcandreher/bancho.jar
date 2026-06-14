@@ -16,74 +16,141 @@ import me.skiincraft.api.ousu.exceptions.BeatmapException;
 
 public class OsuAPIHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(OsuAPIHandler.class);
+
     private final OusuAPI osuAPI;
-    private final static Logger logger = LoggerFactory.getLogger(OsuAPIHandler.class);
 
     public OsuAPIHandler(String apiKey) {
         this.osuAPI = new OusuAPI(apiKey);
     }
 
-    public BeatmapEntity getBeatmapBySetId(MySQL mysql, long beatmapSetId) throws SQLException {
-        ResultSet mapResult = mysql.query("SELECT * FROM `maps` WHERE `set_id` = ?", beatmapSetId).executeQuery();
+    public BeatmapEntity getBeatmapById(MySQL mysql, long beatmapId) throws SQLException {
+        BeatmapEntity cachedMap = getMapById(mysql, beatmapId);
 
-        if (!mapResult.next()) {
-            Beatmap osuBeatmap = osuAPI.getBeatmap(beatmapSetId).get();
-            BeatmapEntity map = BeatmapEntity.fromBeatmap(osuBeatmap);
-
-            insertInDb(mysql, map);
-            return map;
+        if (cachedMap != null) {
+            return cachedMap;
         }
 
-        BeatmapEntity map = BeatmapEntity.fromResultSet(mapResult);
+        Beatmap osuBeatmap = osuAPI.getBeatmap(beatmapId).get();
 
-        return map;
+        cacheMapset(mysql, osuBeatmap.getBeatmapSetId());
+
+        BeatmapEntity map = getMapById(mysql, beatmapId);
+
+        return map != null
+                ? map
+                : BeatmapEntity.fromBeatmap(osuBeatmap);
     }
 
     public BeatmapEntity getBeatmapByHash(MySQL mysql, String beatmapHash) throws SQLException {
-        ResultSet mapResult = mysql.query("SELECT * FROM `maps` WHERE `md5` = ?", beatmapHash).executeQuery();
+        BeatmapEntity cachedMap = getMapByHash(mysql, beatmapHash);
 
-        if (!mapResult.next()) {
-            Beatmap osuBeatmap;
-            try {
-                osuBeatmap = osuAPI.getBeatmapByChecksum(beatmapHash).get();
-            }catch(BeatmapException e) {
-                return null;
-            }
-            BeatmapEntity map = BeatmapEntity.fromBeatmap(osuBeatmap);
-
-            ResultSet mapSetQuery = mysql.query("SELECT * FROM `mapsets` WHERE `id` = ?", map.getSetId()).executeQuery();
-
-            if(!mapSetQuery.next()) {
-                long queryStart = System.currentTimeMillis();
-                int beatmapCount = 0;
-                BeatmapSet beatmapSetRequest = osuAPI.getBeatmapSet(map.getSetId()).get();
-                for(Beatmap beatmap : beatmapSetRequest.getAsList()) {
-                    BeatmapEntity beatmapSetMap = BeatmapEntity.fromBeatmap(beatmap);
-                    insertInDb(mysql, beatmapSetMap);
-                    beatmapCount++;
-                }
-
-                mysql.exec("INSERT INTO `mapsets`(`id`, `last_osuapi_check`) VALUES (?,CURRENT_TIMESTAMP)", map.getSetId());
-
-                logger.debug("Fetched beatmap set <{}> with <{}> beatmaps in <{}ms>", map.getSetId(), beatmapCount, System.currentTimeMillis() - queryStart);
-            }
-
-            return map;
+        if (cachedMap != null) {
+            return cachedMap;
         }
 
-        BeatmapEntity map = BeatmapEntity.fromResultSet(mapResult);
+        Beatmap osuBeatmap;
 
-        return map;
+        try {
+            osuBeatmap = osuAPI.getBeatmapByChecksum(beatmapHash).get();
+        } catch (BeatmapException e) {
+            return null;
+        }
+
+        cacheMapset(mysql, osuBeatmap.getBeatmapSetId());
+
+        BeatmapEntity map = getMapByHash(mysql, beatmapHash);
+
+        return map != null
+                ? map
+                : BeatmapEntity.fromBeatmap(osuBeatmap);
     }
 
-    private void insertInDb(MySQL mysql, BeatmapEntity map) throws SQLException {
+    private BeatmapEntity getMapById(MySQL mysql, long beatmapId) throws SQLException {
+        ResultSet result = mysql.query(
+                "SELECT * FROM `maps` WHERE `id` = ?",
+                beatmapId
+        ).executeQuery();
+
+        return result.next()
+                ? BeatmapEntity.fromResultSet(result)
+                : null;
+    }
+
+    private BeatmapEntity getMapByHash(MySQL mysql, String md5) throws SQLException {
+        ResultSet result = mysql.query(
+                "SELECT * FROM `maps` WHERE `md5` = ?",
+                md5
+        ).executeQuery();
+
+        return result.next()
+                ? BeatmapEntity.fromResultSet(result)
+                : null;
+    }
+
+    private boolean isMapsetCached(MySQL mysql, long setId) throws SQLException {
+        ResultSet result = mysql.query(
+                "SELECT 1 FROM `mapsets` WHERE `id` = ?",
+                setId
+        ).executeQuery();
+
+        return result.next();
+    }
+
+    private void cacheMapset(MySQL mysql, long setId) throws SQLException {
+        if (isMapsetCached(mysql, setId)) {
+            return;
+        }
+
+        long startTime = System.currentTimeMillis();
+
+        BeatmapSet beatmapSet = osuAPI.getBeatmapSet(setId).get();
+
+        int beatmapCount = 0;
+
+        for (Beatmap beatmap : beatmapSet.getAsList()) {
+            insertMap(mysql, BeatmapEntity.fromBeatmap(beatmap));
+            beatmapCount++;
+        }
+
+        mysql.exec(
+                "INSERT INTO `mapsets` (`id`, `last_osuapi_check`) VALUES (?, CURRENT_TIMESTAMP)",
+                setId
+        );
+
+        logger.debug(
+                "Fetched beatmap set <{}> with <{}> beatmaps in <{}ms>",
+                setId,
+                beatmapCount,
+                System.currentTimeMillis() - startTime
+        );
+    }
+
+    private void insertMap(MySQL mysql, BeatmapEntity map) throws SQLException {
         mysql.exec(
                 "INSERT INTO `maps` (`id`, `set_id`, `status`, `md5`, `artist`, `title`, `version`, `creator`, `filename`, `last_update`, `total_length`, `max_combo`, `frozen`, `plays`, `passes`, `mode`, `bpm`, `cs`, `ar`, `od`, `hp`, `diff`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                map.getId(), map.getSetId(), map.getStatus(), map.getMd5(), map.getArtist(), map.getTitle(),
-                map.getVersion(), map.getCreator(), map.getFilename(), map.getLastUpdate(), map.getTotalLength(),
-                map.getMaxCombo(), map.isFrozen(), map.getPlays(), map.getPasses(), map.getMode(), map.getBpm(),
-                map.getCs(), map.getAr(), map.getOd(), map.getHp(), map.getDiff());
-
+                map.getId(),
+                map.getSetId(),
+                map.getStatus(),
+                map.getMd5(),
+                map.getArtist(),
+                map.getTitle(),
+                map.getVersion(),
+                map.getCreator(),
+                map.getFilename(),
+                map.getLastUpdate(),
+                map.getTotalLength(),
+                map.getMaxCombo(),
+                map.isFrozen(),
+                map.getPlays(),
+                map.getPasses(),
+                map.getMode(),
+                map.getBpm(),
+                map.getCs(),
+                map.getAr(),
+                map.getOd(),
+                map.getHp(),
+                map.getDiff()
+        );
     }
-
 }

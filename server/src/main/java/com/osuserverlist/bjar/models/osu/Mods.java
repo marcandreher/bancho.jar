@@ -90,6 +90,15 @@ public enum Mods {
             "MR"
     };
 
+    public static Mods fromAbbreviation(String abbreviation) {
+        for (int i = 0; i < MOD_NAMES.length; i++) {
+            if (MOD_NAMES[i].equalsIgnoreCase(abbreviation)) {
+                return Mods.values()[i + 1]; // +1 because Mods.None is at index 0
+            }
+        }
+        throw new IllegalArgumentException("Invalid mod abbreviation: " + abbreviation);
+    }
+
     public static String[] convertMods(int mods) {
         ArrayList<String> result = new ArrayList<>(8);
 

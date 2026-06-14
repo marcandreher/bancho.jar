@@ -26,7 +26,7 @@ public final class OsuMapDownloader {
         }
 
         Request request = new Request.Builder()
-                .url("https://osu.direct/api/osu/" + mapId)
+                .url("https://osu.ppy.sh/osu/" + mapId)
                 .build();
 
         try (Response response = CLIENT.newCall(request).execute()) {

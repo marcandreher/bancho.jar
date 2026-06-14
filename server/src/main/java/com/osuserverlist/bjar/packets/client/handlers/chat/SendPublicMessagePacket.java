@@ -30,9 +30,17 @@ public class SendPublicMessagePacket implements BanchoPacketHandler {
         logger.info("Message from <{}>: <{}> to <{}>", player.getUsername(), message, target);
 
         BanchoChannel channel = Server.getInstance().channelManager.get(target);
-        if (channel == null) {
+        if (channel == null && !target.equals("#spectator")) {
             logger.warn("Channel not found for target: " + target);
             return true;
+        }
+
+        if(target.equals("#spectator")) {
+            channel = Server.getInstance().channelManager.get("#spec_" + player.getSpectating().getId());
+            if(channel == null) {
+                logger.warn("Player is not spectating anyone but sent a message to #spectator");
+                return true;
+            }
         }
 
         List<Player> players = new ArrayList<>(channel.getPlayers());
@@ -44,7 +52,7 @@ public class SendPublicMessagePacket implements BanchoPacketHandler {
                 return; // Don't send the message back to the sender
             user.sendPacket(new SendMessagePacket(player.getUsername(), message, target, player.getId()));
         });
-        
+
         BanchoCommandProcessor.processCommand(player, message, target, players);
 
         return true;

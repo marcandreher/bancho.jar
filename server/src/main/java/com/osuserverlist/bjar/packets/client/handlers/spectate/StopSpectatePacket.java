@@ -41,10 +41,10 @@ public class StopSpectatePacket implements BanchoPacketHandler {
 
         if (channel != null) {
             server.channelManager.forceLeaveChannel(channelName, player);
-            player.sendPacket(new ChannelRevokedPacket(channelName));
+            player.sendPacket(new ChannelRevokedPacket(channel.getAlias()));
 
             ChannelInfoPacket infoPacket = new ChannelInfoPacket(
-                    channelName,
+                    channel.getAlias(),
                     channel.getDescription(),
                     (short) channel.getPlayerCount());
 
@@ -59,9 +59,9 @@ public class StopSpectatePacket implements BanchoPacketHandler {
 
             if (host.getSpectators().isEmpty()) {
                 server.channelManager.forceLeaveChannel(channelName, host);
-                host.sendPacket(new ChannelRevokedPacket(channelName));
+                host.sendPacket(new ChannelRevokedPacket(channel.getAlias()));
                 server.channelManager.removeChannel(channelName);
-                player.sendPacket(new ChannelRevokedPacket(channelName));
+                player.sendPacket(new ChannelRevokedPacket(channel.getAlias()));
 
                 // TODO only leaves channel still in channel list
             }
