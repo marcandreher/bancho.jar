@@ -20,8 +20,8 @@
     - [x] Privileges
 - [x] Bots
     - [x] Bot online Handling
-    - [ ] Commands
-    - [ ] Announce on #1
+    - [x] Commands
+    - [x] Announce on #1
 - [ ] Multiplayer
 - [x] Spectating
 - [ ] Restriction
@@ -35,7 +35,6 @@
 - [ ] API
 - [ ] Plugin Framework
 - [x] Asset downloading
-- [ ] Webhooks
 - [x] Configuration
     - [x] Welcome message and metadata
     - [x] Seasonal & Main Menu Icon

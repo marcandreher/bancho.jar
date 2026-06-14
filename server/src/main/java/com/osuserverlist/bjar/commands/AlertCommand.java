@@ -1,0 +1,29 @@
+package com.osuserverlist.bjar.commands;
+
+import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.models.osu.Privileges;
+import com.osuserverlist.bjar.modules.commands.BanchoCommand;
+import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
+import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
+import com.osuserverlist.bjar.packets.server.handlers.util.NotificationPacket;
+import com.osuserverlist.bjar.server.Server;
+
+@BanchoCommand(name = "!alert", description = "Alert all players with a message", requiredPrivileges = Privileges.ADMINISTRATOR)
+public class AlertCommand extends BanchoCommandHandler {
+    
+    @Override
+    public void handle(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
+        
+        if(args.length == 0) {
+            sendBotMessage(commandInfos, "Usage: !alert <message>");
+            return;
+        }
+
+        String message = String.join(" ", args);
+
+        Server.getInstance().playerManager.getAll().forEach(player -> {
+            player.sendPacket(new NotificationPacket(message));
+        });
+    }
+
+}

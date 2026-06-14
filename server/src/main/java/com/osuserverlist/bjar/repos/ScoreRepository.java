@@ -34,7 +34,7 @@ public class ScoreRepository {
     }
 
     public int getRankOnBeatmap(String beatmapMd5, int mode, int playerId, long score) throws SQLException {
-        ResultSet rankResult = mysql.query(GET_RANK_FOR_MAP_QUERY, beatmapMd5, mode, playerId, score)
+        ResultSet rankResult = mysql.query(GET_RANK_FOR_MAP_QUERY, beatmapMd5, mode, score)
                 .executeQuery();
         if (rankResult.next()) {
             return rankResult.getInt("osu_rank");
@@ -66,7 +66,7 @@ public class ScoreRepository {
 
     private final static String GET_RANK_FOR_MAP_QUERY = "SELECT COUNT(*) + 1 AS osu_rank " +
             "FROM (SELECT MAX(score) AS best_score FROM scores " +
-            "      WHERE map_md5 = ? AND mode = ? AND userid != ? AND status = 1 " +
+            "      WHERE map_md5 = ? AND mode = ? AND status = 1 " +
             "      GROUP BY userid) AS best_scores " +
             "WHERE best_score > ?";
 

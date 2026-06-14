@@ -135,14 +135,14 @@ public class OsuSubmitModularHandler implements Handler {
             
             if(rank == 1 && Privileges.fromInt(p.getServerPrivileges()).contains(Privileges.UNRESTRICTED)) {
                 String ann = String.format(
-                    "\u0001ACTION achieved #1 on %s with %.2f%% for %s.",
+                    "\u0001ACTION achieved #1 on %s with %.2f%% for %.2fpp",
                     beatmap.toEmbed(),
-                    s.getAccuracy(),
+                    s.getAccuracy() * 100.0,
                     s.getPp()
                 );
 
                 server.channelManager.get("#announce").getPlayers().forEach(pl -> {
-                    pl.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), ann, "#announce", server.botPlayer.getId()));
+                    pl.sendPacket(new SendMessagePacket(p.getUsername(), ann, "#announce", p.getId()));
                 });
             }
 

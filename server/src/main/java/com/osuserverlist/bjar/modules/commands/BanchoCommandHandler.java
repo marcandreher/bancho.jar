@@ -1,16 +1,19 @@
 package com.osuserverlist.bjar.modules.commands;
 
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
 import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
 import com.osuserverlist.bjar.server.Server;
 
 public abstract class BanchoCommandHandler {
     
-    public abstract void handle(Player player, String target, String[] args);
+    public abstract void handle(Player sender, PlayerCommandInfo[] commandInfos, String[] args);
 
-    public void sendBotMessage(Player player, String message, String target) {
+    public void sendBotMessage(PlayerCommandInfo[] commandInfos, String message) {
         Server server = Server.getInstance();
-        player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), message, target, server.botPlayer.getId()));
+        for (PlayerCommandInfo info : commandInfos) {
+            info.player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), message, info.target, server.botPlayer.getId()));
+        }
     }
 
 }

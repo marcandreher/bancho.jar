@@ -1,6 +1,7 @@
 package com.osuserverlist.bjar.modules.commands;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,6 +46,10 @@ public class BanchoCommandRegistry {
             });
             logger.debug("Registered {} bancho commands from package: {}", count.get(), packageName);
         }
+    }
+
+    public static Collection<CommandInfo> getAllCommands() {
+        return commandMap.values();
     }
 
     public static CommandInfo getCommand(String name) {
