@@ -19,17 +19,17 @@ jobs:
           java-version: 25
 
       - name: Build shaded JAR
-        run: mvn -B clean package
+        run: cd server && mvn -B clean package
 
       - name: Create standalone ZIP
         run: |
           mkdir standalone
 
           # Copy shaded JAR
-          cp target/server.jar standalone/app.jar
+          cp server/target/server.jar standalone/app.jar
 
           # Copy additional files
-          cp .env.example standalone/.env
+          cp server/.env.example standalone/.env
           cp README.md standalone/
 
           cd standalone
