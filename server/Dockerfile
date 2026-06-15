@@ -1,31 +1,38 @@
-# Build stage
-FROM maven:3.9-eclipse-temurin-25 AS build
+# syntax=docker/dockerfile:1.7
+FROM eclipse-temurin:25-jdk AS build
 
 WORKDIR /app
 
-ENV MAVEN_OPTS="-Djava.net.preferIPv4Stack=true -Xmx512m"
+COPY gradlew .
+COPY gradlew.bat .
+COPY gradle ./gradle
+COPY build.gradle.kts settings.gradle gradle.properties* ./
 
-COPY pom.xml .
-RUN mvn -B dependency:resolve
-RUN mvn -B dependency:resolve-plugins
+RUN chmod +x gradlew
+
+# Cache dependencies (resolve only, don't compile yet)
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew dependencies || true
 
 COPY src ./src
-RUN mvn -B package -DskipTests -o
+
+# Build jar + copy runtime deps - cache gradle home AND build output dir, daemon enabled
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
+    --mount=type=cache,target=/app/build,sharing=locked \
+    ./gradlew jar copyDeps --build-cache && \
+    cp /app/build/libs/server.jar /app/server.jar && \
+    rm -rf /app/lib && cp -r /app/build/libs/lib /app/lib
 
 # Runtime stage
 FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    libicu78 \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN mkdir -p /app/logs /app/.config /app/data
 
-COPY --from=build /app/target/server.jar ./target/server.jar
+COPY --from=build /app/server.jar ./server.jar
+COPY --from=build /app/lib ./lib
 
 ENV JAVA_OPTS="--enable-native-access=ALL-UNNAMED"
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar target/server.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -cp 'server.jar:lib/*' com.osuserverlist.bjar.App"]

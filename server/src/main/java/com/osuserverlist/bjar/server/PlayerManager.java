@@ -8,13 +8,18 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
+import org.slf4j.Logger;
+
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserQuitPacket;
 
 public class PlayerManager {
+    private static final Logger logger = LoggerFactory.getLogger(PlayerManager.class);
     private final Map<String, Player> onlinePlayers = new ConcurrentHashMap<>();
     private final Map<String, Player> apiIdentMap = new ConcurrentHashMap<>();
 
@@ -62,6 +67,16 @@ public class PlayerManager {
 
         onlinePlayers.remove(player.getOsuToken());
         apiIdentMap.remove(player.getApiIdent());
+    }
+
+    public void addPriv(Player player, Privileges priv) {
+        player.setServerPrivileges(player.getServerPrivileges() | priv.getValue());
+        disconnect(player);
+    }
+
+    public void removePriv(Player player, Privileges priv) {
+        player.setServerPrivileges(player.getServerPrivileges() & ~priv.getValue());
+        disconnect(player);
     }
 
     public Player getBotPlayer(MySQL mysql, int id) throws SQLException {

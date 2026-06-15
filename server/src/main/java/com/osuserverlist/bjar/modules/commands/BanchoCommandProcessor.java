@@ -27,7 +27,7 @@ public class BanchoCommandProcessor {
             return;
         }
 
-        if (sender.getServerPrivileges() < commandInfo.requiredPrivileges) {
+        if (sender.getServerPrivileges() < commandInfo.requiredPrivileges && commandInfo.requiredPrivileges != 0) {
             recievers.forEach(player -> {
                 player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(),
                         "You don't have permission to use this command.", target, server.botPlayer.getId()));

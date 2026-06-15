@@ -51,6 +51,16 @@ public enum Privileges {
         return result;
     }
 
+    public static Privileges fromName(String name) {
+        for (Privileges priv : values()) {
+            if (priv.name().equalsIgnoreCase(name)) {
+                return priv;
+            }
+        }
+
+        return null;
+    }
+
     public static int fromPrivs(Privileges... privs) {
         int result = 0;
 

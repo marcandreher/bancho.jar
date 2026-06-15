@@ -1,4 +1,4 @@
-name: Java CI with Maven
+name: Java CI with Gradle
 
 on:
   push:
@@ -10,9 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      MAVEN_OPTS: "-Djava.net.preferIPv4Stack=true -Xmx512m"
-
     steps:
       - uses: actions/checkout@v4
 
@@ -21,16 +18,14 @@ jobs:
         with:
           java-version: '25'
           distribution: 'temurin'
-          cache: maven
 
-      - name: Resolve dependencies
-        working-directory: server
-        run: mvn -B dependency:resolve
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
-      - name: Resolve plugins
+      - name: Make wrapper executable
         working-directory: server
-        run: mvn -B dependency:resolve-plugins
+        run: chmod +x gradlew
 
       - name: Build JAR
         working-directory: server
-        run: mvn -B package -DskipTests
+        run: ./gradlew shadowJar

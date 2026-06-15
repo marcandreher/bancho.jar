@@ -10,3 +10,5 @@
 /.vscode
 /.github/modernize
 server/dependency-reduced-pom.xml
+server/.gradle/
+server/build
