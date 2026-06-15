@@ -18,9 +18,7 @@ jobs:
         with:
           java-version: '25'
           distribution: 'temurin'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+          cache: 'gradle'
 
       - name: Make wrapper executable
         working-directory: server
@@ -28,4 +26,4 @@ jobs:
 
       - name: Build JAR
         working-directory: server
-        run: ./gradlew shadowJar
+        run: ./gradlew shadowJar --no-daemon
