@@ -75,6 +75,8 @@ dependencies {
 }
 
 tasks.jar {
+    archiveFileName.set("server.jar")
+
     manifest {
         attributes["Main-Class"] = "com.osuserverlist.bjar.App"
         attributes["Class-Path"] = configurations.runtimeClasspath.get()

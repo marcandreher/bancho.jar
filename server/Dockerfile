@@ -3,36 +3,34 @@ FROM eclipse-temurin:25-jdk AS build
 
 WORKDIR /app
 
-COPY gradlew .
-COPY gradlew.bat .
-COPY gradle ./gradle
-COPY build.gradle.kts settings.gradle gradle.properties* ./
+COPY gradlew gradlew.bat ./
+COPY gradle/ gradle/
+COPY build.gradle.kts settings.gradle ./
 
 RUN chmod +x gradlew
 
-# Cache dependencies (resolve only, don't compile yet)
 RUN --mount=type=cache,target=/root/.gradle \
     ./gradlew dependencies || true
 
-COPY src ./src
+COPY src/ src/
 
-# Build jar + copy runtime deps - cache gradle home AND build output dir, daemon enabled
-RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
-    --mount=type=cache,target=/app/build,sharing=locked \
-    ./gradlew jar copyDeps --build-cache && \
-    cp /app/build/libs/server.jar /app/server.jar && \
-    rm -rf /app/lib && cp -r /app/build/libs/lib /app/lib
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew jar copyDeps
 
-# Runtime stage
 FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
-RUN mkdir -p /app/logs /app/.config /app/data
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    libicu78 \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /app/server.jar ./server.jar
-COPY --from=build /app/lib ./lib
+RUN mkdir -p logs .config data
+
+COPY --from=build /app/build/libs/server.jar ./server.jar
+COPY --from=build /app/build/libs/lib ./lib
 
 ENV JAVA_OPTS="--enable-native-access=ALL-UNNAMED"
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -cp 'server.jar:lib/*' com.osuserverlist.bjar.App"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -cp 'server.jar:lib/*' com.osuserverlist.bjar.App"]

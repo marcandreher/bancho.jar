@@ -2,6 +2,8 @@ package com.osuserverlist.bjar.modules.osu;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 
@@ -17,6 +19,8 @@ import me.skiincraft.api.ousu.exceptions.BeatmapException;
 public class OsuAPIHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(OsuAPIHandler.class);
+
+    private static final Map<Long, Object> MAPSET_LOCKS = new ConcurrentHashMap<>();
 
     private final OusuAPI osuAPI;
 
@@ -98,32 +102,40 @@ public class OsuAPIHandler {
     }
 
     private void cacheMapset(MySQL mysql, long setId) throws SQLException {
-        if (isMapsetCached(mysql, setId)) {
-            return;
+        Object lock = MAPSET_LOCKS.computeIfAbsent(setId, k -> new Object());
+
+        synchronized (lock) {
+            try {
+                if (isMapsetCached(mysql, setId)) {
+                    return;
+                }
+
+                long startTime = System.currentTimeMillis();
+
+                BeatmapSet beatmapSet = osuAPI.getBeatmapSet(setId).get();
+
+                int beatmapCount = 0;
+
+                for (Beatmap beatmap : beatmapSet.getAsList()) {
+                    insertMap(mysql, BeatmapEntity.fromBeatmap(beatmap));
+                    beatmapCount++;
+                }
+
+                mysql.exec(
+                        "INSERT INTO `mapsets` (`id`, `last_osuapi_check`) VALUES (?, CURRENT_TIMESTAMP)",
+                        setId
+                );
+
+                logger.debug(
+                        "Fetched beatmap set <{}> with <{}> beatmaps in <{}ms>",
+                        setId,
+                        beatmapCount,
+                        System.currentTimeMillis() - startTime
+                );
+            } finally {
+                MAPSET_LOCKS.remove(setId, lock);
+            }
         }
-
-        long startTime = System.currentTimeMillis();
-
-        BeatmapSet beatmapSet = osuAPI.getBeatmapSet(setId).get();
-
-        int beatmapCount = 0;
-
-        for (Beatmap beatmap : beatmapSet.getAsList()) {
-            insertMap(mysql, BeatmapEntity.fromBeatmap(beatmap));
-            beatmapCount++;
-        }
-
-        mysql.exec(
-                "INSERT INTO `mapsets` (`id`, `last_osuapi_check`) VALUES (?, CURRENT_TIMESTAMP)",
-                setId
-        );
-
-        logger.debug(
-                "Fetched beatmap set <{}> with <{}> beatmaps in <{}ms>",
-                setId,
-                beatmapCount,
-                System.currentTimeMillis() - startTime
-        );
     }
 
     private void insertMap(MySQL mysql, BeatmapEntity map) throws SQLException {
