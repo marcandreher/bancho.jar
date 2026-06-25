@@ -1,8 +1,9 @@
 package com.osuserverlist.bjar.models.essentials;
 
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Stack;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 
@@ -64,7 +65,7 @@ public class Player {
 
     private long lastPing = System.currentTimeMillis();
 
-    private Stack<ServerPacketHandler> packetStack = new Stack<>();
+    private Deque<ServerPacketHandler> packetStack = new ConcurrentLinkedDeque<>();
     private boolean inLobby = false;
     private boolean displayCityLocation = false;
     private boolean friendOnlyDms = false;

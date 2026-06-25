@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.TimeUnit;
 
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import org.slf4j.Logger;
@@ -171,7 +172,11 @@ public class LoginHandler {
                     player.sendPacket(new UserPresencePacket(p.getId()));
                     return;
                 }
-                p.sendPacket(new UserPresenceSinglePacket(player.getId()));
+                
+                //Scheudle one time task in 1 second 
+                server.scheduler.schedule(() -> {
+                    player.sendPacket(new UserPresenceSinglePacket(p.getId()));
+                }, 1, TimeUnit.SECONDS);
             });
 
             server.achievementManager.loadForPlayer(player, mysql);

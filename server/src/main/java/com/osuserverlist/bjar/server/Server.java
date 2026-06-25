@@ -78,6 +78,13 @@ public class Server {
         return instance;
     }
 
+    public static void stop() {
+        if (instance != null) {
+            instance.scheduler.shutdown();
+            logger.info("Server stopped");
+        }
+    }
+
     @Data
     public static class OsuDirectAPI {
         private String searchEndpoint;
