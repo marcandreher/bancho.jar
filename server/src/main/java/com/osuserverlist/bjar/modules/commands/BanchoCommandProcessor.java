@@ -1,6 +1,8 @@
 package com.osuserverlist.bjar.modules.commands;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry.CommandInfo;
@@ -45,6 +47,18 @@ public class BanchoCommandProcessor {
         String[] args = new String[command.length - 1];
         System.arraycopy(command, 1, args, 0, args.length);
         commandInfo.handler.handle(sender, targetArray, args);
+    }
+
+    public static void processNp(Player sender, String message) {
+        Pattern pattern = Pattern.compile("beatmapsets/(\\d+)#/(\\d+)");
+        Matcher matcher = pattern.matcher(message);
+
+        if(matcher.find()) {
+            String beatmapId = matcher.group(2);
+            String beatmapSetId = matcher.group(1);
+            sender.setLastNpBeatmapId(Long.parseLong(beatmapId));
+            sender.setLastNpBeatmapSetId(Long.parseLong(beatmapSetId));   
+        }
     }
 
     public static class PlayerCommandInfo {

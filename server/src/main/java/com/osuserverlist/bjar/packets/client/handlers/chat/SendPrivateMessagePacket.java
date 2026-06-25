@@ -2,8 +2,6 @@ package com.osuserverlist.bjar.packets.client.handlers.chat;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 
@@ -39,16 +37,7 @@ public class SendPrivateMessagePacket implements BanchoPacketHandler {
 
         targetPlayer.sendPacket(new SendMessagePacket(player.getUsername(), message, target, player.getId()));
 
-        Pattern pattern = Pattern.compile("beatmapsets/(\\d+)#/(\\d+)");
-        Matcher matcher = pattern.matcher(message);
-
-        if(matcher.find()) {
-            String beatmapId = matcher.group(2);
-            String beatmapSetId = matcher.group(1);
-            player.setLastNpBeatmapId(Long.parseLong(beatmapId));
-            player.setLastNpBeatmapSetId(Long.parseLong(beatmapSetId));   
-        }
-
+        BanchoCommandProcessor.processNp(player, message);
         BanchoCommandProcessor.processCommand(player, message, target, List.of(player));
 
         return true;

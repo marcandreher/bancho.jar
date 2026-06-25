@@ -53,6 +53,7 @@ public class SendPublicMessagePacket implements BanchoPacketHandler {
             user.sendPacket(new SendMessagePacket(player.getUsername(), message, target, player.getId()));
         });
 
+        BanchoCommandProcessor.processNp(player, message);
         BanchoCommandProcessor.processCommand(player, message, target, players);
 
         return true;
