@@ -172,10 +172,10 @@ public class LoginHandler {
                     player.sendPacket(new UserPresencePacket(p.getId()));
                     return;
                 }
-                
+
                 //Scheudle one time task in 1 second 
                 server.scheduler.schedule(() -> {
-                    player.sendPacket(new UserPresenceSinglePacket(p.getId()));
+                    p.sendPacket(new UserPresenceSinglePacket(player.getId()));
                 }, 1, TimeUnit.SECONDS);
             });
 
