@@ -6,11 +6,11 @@ import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
 import com.osuserverlist.bjar.packets.client.engine.ClientPacketRegistry;
-import com.osuserverlist.bjar.server.Server;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;

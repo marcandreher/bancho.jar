@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.BanchoPacket;
@@ -11,7 +12,6 @@ import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
 import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
 import com.osuserverlist.bjar.packets.client.ClientPackets;
 import com.osuserverlist.bjar.packets.client.engine.ClientPacket;
-import com.osuserverlist.bjar.server.Server;
 
 @ClientPacket(ClientPackets.LOGOUT)
 public class LogoutPacket implements BanchoPacketHandler {

@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.server;
+package com.osuserverlist.bjar;
 
 import java.sql.SQLException;
 import java.util.concurrent.Executors;
@@ -7,20 +7,26 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 
-import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.config.ServerConfiguration;
+import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
+import com.osuserverlist.bjar.modules.web.BanchoWebLogger;
+import com.osuserverlist.bjar.modules.web.ServerWebApp;
 import com.osuserverlist.bjar.packets.client.engine.ClientPacketRegistry;
+import com.osuserverlist.bjar.server.AchievementManager;
+import com.osuserverlist.bjar.server.ChannelManager;
+import com.osuserverlist.bjar.server.PlayerManager;
 import com.osuserverlist.bjar.server.scheudler.AutoDisconnectTask;
 import com.osuserverlist.bjar.server.scheudler.BotPresenceTask;
 import com.osuserverlist.bjar.server.scheudler.SendChannelInfoTask;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import io.javalin.Javalin;
 import lombok.Data;
 
 public class Server {
@@ -41,17 +47,17 @@ public class Server {
     public ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
     public OsuDirectAPI osuDirectAPI = new OsuDirectAPI();
 
-    public static Server start(Dotenv config) {
+    public static Server start(Dotenv dotenv, ProductionLevel level) {
         instance = new Server();
 
         ClientPacketRegistry.scanAndRegister();
 
-        instance.osuAPIHandler = new OsuAPIHandler(config.get("OSU_API_KEY"));
+        instance.osuAPIHandler = new OsuAPIHandler(dotenv.get("OSU_API_KEY"));
 
-        instance.osuDirectAPI.setSearchEndpoint(config.get("DIRECT_SEARCH"));
-        instance.osuDirectAPI.setDlEndpoint(config.get("DIRECT_DL"));
+        instance.osuDirectAPI.setSearchEndpoint(dotenv.get("DIRECT_SEARCH"));
+        instance.osuDirectAPI.setDlEndpoint(dotenv.get("DIRECT_DL"));
 
-        instance.domain = config.get("DOMAIN");
+        instance.domain = dotenv.get("DOMAIN");
 
         instance.scheduler.scheduleAtFixedRate(new AutoDisconnectTask(), 0, 60, TimeUnit.SECONDS);
         instance.scheduler.scheduleAtFixedRate(new SendChannelInfoTask(), 0, 8, TimeUnit.SECONDS);
@@ -75,6 +81,24 @@ public class Server {
         }
 
         BanchoCommandRegistry.registerAnnotatedHandlers("com.osuserverlist.bjar.commands");
+
+        Javalin app = Javalin.create(config -> {
+            config.routes.exception(Exception.class, (e, ctx) -> {
+                logger.error("Unhandled exception while processing {} {}",
+                        ctx.method(), ctx.path(), e);
+
+                ctx.status(500).result("Internal Server Error");
+            });
+
+            config.requestLogger.http(new BanchoWebLogger());
+            ServerWebApp.registerRoutes(config);
+
+            if (level == ProductionLevel.DEVELOPMENT) {
+                config.bundledPlugins.enableRouteOverview("/routes");
+            }
+        });
+
+        app.start(Integer.parseInt(dotenv.get("PORT")));
         return instance;
     }
 

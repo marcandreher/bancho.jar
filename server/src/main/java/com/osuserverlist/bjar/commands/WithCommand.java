@@ -5,6 +5,7 @@ import java.sql.SQLException;
 
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
@@ -18,7 +19,6 @@ import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuMapDownloader;
-import com.osuserverlist.bjar.server.Server;
 
 @BanchoCommand(name = "!with", description = "Shows PPCount of last nped map")
 public class WithCommand extends BanchoCommandHandler {

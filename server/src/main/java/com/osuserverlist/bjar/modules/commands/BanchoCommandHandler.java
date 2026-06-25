@@ -1,9 +1,9 @@
 package com.osuserverlist.bjar.modules.commands;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
 import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
-import com.osuserverlist.bjar.server.Server;
 
 public abstract class BanchoCommandHandler {
     

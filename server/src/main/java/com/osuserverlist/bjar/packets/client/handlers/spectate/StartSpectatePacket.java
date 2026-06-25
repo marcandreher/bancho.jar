@@ -2,6 +2,7 @@ package com.osuserverlist.bjar.packets.client.handlers.spectate;
 
 import java.io.IOException;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
@@ -14,8 +15,6 @@ import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelRevokedPack
 import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoPacket;
 import com.osuserverlist.bjar.packets.server.handlers.spectate.FellowSpectatorJoinedPacket;
 import com.osuserverlist.bjar.packets.server.handlers.spectate.SpectatorJoinedPacket;
-
-import com.osuserverlist.bjar.server.Server;
 
 @ClientPacket(ClientPackets.START_SPECTATING)
 public class StartSpectatePacket implements BanchoPacketHandler {

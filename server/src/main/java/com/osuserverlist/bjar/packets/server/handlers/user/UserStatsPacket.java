@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
@@ -12,7 +13,6 @@ import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
-import com.osuserverlist.bjar.server.Server;
 
 public class UserStatsPacket implements ServerPacketHandler {
 

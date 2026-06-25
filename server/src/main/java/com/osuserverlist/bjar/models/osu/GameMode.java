@@ -44,5 +44,37 @@ public enum GameMode {
         throw new IllegalArgumentException("Invalid game mode value: " + mode);
     }
 
+    public static GameMode fromValue(int value) {
+        for (GameMode gm : GameMode.values()) {
+            if (gm.getValue() == value) {
+                return gm;
+            }
+        }
+        throw new IllegalArgumentException("Invalid game mode value: " + value);
+    }
+
+    public static GameMode toVanillaMode(GameMode mode) {
+        switch (mode) {
+            case VANILLA_OSU:
+            case RELAX_OSU:
+            case AUTOPILOT_OSU:
+                return VANILLA_OSU;
+            case VANILLA_TAIKO:
+            case RELAX_TAIKO:
+            case AUTOPILOT_TAIKO:
+                return VANILLA_TAIKO;
+            case VANILLA_CATCH:
+            case RELAX_CATCH:
+            case AUTOPILOT_CATCH:
+                return VANILLA_CATCH;
+            case VANILLA_MANIA:
+            case RELAX_MANIA:
+            case AUTOPILOT_MANIA:
+                return VANILLA_MANIA;
+            default:
+                throw new IllegalArgumentException("Invalid game mode: " + mode);
+        }
+    }
+
 
 }

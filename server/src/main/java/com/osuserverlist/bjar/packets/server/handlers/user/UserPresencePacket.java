@@ -1,11 +1,11 @@
 package com.osuserverlist.bjar.packets.server.handlers.user;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
-import com.osuserverlist.bjar.server.Server;
 
 public class UserPresencePacket implements ServerPacketHandler {
 

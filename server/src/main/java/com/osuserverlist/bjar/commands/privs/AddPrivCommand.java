@@ -1,5 +1,6 @@
 package com.osuserverlist.bjar.commands.privs;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
@@ -9,7 +10,6 @@ import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerComm
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.repos.UserRepository;
-import com.osuserverlist.bjar.server.Server;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;

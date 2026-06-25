@@ -13,13 +13,10 @@ import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.Database.ServerTimezone;
 import com.osuserverlist.bjar.modules.logger.LoggerConfiguration;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import com.osuserverlist.bjar.modules.recalc.RecalcRunnable;
 import com.osuserverlist.bjar.modules.redis.Redis;
-import com.osuserverlist.bjar.modules.web.BanchoWebLogger;
-import com.osuserverlist.bjar.modules.web.ServerWebApp;
-import com.osuserverlist.bjar.server.Server;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import io.javalin.Javalin;
 
 /**
  * Bancho.jar - An open-source osu! server implementation in Java.
@@ -27,17 +24,17 @@ import io.javalin.Javalin;
  */
 public class App {
 
-    public static final String HEADER = """                           
- ██          ▄           ██              ▀▀       ▄    
- ████▄ ▄▀▀█▄ ████▄ ▄███▀ ████▄ ▄███▄     ██ ▄▀▀█▄ ████▄
- ██ ██ ▄█▀██ ██ ██ ██    ██ ██ ██ ██     ██ ▄█▀██ ██   
-▄████▀▄▀█▄██▄██ ▀█▄▀███▄▄██ ██▄▀███▀ ██  ██ ▀█▄██ █▀   
-                                         ██            
-                                       ▀▀▀      """;
+    public static final String HEADER = """
+             ██          ▄           ██              ▀▀       ▄
+             ████▄ ▄▀▀█▄ ████▄ ▄███▀ ████▄ ▄███▄     ██ ▄▀▀█▄ ████▄
+             ██ ██ ▄█▀██ ██ ██ ██    ██ ██ ██ ██     ██ ▄█▀██ ██
+            ▄████▀▄▀█▄██▄██ ▀█▄▀███▄▄██ ██▄▀███▀ ██  ██ ▀█▄██ █▀
+                                                     ██
+                                                   ▀▀▀      """;
 
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-    public void main() {
+    public void main(String[] args) {
         System.out.println(HEADER);
 
         Dotenv dotenv = Dotenv.configure().systemProperties().ignoreIfMissing().load();
@@ -47,15 +44,30 @@ public class App {
         loggerConfig.apply();
 
         Database db = new Database();
-        db.connectToMySQL(dotenv.get("DB_HOST"),
-                dotenv.get("DB_USER"),
-                dotenv.get("DB_PASS"),
-                dotenv.get("DB_NAME"),
-                ServerTimezone.valueOf(dotenv.get("DB_TIMEZONE")));
+
+        db.connectToMySQL(config -> {
+            config.setHost(dotenv.get("DB_HOST"));
+            config.setUser(dotenv.get("DB_USER"));
+            config.setPassword(dotenv.get("DB_PASS"));
+            config.setDatabase(dotenv.get("DB_NAME"));
+            config.setServerTimezone(ServerTimezone.valueOf(dotenv.get("DB_TIMEZONE")));
+        });
 
         Redis.connect(dotenv);
 
+        if (args.length > 0 && args[0].equalsIgnoreCase("--recalc")) {
+            boolean force = false;
+            if (args.length > 1 && args[1].equalsIgnoreCase("--force")) {
+                force = true;
+            }
+
+            RecalcRunnable recalcRunnable = new RecalcRunnable(force);
+            recalcRunnable.run();
+            return;
+        }
+
         try {
+
             Files.createDirectories(Path.of("data/maps"));
             Files.createDirectories(Path.of("data/replays"));
             Files.createDirectories(Path.of("data/ss"));
@@ -68,28 +80,10 @@ public class App {
             downloader.run();
 
         } catch (IOException e) {
-            logger.error("Failed to initialize data structures", e);
+            logger.error("Failed to initialize data structure", e);
         }
 
         // Main bjar entrypoint
-        Server.start(dotenv);
-
-        Javalin app = Javalin.create(config -> {
-            config.routes.exception(Exception.class, (e, ctx) -> {
-                logger.error("Unhandled exception while processing {} {}",
-                        ctx.method(), ctx.path(), e);
-
-                ctx.status(500).result("Internal Server Error");
-            });
-
-            config.requestLogger.http(new BanchoWebLogger());
-            ServerWebApp.registerRoutes(config);
-
-            if (level == ProductionLevel.DEVELOPMENT) {
-                config.bundledPlugins.enableRouteOverview("/routes");
-            }
-        });
-
-        app.start(Integer.parseInt(dotenv.get("PORT")));
+        Server.start(dotenv, level);
     }
 }

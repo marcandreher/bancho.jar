@@ -55,18 +55,18 @@ public class ScoreRepository {
     }
 
     private final static String GET_BEST_SCORE_FOR_PLAYER_ON_BEATMAP_QUERY = "SELECT * FROM scores "+
-            "WHERE userid = ? AND map_md5 = ? AND mode = ? AND status = 1 " +
+            "WHERE userid = ? AND map_md5 = ? AND mode = ? AND status = 2 " +
             "ORDER BY score DESC LIMIT 1";
 
     private final static String GET_PREVIOUS_MAP_RANK_QUERY = "SELECT COUNT(*) + 1 AS osu_rank " +
             "FROM (SELECT MAX(score) AS best_score FROM scores " +
-            "      WHERE map_md5 = ? AND mode = ? AND userid != ? AND status = 1 " +
+            "      WHERE map_md5 = ? AND mode = ? AND userid != ? AND status = 2 " +
             "      GROUP BY userid) AS best_scores " +
             "WHERE best_score > ?";
 
     private final static String GET_RANK_FOR_MAP_QUERY = "SELECT COUNT(*) + 1 AS osu_rank " +
             "FROM (SELECT MAX(score) AS best_score FROM scores " +
-            "      WHERE map_md5 = ? AND mode = ? AND status = 1 " +
+            "      WHERE map_md5 = ? AND mode = ? AND status = 2 " +
             "      GROUP BY userid) AS best_scores " +
             "WHERE best_score > ?";
 

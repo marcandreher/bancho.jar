@@ -5,8 +5,8 @@ import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.server.Server;
 
 import lombok.Data;
 import me.skiincraft.api.ousu.entity.beatmap.Beatmap;

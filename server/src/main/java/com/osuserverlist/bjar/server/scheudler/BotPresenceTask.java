@@ -2,9 +2,9 @@ package com.osuserverlist.bjar.server.scheudler;
 
 import java.util.Random;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.config.PresenceConfiguration;
 import com.osuserverlist.bjar.models.config.PresenceConfiguration.PresenceInfo;
-import com.osuserverlist.bjar.server.Server;
 
 public class BotPresenceTask implements Runnable {
     

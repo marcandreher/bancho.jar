@@ -3,6 +3,7 @@ package com.osuserverlist.bjar.packets.client.handlers.user;
 import java.io.IOException;
 import java.util.List;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
@@ -10,7 +11,6 @@ import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
 import com.osuserverlist.bjar.packets.client.ClientPackets;
 import com.osuserverlist.bjar.packets.client.engine.ClientPacket;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
-import com.osuserverlist.bjar.server.Server;
 
 @ClientPacket(ClientPackets.USER_STATS_REQUEST)
 public class StatsRequestPacket implements BanchoPacketHandler {

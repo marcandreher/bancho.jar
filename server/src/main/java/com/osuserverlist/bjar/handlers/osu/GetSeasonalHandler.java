@@ -5,10 +5,10 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.gson.Gson;
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
-import com.osuserverlist.bjar.server.Server;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;

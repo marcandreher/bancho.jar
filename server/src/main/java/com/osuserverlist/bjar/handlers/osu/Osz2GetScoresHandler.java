@@ -7,6 +7,7 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
@@ -20,7 +21,6 @@ import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
-import com.osuserverlist.bjar.server.Server;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
@@ -83,7 +83,7 @@ public class Osz2GetScoresHandler implements Handler {
                     "SELECT s.*, u.name " +
                             "FROM scores s " +
                             "JOIN users u ON u.id = s.userid " +
-                            "WHERE s.map_md5 = ? AND s.mode = ? AND s.userid = ? AND s.status = 1 " +
+                            "WHERE s.map_md5 = ? AND s.mode = ? AND s.userid = ? AND s.status = 2 " +
                             "ORDER BY s.score DESC LIMIT 1",
                     beatmap.getMd5(),
                     gameMode.getValue(),
@@ -102,7 +102,7 @@ public class Osz2GetScoresHandler implements Handler {
                             "          ROW_NUMBER() OVER (PARTITION BY s.userid ORDER BY s.score DESC) AS rn " +
                             "   FROM scores s " +
                             "   JOIN users u ON u.id = s.userid " +
-                            "   WHERE s.map_md5 = ? AND s.mode = ? AND s.status = 1" +
+                            "   WHERE s.map_md5 = ? AND s.mode = ? AND s.status = 2" +
                             ") ranked_scores " +
                             "WHERE rn = 1 " +
                             "ORDER BY score DESC, name " +

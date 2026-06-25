@@ -1,7 +1,7 @@
 package com.osuserverlist.bjar.server.scheudler;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoPacket;
-import com.osuserverlist.bjar.server.Server;
 
 public class SendChannelInfoTask implements Runnable {
 

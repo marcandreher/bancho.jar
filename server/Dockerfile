@@ -33,4 +33,4 @@ COPY --from=build /app/build/libs/lib ./lib
 
 ENV JAVA_OPTS="--enable-native-access=ALL-UNNAMED"
 
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -cp 'server.jar:lib/*' com.osuserverlist.bjar.App"]
+ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED", "-cp", "server.jar:lib/*", "com.osuserverlist.bjar.App"]

@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.config.ServerConfiguration.WelcomeMessage;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
@@ -42,7 +43,6 @@ import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceSinglePac
 import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
 import com.osuserverlist.bjar.packets.server.handlers.util.NotificationPacket;
 import com.osuserverlist.bjar.repos.UserRepository;
-import com.osuserverlist.bjar.server.Server;
 
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;

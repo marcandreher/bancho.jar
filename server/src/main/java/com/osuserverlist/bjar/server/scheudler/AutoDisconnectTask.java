@@ -2,14 +2,14 @@ package com.osuserverlist.bjar.server.scheudler;
 
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
-import com.osuserverlist.bjar.server.Server;
 
 public class AutoDisconnectTask implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger(AutoDisconnectTask.class);
 
-    public static final long OSU_CLIENT_MIN_PING_INTERVAL = 300_000L * 2; // 5 minutes
+    public static final long OSU_CLIENT_MIN_PING_INTERVAL = 300_000L * 3; // 5 minutes
 
     @Override
     public void run() {

@@ -3,6 +3,7 @@ package com.osuserverlist.bjar.modules.database;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 
@@ -10,6 +11,8 @@ import com.osuserverlist.bjar.models.config.DatabaseConfiguration;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+
+import lombok.Data;
 
 public class Database {
     public static Logger logger = LoggerFactory.getLogger(Database.class);
@@ -71,16 +74,17 @@ public class Database {
      * @param database       The name of the database to connect to.
      * @param serverTimezone The server timezone for the MySQL connection.
      */
-    public void connectToMySQL(String host, String user, String password, String database,
-            ServerTimezone serverTimezone) {
+    public void connectToMySQL(Consumer<DatabaseCredentials> databaseConfig) {
+        DatabaseCredentials dbConfig = new DatabaseCredentials();
+        databaseConfig.accept(dbConfig);
         config = DatabaseConfiguration.load();
         config.apply(hikariConfig);
-        String url = "jdbc:mysql://" + host + ":3306/" + database + "?serverTimezone=" + serverTimezone
+        String url = "jdbc:mysql://" + dbConfig.getHost() + ":3306/" + dbConfig.getDatabase() + "?serverTimezone=" + dbConfig.getServerTimezone()
                 + "&allowPublicKeyRetrieval=true";
         hikariConfig
                 .setJdbcUrl(url);
-        hikariConfig.setUsername(user);
-        hikariConfig.setPassword(password);
+        hikariConfig.setUsername(dbConfig.getUser());
+        hikariConfig.setPassword(dbConfig.getPassword());
 
         try {
             dataSource = new HikariDataSource(hikariConfig);
@@ -125,5 +129,14 @@ public class Database {
             logger.error("Error while obtaining a connection from the pool.", e);
             return null;
         }
+    }
+
+    @Data
+    public static class DatabaseCredentials {
+        private String host;
+        private String user;
+        private String password;
+        private String database;
+        private ServerTimezone serverTimezone;
     }
 }

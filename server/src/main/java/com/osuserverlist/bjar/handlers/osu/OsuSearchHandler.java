@@ -10,13 +10,13 @@ import org.jetbrains.annotations.NotNull;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.direct.DirectBeatmapSet;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.RankedStatus;
 import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
-import com.osuserverlist.bjar.server.Server;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;

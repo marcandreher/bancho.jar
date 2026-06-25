@@ -11,6 +11,7 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.AchievementEntity;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
@@ -36,7 +37,6 @@ import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
 import com.osuserverlist.bjar.repos.AchievementRepository;
 import com.osuserverlist.bjar.repos.ScoreRepository;
-import com.osuserverlist.bjar.server.Server;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
@@ -114,7 +114,7 @@ public class OsuSubmitModularHandler implements Handler {
                 prevMapRank = scoreRepo.getPreviousMapRank(beatmap.getMd5(), realGameMode.getValue(), s.getPlayerId(), bestScore.getScore());
             }
 
-            int scoreStatus = (isPersonalBest && s.isPassed()) ? 1 : 0;
+            int scoreStatus = (isPersonalBest && s.isPassed()) ? 2 : 0;
 
             scoreRepo.insertScore(s, beatmap, scoreStatus, realGameMode.getValue());
             
@@ -151,7 +151,7 @@ public class OsuSubmitModularHandler implements Handler {
             double totalPp = 0.0;
             if (isPersonalBest && s.isPassed()) {
                 ResultSet bestUserScoresResult = mysql.query(
-                        "SELECT SUM(pp * POW(0.95, rn - 1)) AS weighted_pp FROM ( SELECT pp, ROW_NUMBER() OVER (ORDER BY pp DESC) AS rn FROM ( SELECT MAX(s.pp) AS pp FROM scores s JOIN maps m ON s.map_md5 = m.md5 WHERE s.userid = ? AND s.mode = ? AND m.status = 1 AND s.status = 1 GROUP BY s.map_md5 ) best_scores ) ranked;",
+                        "SELECT SUM(pp * POW(0.95, rn - 1)) AS weighted_pp FROM ( SELECT pp, ROW_NUMBER() OVER (ORDER BY pp DESC) AS rn FROM ( SELECT MAX(s.pp) AS pp FROM scores s JOIN maps m ON s.map_md5 = m.md5 WHERE s.userid = ? AND s.mode = ? AND m.status = 1 AND s.status = 2 GROUP BY s.map_md5 ) best_scores ) ranked;",
                         s.getPlayerId(), realGameMode.getValue()).executeQuery();
                 if (bestUserScoresResult.next()) {
                     totalPp = bestUserScoresResult.getDouble("weighted_pp");

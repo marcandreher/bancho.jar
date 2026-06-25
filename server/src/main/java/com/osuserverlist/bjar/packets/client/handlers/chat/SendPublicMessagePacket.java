@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor;
@@ -16,7 +17,6 @@ import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
 import com.osuserverlist.bjar.packets.client.ClientPackets;
 import com.osuserverlist.bjar.packets.client.engine.ClientPacket;
 import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
-import com.osuserverlist.bjar.server.Server;
 
 @ClientPacket(ClientPackets.SEND_PUBLIC_MESSAGE)
 public class SendPublicMessagePacket implements BanchoPacketHandler {
