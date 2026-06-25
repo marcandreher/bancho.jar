@@ -20,9 +20,7 @@ public class ChannelManager {
 
     public void populate(MySQL mysql) throws SQLException {
         ResultSet channelRs = mysql.query("SELECT * FROM `channels`").executeQuery();
-        
-        int channelCount = 0;
-        
+
         while (channelRs.next()) {
             ChannelEntity defaultChannel = ChannelEntity.fromResultSet(channelRs);
         
@@ -40,9 +38,21 @@ public class ChannelManager {
                 channel.setVisible(false);
             }
             this.add(channel);
-            channelCount++;
         }
-        logger.info("Loaded <{}> channels from SQL", channelCount);
+
+        // Only for allowing joining
+        BanchoChannel highlightChannel = BanchoChannel.builder()
+                .id("highlight")
+                .name("#highlight")
+                .alias("#highlight")
+                .description("Highlight Channel")
+                .autoJoin(false)
+                .readPriv(0)
+                .writePriv(0)
+                .visible(false)
+                .build();
+        this.add(highlightChannel);
+        logger.info("Loaded <{}> channels", channels.size());
     }
 
     public void add(BanchoChannel channel) {
