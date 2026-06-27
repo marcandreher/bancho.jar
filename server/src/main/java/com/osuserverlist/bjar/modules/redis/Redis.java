@@ -1,15 +1,23 @@
 package com.osuserverlist.bjar.modules.redis;
 
+import java.util.function.Consumer;
+
 import org.slf4j.Logger;
 
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 
-import io.github.cdimascio.dotenv.Dotenv;
+import lombok.Data;
 import redis.clients.jedis.RedisClient;
 
 public class Redis {
     private final static Logger logger = LoggerFactory.getLogger(Redis.class);
     private static RedisClient redisClient;
+    private static RedisConfiguration config;
+
+    public Redis(Consumer<RedisConfiguration> configConsumer) {
+        config = new RedisConfiguration();
+        configConsumer.accept(config);
+    }
 
     public static RedisClient getClient() {
         if (redisClient == null) {
@@ -18,9 +26,8 @@ public class Redis {
         return redisClient;
     }
 
-    public static void connect(Dotenv dotenv) {
-        RedisClient redisClient = RedisClient.builder()
-                .hostAndPort(dotenv.get("REDIS_HOST"), Integer.parseInt(dotenv.get("REDIS_PORT"))).build();
+    public void connect() {
+        RedisClient redisClient = RedisClient.builder().hostAndPort(config.getHost(), config.getPort()).build();
 
         String ping = redisClient.ping();
         if (!"PONG".equals(ping)) {
@@ -28,9 +35,14 @@ public class Redis {
             System.exit(1);
         }
 
-        logger.info("Connected to redis at: {}:{}", dotenv.get("REDIS_HOST"),
-                Integer.parseInt(dotenv.get("REDIS_PORT")));
+        logger.info("Connected to Redis ({}:{})", config.getHost(), config.getPort());
         Redis.redisClient = redisClient;
+    }
+
+    @Data
+    public static class RedisConfiguration {
+        private String host;
+        private int port;
     }
 
 

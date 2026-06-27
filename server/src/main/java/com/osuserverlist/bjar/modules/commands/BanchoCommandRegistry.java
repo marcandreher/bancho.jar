@@ -44,7 +44,7 @@ public class BanchoCommandRegistry {
                     count.incrementAndGet();
                 }
             });
-            logger.debug("Registered {} bancho commands from package: {}", count.get(), packageName);
+            logger.debug("Registered <{}> bancho commands from package: ({})", count.get(), packageName);
         }
     }
 

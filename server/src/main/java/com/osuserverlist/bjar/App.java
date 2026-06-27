@@ -53,7 +53,12 @@ public class App {
             config.setServerTimezone(ServerTimezone.valueOf(dotenv.get("DB_TIMEZONE")));
         });
 
-        Redis.connect(dotenv);
+        Redis redis = new Redis(config -> {
+            config.setHost(dotenv.get("REDIS_HOST"));
+            config.setPort(Integer.parseInt(dotenv.get("REDIS_PORT")));
+        });
+
+        redis.connect();
 
         if (args.length > 0 && args[0].equalsIgnoreCase("--recalc")) {
             boolean force = false;

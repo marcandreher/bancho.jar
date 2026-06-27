@@ -40,7 +40,7 @@ public class ClientPacketRegistry {
                 }
             }
 
-            logger.debug("Registered {} client packet handlers", clientPacketCount);
+            logger.debug("Registered <{}> client packet handlers", clientPacketCount);
         }
     }
 }
