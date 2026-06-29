@@ -33,7 +33,7 @@ jobs:
         run: |
           mkdir standalone
 
-          cp server/build/libs/server.jar standalone/app.jar
+          cp server/build/libs/server-shaded.jar standalone/app.jar
 
           if [ -f server/.env.example ]; then
             cp server/.env.example standalone/.env

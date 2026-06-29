@@ -84,6 +84,14 @@ tasks.jar {
     }
 }
 
+tasks.shadowJar {
+    archiveFileName.set("server-shaded.jar")
+
+    manifest {
+        attributes["Main-Class"] = "com.osuserverlist.bjar.App"
+    }
+}
+
 tasks.register<Copy>("copyDeps") {
     from(configurations.runtimeClasspath)
     into("build/libs/lib")
