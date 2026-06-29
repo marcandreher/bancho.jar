@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.handlers.bancho;
+package com.osuserverlist.bjar.handlers.bancho.web;
 
 import java.io.IOException;
 import java.util.Comparator;
