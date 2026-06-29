@@ -1,10 +1,10 @@
 package com.osuserverlist.bjar.models.osu;
 
 public enum LeaderboardType {
-    NORMAL(4),
     GLOBAL(1),
     GLOBAL_MODS(2),
-    FRIENDS(3);
+    FRIENDS(3),
+    COUNTRY(4);
 
     private final int id;
 
@@ -22,6 +22,6 @@ public enum LeaderboardType {
                 return type;
             }
         }
-        return NORMAL; // Default to NORMAL if not found
+        return GLOBAL; // Default to global if unknown type received
     }
 }
