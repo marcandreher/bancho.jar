@@ -16,7 +16,7 @@ import io.javalin.http.Handler;
 @Host("osu.")
 @Path("/web/osu-getseasonal.php")
 @HttpMethod("GET")
-public class GetSeasonalHandler implements Handler {
+public class OsuGetSeasonalHandler implements Handler {
 
     @Override
     public void handle(@NotNull Context ctx) throws Exception {
