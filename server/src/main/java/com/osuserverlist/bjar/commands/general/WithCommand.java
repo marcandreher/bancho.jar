@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.commands;
+package com.osuserverlist.bjar.commands.general;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -21,7 +21,11 @@ import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuMapDownloader;
 
-@BanchoCommand(name = "!with", category = CommandCategory.GENERAL, description = "Shows PPCount of last nped map")
+@BanchoCommand(
+    name = "!with", 
+    category = CommandCategory.GENERAL, 
+    description = "Shows PPCount of last nped map"
+)
 public class WithCommand extends BanchoCommandHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WithCommand.class);

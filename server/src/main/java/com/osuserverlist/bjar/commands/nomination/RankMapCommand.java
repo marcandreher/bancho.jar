@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.commands;
+package com.osuserverlist.bjar.commands.nomination;
 
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
@@ -9,7 +9,12 @@ import com.osuserverlist.bjar.modules.commands.CommandCategory;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 
-@BanchoCommand(name = "!rank", category = CommandCategory.NOMINATION, requiredPrivileges = Privileges.NOMINATOR, description = "Ranks or unranks the currently selected beatmap or beatmap set.")
+@BanchoCommand(
+    name = "!rank",
+    category = CommandCategory.NOMINATION,
+    requiredPrivileges = Privileges.NOMINATOR,
+    description = "Ranks or unranks the currently selected beatmap or beatmap set."
+)
 public class RankMapCommand extends BanchoCommandHandler {
 
     @Override

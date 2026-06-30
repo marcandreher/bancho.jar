@@ -12,6 +12,7 @@ import com.osuserverlist.bjar.models.osu.Privileges;
 public @interface BanchoCommand {
     String name();
     CommandCategory category();
+    boolean isHidden() default false;
     String description() default "";
     Privileges requiredPrivileges() default Privileges.UNRESTRICTED;
 }

@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.commands;
+package com.osuserverlist.bjar.commands.general;
 
 import java.util.Comparator;
 import java.util.List;
@@ -14,7 +14,12 @@ import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry.CommandInfo
 import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry;
 import com.osuserverlist.bjar.modules.commands.CommandCategory;
 
-@BanchoCommand(name = "!help", category = CommandCategory.GENERAL, description = "Lists all available commands with their descriptions.")
+@BanchoCommand(
+    name = "!help", 
+    category = CommandCategory.GENERAL, 
+    description = "Lists all available commands with their descriptions.", 
+    isHidden = true
+)
 public class HelpCommand extends BanchoCommandHandler {
 
     @Override
@@ -22,6 +27,7 @@ public class HelpCommand extends BanchoCommandHandler {
         Map<CommandCategory, List<CommandInfo>> commandsByCategory = BanchoCommandRegistry.getAllCommands()
                 .stream()
                 .filter(commandInfo -> sender.getServerPrivileges() >= commandInfo.requiredPrivileges)
+                .filter(commandInfo -> !commandInfo.isHidden) // exclude hidden commands
                 .sorted(Comparator.comparing((CommandInfo c) -> c.name)) // name first, so each group is alphabetical
                 .collect(Collectors.groupingBy(
                         commandInfo -> commandInfo.category,

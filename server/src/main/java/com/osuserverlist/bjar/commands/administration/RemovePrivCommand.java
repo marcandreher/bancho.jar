@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.commands.privs;
+package com.osuserverlist.bjar.commands.administration;
 
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.UserEntity;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 @BanchoCommand(
     name = "!privrm",
-    category = CommandCategory.MODERATION,
+    category = CommandCategory.ADMINISTRATION,
     description = "Remove privileges from a player",
     requiredPrivileges = Privileges.ADMINISTRATOR
 )

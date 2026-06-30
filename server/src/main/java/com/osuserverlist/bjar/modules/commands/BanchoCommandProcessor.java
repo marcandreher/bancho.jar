@@ -24,7 +24,7 @@ public class BanchoCommandProcessor {
         if (commandInfo == null) {
             recievers.forEach(player -> {
                 player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(),
-                        "Unknown command: " + commandName, target, server.botPlayer.getId()));
+                        "Unknown command: " + commandName + " use !help for a list of commands", target, server.botPlayer.getId()));
             });
             return;
         }
