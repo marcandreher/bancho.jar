@@ -4,6 +4,7 @@ import com.osuserverlist.bjar.models.essentials.Score;
 
 public class AccuracyCalculator {
     public static double calculateAccuracy(Score s) {
+        // TODO: make more accurate and match other gamemodes logic
         int n300 = s.getN300();
         int n100 = s.getN100();
         int n50 = s.getN50();

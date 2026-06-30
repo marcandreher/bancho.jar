@@ -54,21 +54,23 @@ public class BanchoPacketWriter {
             // Write the actual payload
             finalPacket.write(payload);
 
-            // Log packet details
-            StringBuilder sb = new StringBuilder();
-            byte[] packetBytes = finalPacket.toByteArray();
-            int packetId = (packetBytes[0] & 0xFF) | ((packetBytes[1] & 0xFF) << 8);
+            if(logger.isDebugEnabled()) {
+                // Log packet details
+                StringBuilder sb = new StringBuilder();
+                byte[] packetBytes = finalPacket.toByteArray();
+                int packetId = (packetBytes[0] & 0xFF) | ((packetBytes[1] & 0xFF) << 8);
 
-            sb.append("Writing Packet: ID=(").append(packetId).append(") NAME=<")
-                    .append(ServerPackets.getNameById(packetId));
-            sb.append(">, Length=(").append(length);
-            sb.append("), HEX: <");
-            for (byte b : packetBytes) {
-                sb.append(String.format("%02X ", b));
+                sb.append("Writing Packet: ID=(").append(packetId).append(") NAME=<")
+                        .append(ServerPackets.getNameById(packetId));
+                sb.append(">, Length=(").append(length);
+                sb.append("), HEX: <");
+                for (byte b : packetBytes) {
+                    sb.append(String.format("%02X ", b));
+                }
+                sb.delete(sb.length() - 1, sb.length());
+                sb.append(">");
+                logger.debug(sb.toString());
             }
-            sb.delete(sb.length() - 1, sb.length());
-            sb.append(">");
-            logger.debug(sb.toString());
 
             // Add the complete packet to the list
             packets.add(finalPacket.toByteArray());

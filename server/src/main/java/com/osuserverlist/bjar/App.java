@@ -11,6 +11,7 @@ import com.osuserverlist.bjar.modules.assets.AchievementDownloader;
 import com.osuserverlist.bjar.modules.assets.DefaultAssetsDownloader;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.Database.ServerTimezone;
+import com.osuserverlist.bjar.modules.logger.BuildInfo;
 import com.osuserverlist.bjar.modules.logger.LoggerConfiguration;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.recalc.RecalcRunnable;
@@ -36,6 +37,8 @@ public class App {
 
     public void main(String[] args) {
         System.out.println(HEADER);
+        logger.info("Bancho.jar <v" + BuildInfo.VERSION + "> built on (" + BuildInfo.BUILD_TIME + ")");
+        logger.info("Running on Java <" + BuildInfo.JAVA_VERSION + "> with Gradle <" + BuildInfo.GRADLE_VERSION + ">");
 
         Dotenv dotenv = Dotenv.configure().systemProperties().ignoreIfMissing().load();
 

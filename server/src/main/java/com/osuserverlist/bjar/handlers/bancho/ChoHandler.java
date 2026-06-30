@@ -1,8 +1,8 @@
 package com.osuserverlist.bjar.handlers.bancho;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Iterator;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -38,28 +38,25 @@ public class ChoHandler implements Handler {
         if (osuToken == null) {
             loginHandler.handleLogin(ctx);
             return;
-        } 
-            
-        handlePackets(ctx);
-        
+        }
+
+        handlePackets(ctx, osuToken);
     }
 
-    private static void handlePackets(Context ctx) {
-        String osuToken = ctx.header("osu-token");
-
+    private static void handlePackets(Context ctx, String osuToken) {
         PacketSender packetSender = new PacketSender();
         BanchoPacketWriter packetWriter = packetSender.getPacketWriter();
 
         Server server = Server.getInstance();
 
-        if (server.playerManager.get(osuToken) == null) {
+        Player player = server.playerManager.get(osuToken);
+
+        if (player == null) {
             packetWriter.startPacket(ServerPackets.SWITCH_SERVER.getValue());
             packetWriter.endPacket();
             ctx.status(HttpStatus.OK).result(packetSender.toBytes());
             return;
         }
-
-        Player player = server.playerManager.get(osuToken);
 
         byte[] requestBody = ctx.bodyAsBytes();
         if (requestBody.length > 0) {
@@ -94,19 +91,23 @@ public class ChoHandler implements Handler {
     }
 
     public static void HandlePackets(BanchoPacketWriter writer, Player player) {
-        Deque<ServerPacketHandler> reversedStack = new ArrayDeque<>();
-        while (!player.getPacketStack().isEmpty()) {
-            reversedStack.push(player.getPacketStack().pop());
+        Deque<ServerPacketHandler> packetStack = player.getPacketStack();
+
+        if (packetStack.isEmpty()) {
+            return;
         }
 
-        while (!reversedStack.isEmpty()) {
-            ServerPacketHandler packetHandler = reversedStack.pop();
+        Iterator<ServerPacketHandler> it = packetStack.descendingIterator();
+        while (it.hasNext()) {
+            ServerPacketHandler packetHandler = it.next();
             try {
                 packetHandler.handle(null, writer, player);
             } catch (IOException e) {
                 logger.error("Error sending packet: {}", e.getMessage(), e);
             }
         }
+
+        packetStack.clear();
     }
 
 }

@@ -14,12 +14,7 @@ public class BanchoWebLogger implements RequestLogger {
 
     @Override
     public void handle(@NotNull Context ctx, @NotNull Float executionTimeMs) throws Exception {
-        // Real Pretty Logging
-        String method = ctx.method().toString();
-        String path = ctx.url();
-        String status = ctx.status().toString();
-        String logMessage = String.format("%s %s - %s (%.2f ms)", method, path, status, executionTimeMs);
-        logger.info(logMessage);
+        logger.info(String.format("%s %s - %s (%.2f ms)", ctx.method().toString(), ctx.url(), ctx.status().toString(), executionTimeMs));
     }
     
 }

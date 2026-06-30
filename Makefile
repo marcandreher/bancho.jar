@@ -1,7 +1,10 @@
-.PHONY: build run run-d recalc
+.PHONY: build build-jar run run-d recalc
 
 build:
 	docker compose build
+
+build-jar:
+	cd server/ && ./gradlew shadowJar
 
 run:
 	docker compose up

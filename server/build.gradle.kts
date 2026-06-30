@@ -1,3 +1,5 @@
+import java.time.Instant
+
 plugins {
     java
     application
@@ -72,6 +74,25 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
 
     implementation("org.mvel:mvel2:$mvelVersion")
+}
+
+val generateBuildProperties by tasks.registering(WriteProperties::class) {
+    destinationFile = layout.buildDirectory.file("generated/resources/main/build.properties")
+
+    property("name", project.name)
+    property("group", project.group)
+    property("version", project.version)
+    property("buildTime", Instant.now().toString())
+    property("javaVersion", JavaVersion.current())
+    property("gradleVersion", gradle.gradleVersion)
+}
+
+sourceSets.main {
+    resources.srcDir(layout.buildDirectory.dir("generated/resources/main"))
+}
+
+tasks.processResources {
+    dependsOn(generateBuildProperties)
 }
 
 tasks.jar {

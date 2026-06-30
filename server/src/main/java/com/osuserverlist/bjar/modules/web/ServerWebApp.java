@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.osuserverlist.bjar.modules.web.engine.Host;
@@ -43,7 +44,7 @@ public class ServerWebApp {
 
                 Handler handler = instantiateHandler(handlerClass);
                 String path = pathAnnotation.value();
-                String[] hosts = hostAnnotation.value();
+                String[] hosts = normalizeHosts(hostAnnotation.value());
                 String[] methods = methodAnnotation == null
                         ? new String[] { "GET" }
                         : methodAnnotation.value();
@@ -60,13 +61,13 @@ public class ServerWebApp {
         for (var entry : routesByPath.entrySet()) {
             RouteKey key = entry.getKey();
             String path = key.path;
-            List<HostHandler> handlers = entry.getValue();
+            HostHandler[] handlers = entry.getValue().toArray(new HostHandler[0]);
 
             registerRoute(app, key.method, path, handlers);
         }
     }
 
-    private static void registerRoute(JavalinConfig app, String method, String path, List<HostHandler> handlers) {
+    private static void registerRoute(JavalinConfig app, String method, String path, HostHandler[] handlers) {
         switch (method) {
             case "POST":
                 app.routes.post(path, ctx -> dispatchByHost(ctx, handlers));
@@ -80,10 +81,14 @@ public class ServerWebApp {
         }
     }
 
-    private static void dispatchByHost(Context ctx, List<HostHandler> handlers) throws Exception {
+    private static void dispatchByHost(Context ctx, HostHandler[] handlers) throws Exception {
         String host = extractHost(ctx);
+
+        int dotIndex = host.indexOf('.');
+        String subdomain = dotIndex > 0 ? host.substring(0, dotIndex) : host;
+
         for (HostHandler hostHandler : handlers) {
-            if (matchesHost(host, hostHandler.hosts)) {
+            if (matchesHost(host, subdomain, hostHandler.hosts)) {
                 hostHandler.handler.handle(ctx);
                 return;
             }
@@ -97,7 +102,15 @@ public class ServerWebApp {
             return "GET";
         }
 
-        return method.trim().toUpperCase();
+        return method.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private static String[] normalizeHosts(String[] hosts) {
+        String[] normalized = new String[hosts.length];
+        for (int i = 0; i < hosts.length; i++) {
+            normalized[i] = hosts[i].toLowerCase(Locale.ROOT);
+        }
+        return normalized;
     }
 
     private static Handler instantiateHandler(Class<?> handlerClass) {
@@ -116,25 +129,24 @@ public class ServerWebApp {
         }
 
         int colonIndex = hostHeader.indexOf(':');
-        return colonIndex >= 0 ? hostHeader.substring(0, colonIndex) : hostHeader;
+        String host = colonIndex >= 0 ? hostHeader.substring(0, colonIndex) : hostHeader;
+        return host.toLowerCase(Locale.ROOT);
     }
 
-    private static boolean matchesHost(String host, String[] allowedHosts) {
+    private static boolean matchesHost(String host, String subdomain, String[] allowedHosts) {
         for (String allowed : allowedHosts) {
-            if (allowed.equalsIgnoreCase(host)) {
+            if (allowed.equals(host)) {
                 return true;
             }
 
             if (allowed.endsWith(".")) {
-                if (host.regionMatches(true, 0, allowed, 0, allowed.length())) {
+                if (host.regionMatches(0, allowed, 0, allowed.length())) {
                     return true;
                 }
                 continue;
             }
 
-            int dotIndex = host.indexOf('.');
-            String subdomain = dotIndex > 0 ? host.substring(0, dotIndex) : host;
-            if (allowed.equalsIgnoreCase(subdomain)) {
+            if (allowed.equals(subdomain)) {
                 return true;
             }
         }
@@ -182,5 +194,5 @@ public class ServerWebApp {
             return result;
         }
     }
-    
+
 }
