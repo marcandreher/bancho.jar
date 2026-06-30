@@ -4,7 +4,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 
@@ -24,28 +23,30 @@ public class BanchoCommandRegistry {
                 .enableAnnotationInfo()
                 .acceptPackages(packageName)
                 .scan()) {
-            AtomicInteger count = new AtomicInteger();
             scan.getClassesWithAnyAnnotation(BanchoCommand.class.getName()).forEach(classInfo -> {
                 Class<?> handlerClass = classInfo.loadClass();
                 BanchoCommand commandAnnotation = handlerClass.getAnnotation(BanchoCommand.class);
                 if (commandAnnotation != null) {
                     String commandName = commandAnnotation.name();
+                    CommandCategory category = commandAnnotation.category();
                     String description = commandAnnotation.description();
                     int requiredPrivileges = commandAnnotation.requiredPrivileges().getValue();
                     CommandInfo commandInfo;
                     try {
-                        commandInfo = new CommandInfo(commandName, description, requiredPrivileges, (BanchoCommandHandler) handlerClass.getDeclaredConstructor().newInstance());
+                        commandInfo = new CommandInfo(commandName, category, description, requiredPrivileges, (BanchoCommandHandler) handlerClass.getDeclaredConstructor().newInstance());
                     } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                             | InvocationTargetException | NoSuchMethodException e) {
                         logger.error("Error occurred while instantiating command handler for command: {}", commandName, e);
                         return;
                     }
                     commandMap.put(commandName, commandInfo);
-                    count.incrementAndGet();
                 }
             });
-            logger.debug("Registered <{}> bancho commands from package: ({})", count.get(), packageName);
         }
+    }
+
+    public static void finalizeCommandRegistration() {
+        logger.info("Registered <{}> commands", commandMap.size());
     }
 
     public static Collection<CommandInfo> getAllCommands() {
@@ -59,8 +60,9 @@ public class BanchoCommandRegistry {
     @AllArgsConstructor
     public static class CommandInfo {
         public String name;
+        public CommandCategory category;
         public String description;
-        public int requiredPrivileges;
+        public int requiredPrivileges = 0;
         public BanchoCommandHandler handler;
     }
 

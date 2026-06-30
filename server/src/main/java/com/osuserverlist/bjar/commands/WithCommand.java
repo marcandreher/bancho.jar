@@ -14,13 +14,14 @@ import com.osuserverlist.bjar.modules.calculations.IPerformanceCalculator;
 import com.osuserverlist.bjar.modules.calculations.OsuNativePerformanceCalculator;
 import com.osuserverlist.bjar.modules.commands.BanchoCommand;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
+import com.osuserverlist.bjar.modules.commands.CommandCategory;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuMapDownloader;
 
-@BanchoCommand(name = "!with", description = "Shows PPCount of last nped map")
+@BanchoCommand(name = "!with", category = CommandCategory.GENERAL, description = "Shows PPCount of last nped map")
 public class WithCommand extends BanchoCommandHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WithCommand.class);

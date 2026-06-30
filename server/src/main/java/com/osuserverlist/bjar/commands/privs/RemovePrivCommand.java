@@ -7,6 +7,7 @@ import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.commands.BanchoCommand;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
+import com.osuserverlist.bjar.modules.commands.CommandCategory;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.repos.UserRepository;
@@ -15,7 +16,8 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 @BanchoCommand(
-    name = "!rmpriv",
+    name = "!privrm",
+    category = CommandCategory.MODERATION,
     description = "Remove privileges from a player",
     requiredPrivileges = Privileges.ADMINISTRATOR
 )
@@ -24,7 +26,7 @@ public class RemovePrivCommand extends BanchoCommandHandler {
     @Override
     public void handle(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
         if (args.length < 2) {
-            sendBotMessage(commandInfos, "Usage: !rmpriv <username> <privilege>");
+            sendBotMessage(commandInfos, "Usage: !privrm <username> <privilege>");
             return;
         }
 

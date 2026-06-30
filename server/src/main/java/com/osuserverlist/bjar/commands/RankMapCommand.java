@@ -5,10 +5,11 @@ import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.commands.BanchoCommand;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
+import com.osuserverlist.bjar.modules.commands.CommandCategory;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 
-@BanchoCommand(name = "!rank", requiredPrivileges = Privileges.NOMINATOR, description = "Ranks or unranks the currently selected beatmap or beatmap set.")
+@BanchoCommand(name = "!rank", category = CommandCategory.NOMINATION, requiredPrivileges = Privileges.NOMINATOR, description = "Ranks or unranks the currently selected beatmap or beatmap set.")
 public class RankMapCommand extends BanchoCommandHandler {
 
     @Override
@@ -35,18 +36,20 @@ public class RankMapCommand extends BanchoCommandHandler {
         }
 
         try (MySQL mysql = Database.getConnection()) {
-            if(isSet) {
-                if(sender.getLastNpBeatmapSetId() == 0) {
+            if (isSet) {
+                if (sender.getLastNpBeatmapSetId() == 0) {
                     sendBotMessage(commandInfos, "No beatmap set selected. Please select a beatmap set first.");
                     return;
                 }
-                mysql.exec("UPDATE `maps` SET `status`=?,`frozen`=? WHERE `set_id` = ?", rankValue.getValue(), 1, sender.getLastNpBeatmapSetId());
-            }else {
-                if(sender.getLastNpBeatmapId() == 0) {
+                mysql.exec("UPDATE `maps` SET `status`=?,`frozen`=? WHERE `set_id` = ?", rankValue.getValue(), 1,
+                        sender.getLastNpBeatmapSetId());
+            } else {
+                if (sender.getLastNpBeatmapId() == 0) {
                     sendBotMessage(commandInfos, "No beatmap selected. Please select a beatmap first.");
                     return;
                 }
-                mysql.exec("UPDATE `maps` SET `status`=?,`frozen`=? WHERE `id` = ?", rankValue.getValue(), 1, sender.getLastNpBeatmapId());
+                mysql.exec("UPDATE `maps` SET `status`=?,`frozen`=? WHERE `id` = ?", rankValue.getValue(), 1,
+                        sender.getLastNpBeatmapId());
             }
         }
 

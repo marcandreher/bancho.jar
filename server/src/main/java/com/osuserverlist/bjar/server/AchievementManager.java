@@ -22,7 +22,7 @@ public class AchievementManager {
         
         achievements = achievementRepo.getAll();
 
-        logger.debug("Loaded <{}> achievements from SQL", achievements.size());
+        logger.info("Loaded <{}> achievements", achievements.size());
     }
 
     public void loadForPlayer(Player player, MySQL mysql) throws SQLException {

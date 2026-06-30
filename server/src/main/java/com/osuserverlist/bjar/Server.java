@@ -82,6 +82,8 @@ public class Server {
 
         BanchoCommandRegistry.registerAnnotatedHandlers("com.osuserverlist.bjar.commands");
 
+        BanchoCommandRegistry.finalizeCommandRegistration();
+
         Javalin app = Javalin.create(config -> {
             config.routes.exception(Exception.class, (e, ctx) -> {
                 logger.error("Unhandled exception while processing {} {}",
