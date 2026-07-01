@@ -37,7 +37,7 @@ public class BeatmapEntity {
     private float diff;
 
     public String toEmbed() {
-        return String.format("[https://%s/b/%s %s - %s [%s]]", Server.getInstance().domain, id, artist, title, version);
+        return String.format("[https://osu.%s/beatmapsets/%s#/%s %s - %s [%s]]", Server.getInstance().domain, setId, id, artist, title, version);
     }
 
     public static BeatmapEntity fromBeatmap(Beatmap beatmap) {

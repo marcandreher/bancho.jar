@@ -56,6 +56,9 @@ public class RankMapCommand extends BanchoCommandHandler {
                 mysql.exec("UPDATE `maps` SET `status`=?,`frozen`=? WHERE `id` = ?", rankValue.getValue(), 1,
                         sender.getLastNpBeatmapId());
             }
+
+            mysql.exec("UPDATE `map_requests` SET `active` = 0, `admin_id` = ? WHERE `map_id` = ?",
+                    sender.getId(), isSet ? sender.getLastNpBeatmapSetId() : sender.getLastNpBeatmapId());
         }
 
         sendBotMessage(commandInfos, "Beatmap " + (isSet ? "set" : "map") + " has been " + rankType + "ed.");

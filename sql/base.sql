@@ -1,376 +1,415 @@
-create table achievements
-(
-	id int auto_increment
-		primary key,
-	file varchar(128) not null,
-	name varchar(128) charset utf8 not null,
-	`desc` varchar(256) charset utf8 not null,
-	cond varchar(64) not null,
-	constraint achievements_desc_uindex
-		unique (`desc`),
-	constraint achievements_file_uindex
-		unique (file),
-	constraint achievements_name_uindex
-		unique (name)
+CREATE TABLE
+	`achievements` (
+		`id` int NOT NULL,
+		`file` varchar(128) NOT NULL,
+		`name` varchar(128) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`desc` varchar(256) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`cond` varchar(64) NOT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`channels` (
+		`id` int NOT NULL,
+		`name` varchar(32) NOT NULL,
+		`topic` varchar(256) NOT NULL,
+		`read_priv` int NOT NULL DEFAULT '1',
+		`write_priv` int NOT NULL DEFAULT '2',
+		`auto_join` tinyint (1) NOT NULL DEFAULT '0'
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`clans` (
+		`id` int NOT NULL,
+		`name` varchar(16) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`tag` varchar(6) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`owner` int NOT NULL,
+			`created_at` datetime NOT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`client_hashes` (
+		`userid` int NOT NULL,
+		`osupath` char(32) NOT NULL,
+		`adapters` char(32) NOT NULL,
+		`uninstall_id` char(32) NOT NULL,
+		`disk_serial` char(32) NOT NULL,
+		`latest_time` datetime NOT NULL,
+		`occurrences` int NOT NULL DEFAULT '0'
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`comments` (
+		`id` int NOT NULL,
+		`target_id` int NOT NULL COMMENT 'replay, map, or set id',
+		`target_type` enum ('replay', 'map', 'song') NOT NULL,
+		`userid` int NOT NULL,
+		`time` int NOT NULL,
+		`comment` varchar(80) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`colour` char(6) DEFAULT NULL COMMENT 'rgb hex string'
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`favourites` (
+		`userid` int NOT NULL,
+		`setid` int NOT NULL,
+		`created_at` int NOT NULL DEFAULT '0'
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`ingame_logins` (
+		`id` int NOT NULL,
+		`userid` int NOT NULL,
+		`ip` varchar(45) NOT NULL COMMENT 'maxlen for ipv6',
+		`osu_ver` date NOT NULL,
+		`osu_stream` varchar(25) NOT NULL,
+		`datetime` datetime NOT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`logs` (
+		`id` int NOT NULL,
+		`from` int NOT NULL COMMENT 'both from and to are playerids',
+		`to` int NOT NULL,
+		`action` varchar(32) NOT NULL,
+		`msg` varchar(2048) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+			`time` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`mail` (
+		`id` int NOT NULL,
+		`from_id` int NOT NULL,
+		`to_id` int NOT NULL,
+		`msg` varchar(2048) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`time` int DEFAULT NULL,
+			`read` tinyint (1) NOT NULL DEFAULT '0'
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`maps` (
+		`server` enum ('osu!', 'private') NOT NULL DEFAULT 'osu!',
+		`id` int NOT NULL,
+		`set_id` int NOT NULL,
+		`status` int NOT NULL,
+		`md5` char(32) NOT NULL,
+		`artist` varchar(128) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`title` varchar(128) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`version` varchar(128) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`creator` varchar(19) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`filename` varchar(256) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`last_update` datetime NOT NULL,
+			`total_length` int NOT NULL,
+			`max_combo` int NOT NULL,
+			`frozen` tinyint (1) NOT NULL DEFAULT '0',
+			`plays` int NOT NULL DEFAULT '0',
+			`passes` int NOT NULL DEFAULT '0',
+			`mode` tinyint (1) NOT NULL DEFAULT '0',
+			`bpm` float (12, 2) NOT NULL DEFAULT '0.00',
+			`cs` float (4, 2) NOT NULL DEFAULT '0.00',
+			`ar` float (4, 2) NOT NULL DEFAULT '0.00',
+			`od` float (4, 2) NOT NULL DEFAULT '0.00',
+			`hp` float (4, 2) NOT NULL DEFAULT '0.00',
+			`diff` float (6, 3) NOT NULL DEFAULT '0.000'
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`mapsets` (
+		`server` enum ('osu!', 'private') NOT NULL DEFAULT 'osu!',
+		`id` int NOT NULL,
+		`last_osuapi_check` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`map_requests` (
+		`id` int NOT NULL,
+		`map_id` int NOT NULL,
+		`player_id` int NOT NULL,
+		`admin_id` int NOT NULL DEFAULT '0',
+		`datetime` datetime DEFAULT CURRENT_TIMESTAMP,
+		`active` tinyint (1) NOT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`performance_reports` (
+		`scoreid` bigint UNSIGNED NOT NULL,
+		`mod_mode` enum ('vanilla', 'relax', 'autopilot') NOT NULL DEFAULT 'vanilla',
+		`os` varchar(64) NOT NULL,
+		`fullscreen` tinyint (1) NOT NULL,
+		`fps_cap` varchar(16) NOT NULL,
+		`compatibility` tinyint (1) NOT NULL,
+		`version` varchar(16) NOT NULL,
+		`start_time` int NOT NULL,
+		`end_time` int NOT NULL,
+		`frame_count` int NOT NULL,
+		`spike_frames` int NOT NULL,
+		`aim_rate` int NOT NULL,
+		`completion` tinyint (1) NOT NULL,
+		`identifier` varchar(128) DEFAULT NULL COMMENT 'really don''t know much about this yet',
+		`average_frametime` int NOT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`ratings` (
+		`userid` int NOT NULL,
+		`map_md5` char(32) NOT NULL,
+		`rating` tinyint NOT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`relationships` (
+		`user1` int NOT NULL,
+		`user2` int NOT NULL,
+		`type` enum ('friend', 'block') NOT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`scores` (
+		`id` bigint UNSIGNED NOT NULL,
+		`map_md5` char(32) NOT NULL,
+		`score` int NOT NULL,
+		`pp` float (7, 3) NOT NULL,
+		`acc` float (6, 3) NOT NULL,
+		`max_combo` int NOT NULL,
+		`mods` int NOT NULL,
+		`n300` int NOT NULL,
+		`n100` int NOT NULL,
+		`n50` int NOT NULL,
+		`nmiss` int NOT NULL,
+		`ngeki` int NOT NULL,
+		`nkatu` int NOT NULL,
+		`grade` varchar(2) NOT NULL DEFAULT 'N',
+		`status` tinyint NOT NULL,
+		`mode` tinyint NOT NULL,
+		`play_time` datetime NOT NULL,
+		`time_elapsed` int NOT NULL,
+		`client_flags` int NOT NULL,
+		`userid` int NOT NULL,
+		`perfect` tinyint (1) NOT NULL,
+		`online_checksum` char(32) NOT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`startups` (
+		`id` int NOT NULL,
+		`ver_major` tinyint NOT NULL,
+		`ver_minor` tinyint NOT NULL,
+		`ver_micro` tinyint NOT NULL,
+		`datetime` datetime NOT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`stats` (
+		`id` int NOT NULL,
+		`mode` tinyint (1) NOT NULL,
+		`tscore` bigint UNSIGNED NOT NULL DEFAULT '0',
+		`rscore` bigint UNSIGNED NOT NULL DEFAULT '0',
+		`pp` int UNSIGNED NOT NULL DEFAULT '0',
+		`plays` int UNSIGNED NOT NULL DEFAULT '0',
+		`playtime` int UNSIGNED NOT NULL DEFAULT '0',
+		`acc` float (6, 3) NOT NULL DEFAULT '0.000',
+		`max_combo` int UNSIGNED NOT NULL DEFAULT '0',
+		`total_hits` int UNSIGNED NOT NULL DEFAULT '0',
+		`replay_views` int UNSIGNED NOT NULL DEFAULT '0',
+		`xh_count` int UNSIGNED NOT NULL DEFAULT '0',
+		`x_count` int UNSIGNED NOT NULL DEFAULT '0',
+		`sh_count` int UNSIGNED NOT NULL DEFAULT '0',
+		`s_count` int UNSIGNED NOT NULL DEFAULT '0',
+		`a_count` int UNSIGNED NOT NULL DEFAULT '0'
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`tourney_pools` (
+		`id` int NOT NULL,
+		`name` varchar(16) NOT NULL,
+		`created_at` datetime NOT NULL,
+		`created_by` int NOT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`tourney_pool_maps` (
+		`map_id` int NOT NULL,
+		`pool_id` int NOT NULL,
+		`mods` int NOT NULL,
+		`slot` tinyint NOT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`users` (
+		`id` int NOT NULL,
+		`name` varchar(32) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`safe_name` varchar(32) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+			`email` varchar(254) NOT NULL,
+			`priv` int NOT NULL DEFAULT '1',
+			`pw_bcrypt` char(60) NOT NULL,
+			`country` char(2) NOT NULL DEFAULT 'xx',
+			`silence_end` int NOT NULL DEFAULT '0',
+			`donor_end` int NOT NULL DEFAULT '0',
+			`creation_time` int NOT NULL DEFAULT '0',
+			`latest_activity` int NOT NULL DEFAULT '0',
+			`clan_id` int NOT NULL DEFAULT '0',
+			`clan_priv` tinyint (1) NOT NULL DEFAULT '0',
+			`preferred_mode` int NOT NULL DEFAULT '0',
+			`play_style` int NOT NULL DEFAULT '0',
+			`custom_badge_name` varchar(16) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+			`custom_badge_icon` varchar(64) DEFAULT NULL,
+			`userpage_content` varchar(2048) CHARACTER
+		SET
+			utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+			`api_key` char(36) DEFAULT NULL
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE
+	`user_achievements` (`userid` int NOT NULL, `achid` int NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+ALTER TABLE `achievements` ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `achievements_desc_uindex` (`desc`),
+ADD UNIQUE KEY `achievements_file_uindex` (`file`),
+ADD UNIQUE KEY `achievements_name_uindex` (`name`);
+
+ALTER TABLE `channels` ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `channels_name_uindex` (`name`),
+ADD KEY `channels_auto_join_index` (`auto_join`);
+
+ALTER TABLE `clans` ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `clans_name_uindex` (`name`),
+ADD UNIQUE KEY `clans_owner_uindex` (`owner`),
+ADD UNIQUE KEY `clans_tag_uindex` (`tag`);
+
+ALTER TABLE `client_hashes` ADD PRIMARY KEY (
+	`userid`,
+	`osupath`,
+	`adapters`,
+	`uninstall_id`,
+	`disk_serial`
 );
 
-create table channels
-(
-	id int auto_increment
-		primary key,
-	name varchar(32) not null,
-	topic varchar(256) not null,
-	read_priv int default 1 not null,
-	write_priv int default 2 not null,
-	auto_join tinyint(1) default 0 not null,
-	constraint channels_name_uindex
-		unique (name)
-);
-create index channels_auto_join_index
-	on channels (auto_join);
+ALTER TABLE `comments` ADD PRIMARY KEY (`id`);
 
-create table clans
-(
-	id int auto_increment
-		primary key,
-	name varchar(16) charset utf8 not null,
-	tag varchar(6) charset utf8 not null,
-	owner int not null,
-	created_at datetime not null,
-	constraint clans_name_uindex
-		unique (name),
-	constraint clans_owner_uindex
-		unique (owner),
-	constraint clans_tag_uindex
-		unique (tag)
-);
+ALTER TABLE `favourites` ADD PRIMARY KEY (`userid`, `setid`);
 
-create table client_hashes
-(
-	userid int not null,
-	osupath char(32) not null,
-	adapters char(32) not null,
-	uninstall_id char(32) not null,
-	disk_serial char(32) not null,
-	latest_time datetime not null,
-	occurrences int default 0 not null,
-	primary key (userid, osupath, adapters, uninstall_id, disk_serial)
-);
+ALTER TABLE `ingame_logins` ADD PRIMARY KEY (`id`);
 
-create table comments
-(
-	id int auto_increment
-		primary key,
-	target_id int not null comment 'replay, map, or set id',
-	target_type enum('replay', 'map', 'song') not null,
-	userid int not null,
-	time int not null,
-	comment varchar(80) charset utf8 not null,
-	colour char(6) null comment 'rgb hex string'
-);
+ALTER TABLE `logs` ADD PRIMARY KEY (`id`);
 
-create table favourites
-(
-	userid int not null,
-	setid int not null,
-	created_at int default 0 not null,
-	primary key (userid, setid)
-);
+ALTER TABLE `mail` ADD PRIMARY KEY (`id`);
 
-create table ingame_logins
-(
-	id int auto_increment
-		primary key,
-	userid int not null,
-	ip varchar(45) not null comment 'maxlen for ipv6',
-	osu_ver date not null,
-	osu_stream varchar(25) not null,
-	datetime datetime not null
-);
+ALTER TABLE `maps` ADD PRIMARY KEY (`server`, `id`),
+ADD UNIQUE KEY `maps_id_uindex` (`id`),
+ADD UNIQUE KEY `maps_md5_uindex` (`md5`),
+ADD KEY `maps_set_id_index` (`set_id`),
+ADD KEY `maps_status_index` (`status`),
+ADD KEY `maps_filename_index` (`filename`),
+ADD KEY `maps_plays_index` (`plays`),
+ADD KEY `maps_mode_index` (`mode`),
+ADD KEY `maps_frozen_index` (`frozen`);
 
-create table relationships
-(
-	user1 int not null,
-	user2 int not null,
-	type enum('friend', 'block') not null,
-	primary key (user1, user2)
-);
+ALTER TABLE `mapsets` ADD PRIMARY KEY (`server`, `id`),
+ADD UNIQUE KEY `nmapsets_id_uindex` (`id`);
 
-create table logs
-(
-	id int auto_increment
-		primary key,
-	`from` int not null comment 'both from and to are playerids',
-	`to` int not null,
-	`action` varchar(32) not null,
-	msg varchar(2048) charset utf8 null,
-	time datetime not null on update CURRENT_TIMESTAMP
-);
+ALTER TABLE `map_requests` ADD PRIMARY KEY (`id`);
 
-create table mail
-(
-	id int auto_increment
-		primary key,
-	from_id int not null,
-	to_id int not null,
-	msg varchar(2048) charset utf8 not null,
-	time int null,
-	`read` tinyint(1) default 0 not null
-);
+ALTER TABLE `performance_reports` ADD PRIMARY KEY (`scoreid`, `mod_mode`);
 
-create table maps
-(
-	server enum('osu!', 'private') default 'osu!' not null,
-	id int not null,
-	set_id int not null,
-	status int not null,
-	md5 char(32) not null,
-	artist varchar(128) charset utf8 not null,
-	title varchar(128) charset utf8 not null,
-	version varchar(128) charset utf8 not null,
-	creator varchar(19) charset utf8 not null,
-	filename varchar(256) charset utf8 not null,
-	last_update datetime not null,
-	total_length int not null,
-	max_combo int not null,
-	frozen tinyint(1) default 0 not null,
-	plays int default 0 not null,
-	passes int default 0 not null,
-	mode tinyint(1) default 0 not null,
-	bpm float(12,2) default 0.00 not null,
-	cs float(4,2) default 0.00 not null,
-	ar float(4,2) default 0.00 not null,
-	od float(4,2) default 0.00 not null,
-	hp float(4,2) default 0.00 not null,
-	diff float(6,3) default 0.000 not null,
-	primary key (server, id),
-	constraint maps_id_uindex
-		unique (id),
-	constraint maps_md5_uindex
-		unique (md5)
-);
-create index maps_set_id_index
-	on maps (set_id);
-create index maps_status_index
-	on maps (status);
-create index maps_filename_index
-	on maps (filename);
-create index maps_plays_index
-	on maps (plays);
-create index maps_mode_index
-	on maps (mode);
-create index maps_frozen_index
-	on maps (frozen);
+ALTER TABLE `ratings` ADD PRIMARY KEY (`userid`, `map_md5`);
 
-create table mapsets
-(
-	server enum('osu!', 'private') default 'osu!' not null,
-	id int not null,
-	last_osuapi_check datetime default CURRENT_TIMESTAMP not null,
-	primary key (server, id),
-	constraint nmapsets_id_uindex
-		unique (id)
-);
+ALTER TABLE `relationships` ADD PRIMARY KEY (`user1`, `user2`);
 
-create table map_requests
-(
-	id int auto_increment
-		primary key,
-	map_id int not null,
-	player_id int not null,
-	datetime datetime not null,
-	active tinyint(1) not null
-);
+ALTER TABLE `scores` ADD PRIMARY KEY (`id`),
+ADD KEY `scores_map_md5_index` (`map_md5`),
+ADD KEY `scores_score_index` (`score`),
+ADD KEY `scores_pp_index` (`pp`),
+ADD KEY `scores_mods_index` (`mods`),
+ADD KEY `scores_status_index` (`status`),
+ADD KEY `scores_mode_index` (`mode`),
+ADD KEY `scores_play_time_index` (`play_time`),
+ADD KEY `scores_userid_index` (`userid`),
+ADD KEY `scores_online_checksum_index` (`online_checksum`),
+ADD KEY `scores_fetch_leaderboard_generic_index` (`map_md5`, `status`, `mode`);
 
-create table performance_reports
-(
-	scoreid bigint(20) unsigned not null,
-	mod_mode enum('vanilla', 'relax', 'autopilot') default 'vanilla' not null,
-	os varchar(64) not null,
-	fullscreen tinyint(1) not null,
-	fps_cap varchar(16) not null,
-	compatibility tinyint(1) not null,
-	version varchar(16) not null,
-	start_time int not null,
-	end_time int not null,
-	frame_count int not null,
-	spike_frames int not null,
-	aim_rate int not null,
-	completion tinyint(1) not null,
-	identifier varchar(128) null comment 'really don''t know much about this yet',
-	average_frametime int not null,
-	primary key (scoreid, mod_mode)
-);
+ALTER TABLE `startups` ADD PRIMARY KEY (`id`);
 
-create table ratings
-(
-	userid int not null,
-	map_md5 char(32) not null,
-	rating tinyint(2) not null,
-	primary key (userid, map_md5)
-);
+ALTER TABLE `stats` ADD PRIMARY KEY (`id`, `mode`),
+ADD KEY `stats_mode_index` (`mode`),
+ADD KEY `stats_pp_index` (`pp`),
+ADD KEY `stats_tscore_index` (`tscore`),
+ADD KEY `stats_rscore_index` (`rscore`);
 
-create table scores
-(
-	id bigint unsigned auto_increment
-		primary key,
-	map_md5 char(32) not null,
-	score int not null,
-	pp float(7,3) not null,
-	acc float(6,3) not null,
-	max_combo int not null,
-	mods int not null,
-	n300 int not null,
-	n100 int not null,
-	n50 int not null,
-	nmiss int not null,
-	ngeki int not null,
-	nkatu int not null,
-	grade varchar(2) default 'N' not null,
-	status tinyint not null,
-	mode tinyint not null,
-	play_time datetime not null,
-	time_elapsed int not null,
-	client_flags int not null,
-	userid int not null,
-	perfect tinyint(1) not null,
-	online_checksum char(32) not null
-);
-create index scores_map_md5_index
-	on scores (map_md5);
-create index scores_score_index
-	on scores (score);
-create index scores_pp_index
-	on scores (pp);
-create index scores_mods_index
-	on scores (mods);
-create index scores_status_index
-	on scores (status);
-create index scores_mode_index
-	on scores (mode);
-create index scores_play_time_index
-	on scores (play_time);
-create index scores_userid_index
-	on scores (userid);
-create index scores_online_checksum_index
-	on scores (online_checksum);
-create index scores_fetch_leaderboard_generic_index
-	on scores (map_md5, status, mode);
+ALTER TABLE `tourney_pools` ADD PRIMARY KEY (`id`),
+ADD KEY `tourney_pools_users_id_fk` (`created_by`);
 
-create table startups
-(
-	id int auto_increment
-		primary key,
-	ver_major tinyint not null,
-	ver_minor tinyint not null,
-	ver_micro tinyint not null,
-	datetime datetime not null
-);
+ALTER TABLE `tourney_pool_maps` ADD PRIMARY KEY (`map_id`, `pool_id`),
+ADD KEY `tourney_pool_maps_mods_slot_index` (`mods`, `slot`),
+ADD KEY `tourney_pool_maps_tourney_pools_id_fk` (`pool_id`);
 
-create table stats
-(
-	id int auto_increment,
-	mode tinyint(1) not null,
-	tscore bigint unsigned default 0 not null,
-	rscore bigint unsigned default 0 not null,
-	pp int unsigned default 0 not null,
-	plays int unsigned default 0 not null,
-	playtime int unsigned default 0 not null,
-	acc float(6,3) default 0.000 not null,
-	max_combo int unsigned default 0 not null,
-	total_hits int unsigned default 0 not null,
-	replay_views int unsigned default 0 not null,
-	xh_count int unsigned default 0 not null,
-	x_count int unsigned default 0 not null,
-	sh_count int unsigned default 0 not null,
-	s_count int unsigned default 0 not null,
-	a_count int unsigned default 0 not null,
-	primary key (id, mode)
-);
-create index stats_mode_index
-	on stats (mode);
-create index stats_pp_index
-	on stats (pp);
-create index stats_tscore_index
-	on stats (tscore);
-create index stats_rscore_index
-	on stats (rscore);
+ALTER TABLE `users` ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `users_email_uindex` (`email`),
+ADD UNIQUE KEY `users_name_uindex` (`name`),
+ADD UNIQUE KEY `users_safe_name_uindex` (`safe_name`),
+ADD UNIQUE KEY `users_api_key_uindex` (`api_key`),
+ADD KEY `users_priv_index` (`priv`),
+ADD KEY `users_clan_id_index` (`clan_id`),
+ADD KEY `users_clan_priv_index` (`clan_priv`),
+ADD KEY `users_country_index` (`country`);
 
-create table tourney_pool_maps
-(
-	map_id int not null,
-	pool_id int not null,
-	mods int not null,
-	slot tinyint not null,
-	primary key (map_id, pool_id)
-);
-create index tourney_pool_maps_mods_slot_index
-	on tourney_pool_maps (mods, slot);
-create index tourney_pool_maps_tourney_pools_id_fk
-	on tourney_pool_maps (pool_id);
+ALTER TABLE `user_achievements` ADD PRIMARY KEY (`userid`, `achid`),
+ADD KEY `user_achievements_achid_index` (`achid`),
+ADD KEY `user_achievements_userid_index` (`userid`);
 
-create table tourney_pools
-(
-	id int auto_increment
-		primary key,
-	name varchar(16) not null,
-	created_at datetime not null,
-	created_by int not null
-);
+ALTER TABLE `achievements` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
-create index tourney_pools_users_id_fk
-	on tourney_pools (created_by);
+ALTER TABLE `channels` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
-create table user_achievements
-(
-	userid int not null,
-	achid int not null,
-	primary key (userid, achid)
-);
-create index user_achievements_achid_index
-	on user_achievements (achid);
-create index user_achievements_userid_index
-	on user_achievements (userid);
+ALTER TABLE `clans` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
-create table users
-(
-	id int auto_increment
-		primary key,
-	name varchar(32) charset utf8 not null,
-	safe_name varchar(32) charset utf8 not null,
-	email varchar(254) not null,
-	priv int default 1 not null,
-	pw_bcrypt char(60) not null,
-	country char(2) default 'xx' not null,
-	silence_end int default 0 not null,
-	donor_end int default 0 not null,
-	creation_time int default 0 not null,
-	latest_activity int default 0 not null,
-	clan_id int default 0 not null,
-	clan_priv tinyint(1) default 0 not null,
-	preferred_mode int default 0 not null,
-	play_style int default 0 not null,
-	custom_badge_name varchar(16) charset utf8 null,
-	custom_badge_icon varchar(64) null,
-	userpage_content varchar(2048) charset utf8 null,
-	api_key char(36) null,
-	constraint users_api_key_uindex
-		unique (api_key),
-	constraint users_email_uindex
-		unique (email),
-	constraint users_name_uindex
-		unique (name),
-	constraint users_safe_name_uindex
-		unique (safe_name)
-);
-create index users_priv_index
-	on users (priv);
-create index users_clan_id_index
-	on users (clan_id);
-create index users_clan_priv_index
-	on users (clan_priv);
-create index users_country_index
-	on users (country);
+ALTER TABLE `comments` MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `ingame_logins` MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `logs` MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `mail` MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `map_requests` MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `scores` MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `startups` MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `stats` MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `tourney_pools` MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `users` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 insert into users (id, name, safe_name, priv, country, silence_end, email, pw_bcrypt, creation_time, latest_activity)
 values (1, 'BanchoBot', 'banchobot', 1, 'us', 0, 'bot@osu-server-list.com',
@@ -484,3 +523,5 @@ insert into achievements (id, file, name, `desc`, cond) values (80, 'all-intro-n
 insert into achievements (id, file, name, `desc`, cond) values (81, 'all-intro-nightcore', 'Sweet Rave Party', 'Founded in the fine tradition of changing things that were just fine as they were.', 'score.mods & 512');
 insert into achievements (id, file, name, `desc`, cond) values (82, 'all-intro-halftime', 'Slowboat', 'You got there. Eventually.', 'score.mods & 256');
 insert into achievements (id, file, name, `desc`, cond) values (83, 'all-intro-spunout', 'Burned Out', 'One cannot always spin to win.', 'score.mods & 4096');
+
+COMMIT;
