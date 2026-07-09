@@ -52,4 +52,8 @@ public class UserEntity {
 
         return user;
     }
+
+    public String toString() {
+        return String.format("<%s>(%d)", this.name, this.id);
+    }
 }

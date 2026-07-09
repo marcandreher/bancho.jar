@@ -52,7 +52,7 @@ public class OsuLastFmHandler implements Handler {
         // HQ_ASSEMBLY | HQ_FILE
         if ((flags & (LastFMFlags.HQ_ASSEMBLY | LastFMFlags.HQ_FILE)) != 0) {
 
-            // TODO: restrict player
+            server.playerManager.restrict(player);
 
             player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), "", player.getUsername(), server.botPlayer.getId()));
             server.playerManager.disconnect(player);
@@ -67,7 +67,7 @@ public class OsuLastFmHandler implements Handler {
             // 1/32 chance
             if (ThreadLocalRandom.current().nextInt(32) == 0) {
 
-                // TODO: restrict player
+                server.playerManager.restrict(player);
 
                 server.playerManager.disconnect(player);
 

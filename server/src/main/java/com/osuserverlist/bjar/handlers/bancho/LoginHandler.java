@@ -36,6 +36,7 @@ import com.osuserverlist.bjar.packets.server.handlers.connect.LoginReplyPacket;
 import com.osuserverlist.bjar.packets.server.handlers.connect.MenuIconPacket;
 import com.osuserverlist.bjar.packets.server.handlers.connect.PermissionsPacket;
 import com.osuserverlist.bjar.packets.server.handlers.connect.ProtocolVersionPacket;
+import com.osuserverlist.bjar.packets.server.handlers.user.AccountRestrictedPacket;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserFriendListPacket;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserPresenceBundlePacket;
 import com.osuserverlist.bjar.packets.server.handlers.user.UserPresencePacket;
@@ -49,6 +50,12 @@ import io.javalin.http.HttpStatus;
 
 public class LoginHandler {
     private static final Logger logger = LoggerFactory.getLogger(LoginHandler.class);
+
+    
+public static final String RESTRICTED_MSG = """
+Your account is currently in restricted mode.
+If you believe this is a mistake, or have waited a period
+greater than 3 months, you may appeal via discord.""";
 
     public void handleLogin(Context ctx) throws IOException, SQLException {
         LoginResponse loginResponse = new LoginResponse(ctx);
@@ -138,7 +145,6 @@ public class LoginHandler {
 
             player.sendPacket(new UserFriendListPacket(userRepository.getFriendIds(player.getId())));
 
-
             server.channelManager.getAll().forEach(channel -> {
                 if ((channel.getReadPriv() > player.getServerPrivileges())) {
                     return; // Skip channels the player doesn't have access to
@@ -188,6 +194,12 @@ public class LoginHandler {
             if (welcomeConfig.isBotEnabled()) {
                 player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), welcomeConfig.getBotMessage(),
                         player.getUsername(), server.botPlayer.getId()));
+            }
+
+            
+            if(!Privileges.hasAny(player.getServerPrivileges(), Privileges.UNRESTRICTED)) {
+                player.sendPacket(new AccountRestrictedPacket());
+                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), RESTRICTED_MSG, player.getUsername(), server.botPlayer.getId()));
             }
 
             player.sendPacket(new MenuIconPacket());

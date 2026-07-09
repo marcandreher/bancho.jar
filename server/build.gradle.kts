@@ -3,6 +3,7 @@ import java.time.Instant
 plugins {
     java
     application
+    id("maven-publish")
     id("com.gradleup.shadow") version "9.0.0"
 }
 
@@ -74,6 +75,18 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
 
     implementation("org.mvel:mvel2:$mvelVersion")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("shadow") {
+            artifact(tasks.shadowJar)
+
+            groupId = "de.marcandreher"
+            artifactId = "banchojar"
+            version = "0.1.2"
+        }
+    }
 }
 
 val generateBuildProperties by tasks.registering(WriteProperties::class) {

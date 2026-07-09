@@ -19,7 +19,7 @@ import com.osuserverlist.bjar.packets.server.handlers.user.UserQuitPacket;
 public class PlayerManager {
     private final Map<String, Player> onlinePlayers = new ConcurrentHashMap<>();
     private final Map<String, Player> apiIdentMap = new ConcurrentHashMap<>();
-
+    
     public void add(Player player) {
         onlinePlayers.put(player.getOsuToken(), player);
         apiIdentMap.put(player.getApiIdent(), player);
@@ -76,12 +76,24 @@ public class PlayerManager {
         disconnect(player);
     }
 
+    public void restrict(Player player) {
+        player.setServerPrivileges(player.getServerPrivileges() & ~Privileges.UNRESTRICTED.getValue());
+        disconnect(player);
+    }
+
+    public void unrestrict(Player player) {
+        player.setServerPrivileges(player.getServerPrivileges() | Privileges.UNRESTRICTED.getValue());
+        disconnect(player);
+    }
+
     public Player getBotPlayer(MySQL mysql, int id) throws SQLException {
         ResultSet botRs = mysql.query("SELECT * FROM `users` WHERE `id` = ?", id).executeQuery();
 
         if (!botRs.next()) {
             return null;
         }
+
+        // TODO: Make this more dynamic enabling mutliple bots
 
         Player botPlayer = new Player(id, true, UUID.randomUUID().toString());
         botPlayer.setUsername(botRs.getString("name"));

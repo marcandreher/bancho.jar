@@ -5,9 +5,10 @@ import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
 import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
 
-public abstract class BanchoCommandHandler {
-    
-    public abstract void handle(Player sender, PlayerCommandInfo[] commandInfos, String[] args);
+public class BanchoCommandHandler {
+
+    public void handle(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
+    }
 
     public void sendBotMessage(PlayerCommandInfo[] commandInfos, String message) {
         Server server = Server.getInstance();

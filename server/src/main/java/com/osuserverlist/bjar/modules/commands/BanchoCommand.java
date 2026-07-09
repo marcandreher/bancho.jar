@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 import com.osuserverlist.bjar.models.osu.Privileges;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target({ ElementType.TYPE, ElementType.METHOD })
 public @interface BanchoCommand {
     String name();
     CommandCategory category();

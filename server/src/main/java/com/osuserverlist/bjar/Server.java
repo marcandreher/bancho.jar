@@ -92,7 +92,9 @@ public class Server {
                 ctx.status(500).result("Internal Server Error");
             });
 
+            config.concurrency.useVirtualThreads = true;
             config.requestLogger.http(new BanchoWebLogger());
+
             ServerWebApp.registerRoutes(config);
 
             if (level == ProductionLevel.DEVELOPMENT) {
