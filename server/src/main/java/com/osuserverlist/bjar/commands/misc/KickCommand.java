@@ -25,15 +25,18 @@ public class KickCommand extends BanchoCommandHandler {
         }
 
         String username = args[0];
+        Server server = Server.getInstance();
 
-        Player targetPlayer = Server.getInstance().playerManager.getByFilter(p -> p.getUsername().equalsIgnoreCase(username));
+        Player targetPlayer = server.playerManager.getByFilter(p -> p.getUsername().equalsIgnoreCase(username));
 
-        if (targetPlayer != null) {
-            Server.getInstance().playerManager.disconnect(targetPlayer);
-            sendBotMessage(commandInfos, "Player " + username + " has been kicked from the server.");
-        } else {
+        if (targetPlayer == null) {
             sendBotMessage(commandInfos, "Player not found: " + username);
+            return;
         }
+
+        server.playerManager.disconnect(targetPlayer);
+        sendBotMessage(commandInfos, "Player " + username + " has been kicked from the server.");
+        
     }
 
 }

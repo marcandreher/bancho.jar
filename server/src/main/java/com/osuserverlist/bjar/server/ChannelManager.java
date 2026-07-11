@@ -52,6 +52,9 @@ public class ChannelManager {
                 .visible(false)
                 .build();
         this.add(highlightChannel);
+
+        channels.get("#lobby").setVisible(false);
+
         logger.info("Loaded <{}> channels", channels.size());
     }
 

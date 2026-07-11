@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.osuserverlist"
-version = "1.1.2-SNAPSHOT"
+version = "1.1.3-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -84,7 +84,7 @@ publishing {
 
             groupId = "de.marcandreher"
             artifactId = "banchojar"
-            version = "0.1.2"
+            version = "0.1.3"
         }
     }
 }

@@ -10,6 +10,9 @@ import java.util.List;
 
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.models.essentials.Match;
+import com.osuserverlist.bjar.models.osu.match.MatchSpecialMode;
+import com.osuserverlist.bjar.models.osu.replay.ScoreFrame;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 
 public class BanchoPacketWriter {
@@ -54,7 +57,7 @@ public class BanchoPacketWriter {
             // Write the actual payload
             finalPacket.write(payload);
 
-            if(logger.isDebugEnabled()) {
+            if (logger.isDebugEnabled()) {
                 // Log packet details
                 StringBuilder sb = new StringBuilder();
                 byte[] packetBytes = finalPacket.toByteArray();
@@ -163,6 +166,11 @@ public class BanchoPacketWriter {
         writeByte(value ? 1 : 0);
     }
 
+    public void writeDouble(double value) throws IOException {
+        byte[] bytes = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putDouble(value).array();
+        output.write(bytes);
+    }
+
     public void writeString(String str) {
         if (str == null || str.isEmpty()) {
             writeByte(0x00); // Empty/null string indicator
@@ -199,7 +207,7 @@ public class BanchoPacketWriter {
             writeIntLE(value);
         }
     }
-    
+
     /**
      * Writes an unsigned LEB128 encoded integer.
      * ULEB128 is a variable-length encoding for unsigned integers.
@@ -216,4 +224,77 @@ public class BanchoPacketWriter {
             writeByte(b);
         } while (value != 0);
     }
+
+    public void writeMatch(Match match) throws IOException {
+        writeShort(match.getMatchId());
+        writeBoolean(match.isInProgress());
+        writeByte(match.getMatchType().value);
+        writeInt(match.getMods());
+
+        writeString(match.getRoomName());
+        writeString(match.getRoomPassword());
+        writeString(match.getBeatmapName());
+        writeInt(match.getBeatmapId());
+        writeString(match.getBeatmapChecksum());
+
+        // Slot statuses
+        for (int i = 0; i < Match.MAX_SLOTS; i++) {
+            writeByte(match.getSlots()[i].getStatus());
+        }
+
+        // Slot teams
+        for (int i = 0; i < Match.MAX_SLOTS; i++) {
+            writeByte(match.getSlots()[i].getTeam());
+        }
+
+        // Player IDs (only for occupied slots)
+        for (int i = 0; i < Match.MAX_SLOTS; i++) {
+            if ((match.getSlots()[i].getStatus() & 0x7C) > 0) {
+                writeInt(match.getSlots()[i].getPlayerId());
+            }
+        }
+
+        writeInt(match.getHostId());
+
+        writeByte(match.getMode());
+        writeByte(match.getScoringType().value);
+        writeByte(match.getTeamType().value);
+        writeByte(match.getSpecialMode().value);
+
+        // Slot mods are only present in FreeMod
+        if (match.getSpecialMode() == MatchSpecialMode.FREE_MOD) {
+            for (int i = 0; i < Match.MAX_SLOTS; i++) {
+                writeInt(match.getSlots()[i].getMods());
+            }
+        }
+
+        writeInt(match.getSeed());
+    }
+
+    public void writeScoreFrame(ScoreFrame scoreFrame) throws IOException {
+        writeInt(scoreFrame.getTime());
+        writeByte(scoreFrame.getId());
+        writeShort(scoreFrame.getNum300());
+        writeShort(scoreFrame.getNum100());
+        writeShort(scoreFrame.getNum50());
+        writeShort(scoreFrame.getNumGeki());
+        writeShort(scoreFrame.getNumKatu());
+        writeShort(scoreFrame.getNumMiss());
+        writeInt(scoreFrame.getTotalScore());
+        writeShort(scoreFrame.getMaxCombo());
+        writeShort(scoreFrame.getCurrentCombo());
+
+        writeBoolean(scoreFrame.isPerfect());
+
+        writeByte(scoreFrame.getHp());
+        writeByte(scoreFrame.getTagByte());
+
+        writeBoolean(scoreFrame.isScoreVersion2());
+
+        if(scoreFrame.isScoreVersion2()) {
+            writeDouble(scoreFrame.getComboPortion());
+            writeDouble(scoreFrame.getBonusPortion());
+        }
+    }
+
 }

@@ -23,6 +23,7 @@ import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.geo.Country;
 import com.osuserverlist.bjar.modules.geo.GeoRegistry;
 import com.osuserverlist.bjar.modules.geo.GeoResponse;
+import com.osuserverlist.bjar.modules.logger.BuildInfo;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.PacketSender;
@@ -97,7 +98,7 @@ greater than 3 months, you may appeal via discord.""";
 
             Player existingPlayer = server.playerManager.getById(userEntity.getId());
             if (existingPlayer != null) {
-                server.playerManager.forceRemove(existingPlayer);
+                server.playerManager.disconnect(existingPlayer);
             }
 
             // Set country if missing (XX)
@@ -189,10 +190,12 @@ greater than 3 months, you may appeal via discord.""";
 
             WelcomeMessage welcomeConfig = server.config.getWelcomeMessage();
             if (welcomeConfig.isNotificationEnabled()) {
-                player.sendPacket(new NotificationPacket(welcomeConfig.getNotificationMessage()));
+                String notificationMessage = welcomeConfig.getNotificationMessage().replace("%version%", BuildInfo.VERSION);
+                player.sendPacket(new NotificationPacket(notificationMessage));
             }
             if (welcomeConfig.isBotEnabled()) {
-                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), welcomeConfig.getBotMessage(),
+                String botMessage = welcomeConfig.getBotMessage().replace("%version%", BuildInfo.VERSION);
+                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), botMessage,
                         player.getUsername(), server.botPlayer.getId()));
             }
 

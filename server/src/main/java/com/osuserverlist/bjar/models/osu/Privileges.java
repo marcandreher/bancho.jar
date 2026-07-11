@@ -19,9 +19,11 @@ public enum Privileges {
     ADMINISTRATOR(1 << 13),
     DEVELOPER(1 << 14),
 
+    NONE(0),
+
     STAFF(MODERATOR.value | ADMINISTRATOR.value | DEVELOPER.value);
 
-    private final int value;
+    public final int value;
 
     Privileges(int value) {
         this.value = value;

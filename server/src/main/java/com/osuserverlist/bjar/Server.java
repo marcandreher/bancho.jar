@@ -20,6 +20,7 @@ import com.osuserverlist.bjar.modules.web.ServerWebApp;
 import com.osuserverlist.bjar.packets.client.engine.ClientPacketRegistry;
 import com.osuserverlist.bjar.server.AchievementManager;
 import com.osuserverlist.bjar.server.ChannelManager;
+import com.osuserverlist.bjar.server.MatchManager;
 import com.osuserverlist.bjar.server.PlayerManager;
 import com.osuserverlist.bjar.server.scheudler.AutoDisconnectTask;
 import com.osuserverlist.bjar.server.scheudler.BotPresenceTask;
@@ -43,9 +44,11 @@ public class Server {
     public ServerConfiguration config = ServerConfiguration.load();
     public PlayerManager playerManager = new PlayerManager();
     public ChannelManager channelManager = new ChannelManager();
+    public MatchManager matchManager = new MatchManager();
     public AchievementManager achievementManager = new AchievementManager();
     public ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
     public OsuDirectAPI osuDirectAPI = new OsuDirectAPI();
+    
 
     public static Server start(Dotenv dotenv, ProductionLevel level) {
         instance = new Server();

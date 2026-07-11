@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
+import com.osuserverlist.bjar.models.essentials.Match;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
@@ -45,16 +46,17 @@ public class PlayerManager {
         return onlinePlayers.values();
     }
 
-    public void forceRemove(Player player) {
-        onlinePlayers.remove(player.getOsuToken());
-        apiIdentMap.remove(player.getApiIdent());
-    }
-
     public void disconnect(Player player) {
-        for (BanchoChannel channel : Server.getInstance().channelManager.getAll()) {
+        Server server = Server.getInstance();
+        for (BanchoChannel channel : server.channelManager.getAll()) {
             if (channel.getPlayers().contains(player)) {
-                Server.getInstance().channelManager.leaveChannel(channel.getName(), player);
+                server.channelManager.leaveChannel(channel.getName(), player);
             }
+        }
+
+        Match match = player.getMatch();
+        if(match != null) {
+            server.matchManager.leaveMatch(match, player);
         }
 
         for(Player p : onlinePlayers.values()) {

@@ -8,7 +8,13 @@ import java.util.List;
 
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.models.essentials.Match;
+import com.osuserverlist.bjar.models.essentials.MatchSlot;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.models.osu.match.MatchScoringType;
+import com.osuserverlist.bjar.models.osu.match.MatchSpecialMode;
+import com.osuserverlist.bjar.models.osu.match.MatchTeamType;
+import com.osuserverlist.bjar.models.osu.match.MatchType;
 import com.osuserverlist.bjar.models.osu.replay.ReplayAction;
 import com.osuserverlist.bjar.models.osu.replay.ReplayFrame;
 import com.osuserverlist.bjar.models.osu.replay.ReplayFrameBundle;
@@ -257,8 +263,7 @@ public class BanchoPacketReader {
         bundle.setFrames(frames);
 
         bundle.setAction(
-            ReplayAction.fromId(readUnsignedByte())
-        );
+                ReplayAction.fromId(readUnsignedByte()));
 
         bundle.setScoreFrame(readScoreFrame());
 
@@ -311,6 +316,54 @@ public class BanchoPacketReader {
         frame.setY(readFloat());
         frame.setTime(readInt());
         return frame;
+    }
+
+    public Match readMatch() throws IOException {
+        Match match = new Match();
+
+        match.setMatchId(readShort());
+        match.setInProgress(readBoolean());
+        match.setMatchType(MatchType.byByte(readByte()));
+        match.setMods(readInt());
+
+        match.setRoomName(readString());
+        match.setRoomPassword(readString());
+        match.setBeatmapName(readString());
+        match.setBeatmapId(readInt());
+        match.setBeatmapChecksum(readString());
+
+        for (int i = 0; i < Match.MAX_SLOTS; i++) {
+            match.getSlots()[i] = new MatchSlot();
+            match.getSlots()[i].setStatus(readByte());
+        }
+
+        for (int i = 0; i < Match.MAX_SLOTS; i++) {
+            match.getSlots()[i].setTeam(readByte());
+        }
+
+        // Read player IDs only for occupied slots
+        for (int i = 0; i < Match.MAX_SLOTS; i++) {
+            if ((match.getSlots()[i].getStatus() & 0x7C) > 0) {
+                match.getSlots()[i].setPlayerId(readInt());
+            }
+        }
+
+        match.setHostId(readInt());
+
+        match.setMode(readByte());
+        match.setScoringType(MatchScoringType.byByte(readByte()));
+        match.setTeamType(MatchTeamType.byByte(readByte()));
+        match.setSpecialMode(MatchSpecialMode.byByte(readByte()));
+
+        if (match.getSpecialMode() == MatchSpecialMode.FREE_MOD) {
+            for (int i = 0; i < Match.MAX_SLOTS; i++) {
+                match.getSlots()[i].setMods(readInt());
+            }
+        }
+
+        match.setSeed(readInt());
+
+        return match;
     }
 
     public void skip(int count) {

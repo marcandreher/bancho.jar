@@ -20,9 +20,9 @@ public class ServerConfiguration {
     @Data
     public static class WelcomeMessage {
         private boolean botEnabled = true;
-        private String botMessage = "Welcome to bancho.jar!";
+        private String botMessage = "Welcome to bancho.jar v(%version%)";
         private boolean notificationEnabled = true;
-        private String notificationMessage = "Welcome to bancho.jar!";
+        private String notificationMessage = "Welcome to bancho.jar v(%version%)";
     }
 
     @Data

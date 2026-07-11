@@ -4,7 +4,7 @@
 > At the moment the server is not recommended to use in production
 
 - [x] Authentication
-- [x] Leaderboards (Partially) (Only global)
+- [x] Leaderboards
 - [x] Score Submission
     - [x] All Modes Supported
     - [x] RX & AP Support
@@ -22,9 +22,9 @@
     - [x] Bot online Handling
     - [x] Commands
     - [x] Announce on #1
-- [ ] Multiplayer
+- [x] Multiplayer
 - [x] Spectating
-- [ ] Restriction
+- [x] Restriction
 - [x] Achievements
 - [ ] Web Redirects
 - [x] osu!Direct

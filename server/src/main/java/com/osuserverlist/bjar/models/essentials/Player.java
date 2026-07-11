@@ -1,8 +1,8 @@
 package com.osuserverlist.bjar.models.essentials;
 
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
@@ -34,9 +34,10 @@ public class Player {
     private boolean relaxEnabled = false;
 
     private ModeStats[] modeStats = new ModeStats[9];
-    private Set<Integer> unlockedAchievements = new HashSet<>();
-    private Set<Player> spectators = new HashSet<>();
+    private Set<Integer> unlockedAchievements = ConcurrentHashMap.newKeySet();
+    private Set<Player> spectators = ConcurrentHashMap.newKeySet();
     private Player spectating = null;
+    private Match match = null;
     private boolean stealth = false;
 
     private String username;
