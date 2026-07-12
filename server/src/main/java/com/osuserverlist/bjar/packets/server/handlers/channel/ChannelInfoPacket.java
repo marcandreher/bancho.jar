@@ -22,7 +22,7 @@ public class ChannelInfoPacket implements ServerPacketHandler {
     }
 
     @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws java.io.IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) {
         writer.startPacket(type.getValue());
     
         writer.writeString(channelName);

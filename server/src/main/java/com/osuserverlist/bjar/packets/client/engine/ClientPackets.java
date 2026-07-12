@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.packets.client;
+package com.osuserverlist.bjar.packets.client.engine;
 
 public enum ClientPackets {
     UNKNOWN_PACKET(-1),
@@ -50,7 +50,8 @@ public enum ClientPackets {
     USER_PRESENCE_REQUEST_ALL(98),
     TOGGLE_BLOCK_NON_FRIEND_DMS(99),
     TOURNAMENT_JOIN_MATCH_CHANNEL(108),
-    TOURNAMENT_LEAVE_MATCH_CHANNEL(109);
+    TOURNAMENT_LEAVE_MATCH_CHANNEL(109),
+    UNHANDLED_PACKET(255); // This is a special case for packets that don't have a specific handler
 
     private final int value;
 

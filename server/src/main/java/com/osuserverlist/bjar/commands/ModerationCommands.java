@@ -1,8 +1,6 @@
-package com.osuserverlist.bjar.commands.moderation;
+package com.osuserverlist.bjar.commands;
 
 import java.util.Arrays;
-
-import org.slf4j.Logger;
 
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.UserEntity;
@@ -14,14 +12,10 @@ import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerComm
 import com.osuserverlist.bjar.modules.commands.CommandCategory;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.repos.UserRepository;
 
-public class RestrictionCommands extends BanchoCommandHandler {
-
-    private static final Logger logger = LoggerFactory.getLogger(RestrictionCommands.class);
-
-    @BanchoCommand(
+public class ModerationCommands extends BanchoCommandHandler {
+     @BanchoCommand(
             name = "!restrict",
             category = CommandCategory.MODERATION,
             description = "Restrict a player",
@@ -39,6 +33,33 @@ public class RestrictionCommands extends BanchoCommandHandler {
     )
     public void unrestrict(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
         handleRestriction(sender, commandInfos, args, false);
+    }
+
+    @BanchoCommand(
+        name = "!kick", 
+        category = CommandCategory.MODERATION, 
+        description = "Kick a player from the server", 
+        requiredPrivileges = Privileges.MODERATOR
+    )
+    public void kick(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
+        if(args.length == 0) {
+            sendBotMessage(commandInfos, "Usage: !kick <username>");
+            return;
+        }
+
+        String username = args[0];
+
+        Player targetPlayer = server.playerManager.getByFilter(p -> p.getUsername().equalsIgnoreCase(username));
+
+        if (targetPlayer == null) {
+            sendBotMessage(commandInfos, "Player not found: " + username);
+            return;
+        }
+
+        logger.info("Player {} has been kicked by {}", targetPlayer.toString(), sender.toString());
+
+        server.playerManager.disconnect(targetPlayer);
+        sendBotMessage(commandInfos, "Player " + username + " has been kicked from the server.");
     }
 
     private void handleRestriction(
@@ -61,7 +82,6 @@ public class RestrictionCommands extends BanchoCommandHandler {
 
         try (MySQL mysql = Database.getConnection()) {
             UserRepository userRepo = new UserRepository(mysql);
-            Server server = Server.getInstance();
 
             Player targetPlayer = server.playerManager.getByFilter(
                     player -> player.getUsername().equalsIgnoreCase(username)

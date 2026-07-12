@@ -7,18 +7,17 @@ import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class UserPresencePacket implements ServerPacketHandler {
 
     final ServerPackets type = ServerPackets.USER_PRESENCE;
 
     private final int userId;
 
-    public UserPresencePacket(int userId) {
-        this.userId = userId;
-    }
-
     @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws java.io.IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) {
         Player player = Server.getInstance().playerManager.getById(userId);
 
         if (player == null) return false;

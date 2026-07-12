@@ -1,7 +1,5 @@
 package com.osuserverlist.bjar.packets.server.handlers.channel;
 
-import java.io.IOException;
-
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
@@ -19,8 +17,8 @@ public class ChannelAutojoinPacket implements ServerPacketHandler {
     }
 
     @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
-        writer.startPacket(ServerPackets.CHANNEL_AUTO_JOIN.getValue());  // Start new packet with CHANNEL_AUTO_JOIN packet ID
+    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) {
+        writer.startPacket(ServerPackets.CHANNEL_AUTO_JOIN.getValue()); 
         writer.writeString(channel); 
         writer.endPacket();
         return true;

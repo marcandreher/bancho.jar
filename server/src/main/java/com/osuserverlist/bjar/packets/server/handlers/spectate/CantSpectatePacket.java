@@ -1,7 +1,5 @@
 package com.osuserverlist.bjar.packets.server.handlers.spectate;
 
-import java.io.IOException;
-
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
@@ -15,7 +13,7 @@ public class CantSpectatePacket implements ServerPacketHandler {
     private final int id;
 
     @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) {
         writer.startPacket(ServerPackets.SPECTATOR_CANT_SPECTATE.getValue());
         writer.writeInt(id);
         writer.endPacket();

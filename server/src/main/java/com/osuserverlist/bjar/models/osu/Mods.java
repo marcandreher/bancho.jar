@@ -36,6 +36,10 @@ public enum Mods {
     ScoreV2(536870912),
     Mirror(1073741824);
 
+    public static final int SPEED_CHANGING_MODS = Mods.DoubleTime.getValue()
+                                                 | Mods.Nightcore.getValue()
+                                                 | Mods.HalfTime.getValue();
+
     private final int value;
 
     Mods(int value) {

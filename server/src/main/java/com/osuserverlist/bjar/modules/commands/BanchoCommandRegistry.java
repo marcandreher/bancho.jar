@@ -1,6 +1,5 @@
 package com.osuserverlist.bjar.modules.commands;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -9,6 +8,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 
+import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 
 import io.github.classgraph.ClassGraph;
@@ -43,8 +43,7 @@ public class BanchoCommandRegistry {
                 if (classAnnotation != null || hasMethodCommands) {
                     try {
                         handlerInstance = handlerClass.getDeclaredConstructor().newInstance();
-                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                            | InvocationTargetException | NoSuchMethodException e) {
+                    } catch (Exception e) {
                         logger.error("Error occurred while instantiating command handler for class: {}", handlerClass.getName(), e);
                         return;
                     }
@@ -58,15 +57,6 @@ public class BanchoCommandRegistry {
                     BanchoCommand methodAnnotation = method.getAnnotation(BanchoCommand.class);
 
                     if (methodAnnotation == null) {
-                        continue;
-                    }
-
-                    if (!isValidCommandMethod(method)) {
-                        logger.error(
-                                "Ignoring command method {}#{} because it does not match the expected signature",
-                                handlerClass.getName(),
-                                method.getName()
-                        );
                         continue;
                     }
 
@@ -94,17 +84,17 @@ public class BanchoCommandRegistry {
     private static BanchoCommandHandler createMethodHandler(Object handlerInstance, Method method) {
         method.setAccessible(true);
 
-        return new BanchoCommandHandler() {
+        BanchoCommandHandler handler = new BanchoCommandHandler() {
             @Override
             public void handle(
-                    com.osuserverlist.bjar.models.essentials.Player sender,
+                    Player sender,
                     BanchoCommandProcessor.PlayerCommandInfo[] commandInfos,
                     String[] args
             ) {
                 try {
                     Object target = Modifier.isStatic(method.getModifiers()) ? null : handlerInstance;
                     method.invoke(target, sender, commandInfos, args);
-                } catch (IllegalAccessException | InvocationTargetException e) {
+                } catch (Exception e) {
                     logger.error(
                             "Error occurred while invoking command method {}#{}",
                             method.getDeclaringClass().getName(),
@@ -114,14 +104,10 @@ public class BanchoCommandRegistry {
                 }
             }
         };
-    }
 
-    private static boolean isValidCommandMethod(Method method) {
-        return method.getParameterCount() == 3
-                && method.getParameterTypes()[0] == com.osuserverlist.bjar.models.essentials.Player.class
-                && method.getParameterTypes()[1] == BanchoCommandProcessor.PlayerCommandInfo[].class
-                && method.getParameterTypes()[2] == String[].class;
+        return handler;
     }
+    
 
     public static void finalizeCommandRegistration() {
         logger.info("Registered <{}> commands", commandMap.size());

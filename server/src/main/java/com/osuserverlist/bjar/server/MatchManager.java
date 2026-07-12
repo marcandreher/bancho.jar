@@ -133,9 +133,9 @@ public class MatchManager {
 
 
     public void removePlayerFromMatch(Match match, Player player) {
-       Integer slotIndex = match.getSlot(player);
-        if (slotIndex != null) {
-            match.getSlots()[slotIndex].reset();
+       MatchSlot slot = match.getSlot(player);
+        if (slot != null) {
+            slot.reset();
         }else {
             logger.warn("Player {} was not found in match {} slots", player, match);
         }

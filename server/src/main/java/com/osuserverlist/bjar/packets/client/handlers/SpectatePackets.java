@@ -1,26 +1,59 @@
-package com.osuserverlist.bjar.packets.client.handlers.spectate;
+package com.osuserverlist.bjar.packets.client.handlers;
 
 import java.io.IOException;
 
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.BanchoChannel;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.models.osu.replay.ReplayFrameBundle;
 import com.osuserverlist.bjar.packets.BanchoPacket;
-import com.osuserverlist.bjar.packets.client.BanchoPacketHandler;
-import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
-import com.osuserverlist.bjar.packets.client.ClientPackets;
+import com.osuserverlist.bjar.packets.client.engine.BanchoPacketReader;
 import com.osuserverlist.bjar.packets.client.engine.ClientPacket;
+import com.osuserverlist.bjar.packets.client.engine.ClientPackets;
+import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
+import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoPacket;
 import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelJoinSuccessPacket;
 import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelRevokedPacket;
-import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoPacket;
+import com.osuserverlist.bjar.packets.server.handlers.spectate.CantSpectatePacket;
 import com.osuserverlist.bjar.packets.server.handlers.spectate.FellowSpectatorJoinedPacket;
+import com.osuserverlist.bjar.packets.server.handlers.spectate.FellowSpectatorLeftPacket;
+import com.osuserverlist.bjar.packets.server.handlers.spectate.SendSpectateFramesPacket;
 import com.osuserverlist.bjar.packets.server.handlers.spectate.SpectatorJoinedPacket;
+import com.osuserverlist.bjar.packets.server.handlers.spectate.SpectatorLeftPacket;
 
-@ClientPacket(ClientPackets.START_SPECTATING)
-public class StartSpectatePacket implements BanchoPacketHandler {
+public class SpectatePackets {
+    
+    @ClientPacket(ClientPackets.SPECTATE_FRAMES)
+    public boolean spectateFrames(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
+        ReplayFrameBundle frames = reader.readReplayFrameBundle();
 
-    @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
+        byte[] rawData = frames.getRawData();
+
+        for (Player spectator : player.getSpectators()) {
+            spectator.sendPacket(new SendSpectateFramesPacket(rawData));
+        }
+
+        return true;
+    }
+
+    @ClientPacket(ClientPackets.CANT_SPECTATE)
+    public boolean cantSpectate(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
+        if(player.getSpectating() == null) return true;
+        if(player.getSpectating().isStealth()) return true;
+
+        ServerPacketHandler cantSpectatePacket = new CantSpectatePacket(player.getId());
+        Player host = player.getSpectating();
+        host.sendPacket(cantSpectatePacket);
+
+        for(Player p : host.getSpectators()) {
+            p.sendPacket(cantSpectatePacket);
+        }
+
+        return true;
+    }
+
+    @ClientPacket(ClientPackets.START_SPECTATING)
+    public boolean startSpectating(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         int targetUserId = reader.readInt();
 
         Server server = Server.getInstance();
@@ -111,7 +144,54 @@ public class StartSpectatePacket implements BanchoPacketHandler {
 
         newHost.getSpectators().add(player);
         player.setSpectating(newHost);
+        return true;
+    }
+
+    @ClientPacket(ClientPackets.STOP_SPECTATING)
+    public boolean stopSpectating(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
+        Player host = player.getSpectating();
+        Server server = Server.getInstance();
+
+        if (host == null) {
+            return true;
+        }
+
+        host.getSpectators().remove(player);
+        player.setSpectating(null);
+
+        host.sendPacket(new SpectatorLeftPacket(player.getId()));
+
+        String channelName = "#spec_" + host.getId();
+        BanchoChannel channel = server.channelManager.get(channelName);
+
+        if (channel != null) {
+            server.channelManager.forceLeaveChannel(channelName, player);
+            player.sendPacket(new ChannelRevokedPacket(channel.getAlias()));
+
+            ChannelInfoPacket infoPacket = new ChannelInfoPacket(
+                    channel.getAlias(),
+                    channel.getDescription(),
+                    (short) channel.getPlayerCount());
+
+            FellowSpectatorLeftPacket leftPacket = new FellowSpectatorLeftPacket(player.getId());
+
+            for (Player spectator : host.getSpectators()) {
+                spectator.sendPacket(leftPacket);
+                spectator.sendPacket(infoPacket);
+            }
+
+            host.sendPacket(infoPacket);
+
+            if (host.getSpectators().isEmpty()) {
+                server.channelManager.forceLeaveChannel(channelName, host);
+                host.sendPacket(new ChannelRevokedPacket(channel.getAlias()));
+                server.channelManager.removeChannel(channelName);
+                player.sendPacket(new ChannelRevokedPacket(channel.getAlias()));
+            }
+
+        }
 
         return true;
     }
+
 }

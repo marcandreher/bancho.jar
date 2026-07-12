@@ -1,6 +1,5 @@
 package com.osuserverlist.bjar.packets.server.handlers.user;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.osuserverlist.bjar.models.essentials.Player;
@@ -19,7 +18,7 @@ public class UserFriendListPacket implements ServerPacketHandler {
     }
     
     @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) {
         writer.startPacket(type.getValue());
         writer.writeIntList(friendIds);
         writer.endPacket();

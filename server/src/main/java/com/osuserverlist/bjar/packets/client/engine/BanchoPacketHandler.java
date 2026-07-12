@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.packets.client;
+package com.osuserverlist.bjar.packets.client.engine;
 
 import java.io.IOException;
 

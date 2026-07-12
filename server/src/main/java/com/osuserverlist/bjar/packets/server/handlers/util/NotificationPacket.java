@@ -6,18 +6,16 @@ import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class NotificationPacket implements ServerPacketHandler {
 
     final ServerPackets type = ServerPackets.NOTIFICATION;
-
-    private String message; 
-
-    public NotificationPacket(String message) {
-        this.message = message;
-    }
+    private final String message; 
 
     @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws java.io.IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) {
         writer.startPacket(type.getValue());
         writer.writeString(message);
         writer.endPacket();

@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
@@ -126,19 +128,26 @@ greater than 3 months, you may appeal via discord.""";
             player.sendPacket(new LoginReplyPacket(player.getId()));
             player.sendPacket(new PermissionsPacket(player.getClientPrivileges()));
 
-            for (int i = 0; i <= 8; i++) {
-                if (i == 7)
-                    continue;
+            ResultSet statsRs = mysql
+                    .query("SELECT * FROM `stats` WHERE `id` = ? AND `mode` IN (0,1,2,3,4,5,6,8)", player.getId())
+                    .executeQuery();
 
-                ResultSet statsRs = mysql
-                        .query("SELECT * FROM `stats` WHERE `id` = ? AND `mode` = ?", player.getId(), i).executeQuery();
-                if (!statsRs.next()) {
-                    logger.warn("Stats not found for player ID={} mode={}", player.getId(), i);
+            boolean[] statsFound = new boolean[9];
+
+            while (statsRs.next()) {
+                int mode = statsRs.getInt("mode");
+                ModeStats modeStats = ModeStats.fromResultSet(statsRs, mode, player);
+                player.getModeStats()[mode] = modeStats;
+                statsFound[mode] = true;
+            }
+
+            for (int i = 0; i <= 8; i++) {
+                if (i == 7) {
                     continue;
                 }
-
-                ModeStats modeStats = ModeStats.fromResultSet(statsRs, i, player);
-                player.getModeStats()[i] = modeStats;
+                if (!statsFound[i]) {
+                    logger.warn("Stats not found for player ID={} mode={}", player.getId(), i);
+                }
             }
 
             player.sendPacket(new UserPresencePacket(player.getId()));
@@ -172,6 +181,8 @@ greater than 3 months, you may appeal via discord.""";
 
             server.playerManager.add(player);
 
+            List<Player> toNotify = new ArrayList<>();
+
             server.playerManager.getAll().forEach(p -> {
                 if (p.getId() == player.getId())
                     return;
@@ -180,11 +191,16 @@ greater than 3 months, you may appeal via discord.""";
                     return;
                 }
 
-                //Scheudle one time task in 1 second 
-                server.scheduler.schedule(() -> {
-                    p.sendPacket(new UserPresenceSinglePacket(player.getId()));
-                }, 1, TimeUnit.SECONDS);
+                toNotify.add(p);
             });
+
+            if (!toNotify.isEmpty()) {
+                server.scheduler.schedule(() -> {
+                    for (Player p : toNotify) {
+                        p.sendPacket(new UserPresenceSinglePacket(player.getId()));
+                    }
+                }, 1, TimeUnit.SECONDS);
+            }
 
             server.achievementManager.loadForPlayer(player, mysql);
 

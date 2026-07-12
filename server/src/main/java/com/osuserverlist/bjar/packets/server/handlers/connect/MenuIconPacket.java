@@ -1,7 +1,5 @@
 package com.osuserverlist.bjar.packets.server.handlers.connect;
 
-import java.io.IOException;
-
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.config.ServerConfiguration.MenuIcon;
 import com.osuserverlist.bjar.models.essentials.Player;
@@ -11,11 +9,11 @@ import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.ServerPackets;
 
 public class MenuIconPacket implements ServerPacketHandler {
-    
+
     final ServerPackets type = ServerPackets.MAIN_MENU_ICON;
 
     @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) {
         MenuIcon menuIcon = Server.getInstance().config.getMenuIcon();
 
         writer.startPacket(type.getValue());

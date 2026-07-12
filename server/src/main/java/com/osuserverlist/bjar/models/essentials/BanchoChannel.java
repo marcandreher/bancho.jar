@@ -24,6 +24,6 @@ public class BanchoChannel {
     private boolean visible = true;
 
     public int getPlayerCount() {
-        return players.size() + 1; // +1 for the bot
+        return players.size();
     }
 }

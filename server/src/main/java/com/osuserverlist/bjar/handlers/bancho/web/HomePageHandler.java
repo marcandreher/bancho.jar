@@ -2,6 +2,7 @@ package com.osuserverlist.bjar.handlers.bancho.web;
 
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,25 +26,34 @@ public class HomePageHandler implements Handler {
 
     public HomePageHandler() throws IOException {
         this.indexTemplate = new String(
-            getClass().getResourceAsStream("/web/index.html").readAllBytes()
-        );
+                getClass().getResourceAsStream("/web/index.html").readAllBytes());
 
-        this.packetList = ClientPacketRegistry.packetHandlers.entrySet()
-            .stream()
-            .sorted(Comparator.comparing(entry -> entry.getKey().name()))
-            .map(entry ->
-                entry.getKey().name() +
-                "(" + entry.getKey().getValue() + ") - " +
-                entry.getValue().getClass().getSimpleName()
-            )
-            .collect(Collectors.joining("\n"));
+        this.packetList = ClientPacketRegistry.packetMetadata.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.comparing(Enum::name)))
+                .map(entry -> {
+                    var packet = entry.getKey();
+                    var metadata = entry.getValue();
+
+                    String handler = metadata.getHandlerClassName();
+                    if (metadata.getHandlerMethodName() != null && !metadata.getHandlerMethodName().isBlank()) {
+                        handler += "::" + metadata.getHandlerMethodName();
+                    }
+
+                    return String.format(
+                            "%s(%d) -> %s",
+                            packet.name(),
+                            packet.getValue(),
+                            handler);
+                })
+                .collect(Collectors.joining(System.lineSeparator()));
     }
 
     @Override
     public void handle(@NotNull Context ctx) {
         String html = indexTemplate
-            .replace("%players%", String.valueOf(Server.getInstance().playerManager.getAll().size()))
-            .replace("%packets%", packetList);
+                .replace("%players%", String.valueOf(Server.getInstance().playerManager.getAll().size()))
+                .replace("%packets%", packetList);
 
         ctx.contentType("text/html").result(html);
     }

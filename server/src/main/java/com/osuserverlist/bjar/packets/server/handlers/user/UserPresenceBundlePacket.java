@@ -1,6 +1,5 @@
 package com.osuserverlist.bjar.packets.server.handlers.user;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.osuserverlist.bjar.Server;
@@ -15,7 +14,7 @@ public class UserPresenceBundlePacket implements ServerPacketHandler {
     final ServerPackets type = ServerPackets.USER_PRESENCE_BUNDLE;
 
     @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) {
         List<Integer> userIds = Server.getInstance().playerManager.getAll().stream()
                 .filter(p -> p.getId() != sender.getId())
                 .map(Player::getId)

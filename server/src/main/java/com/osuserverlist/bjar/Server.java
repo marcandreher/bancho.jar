@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import com.osuserverlist.bjar.models.config.ServerConfiguration;
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
@@ -86,6 +87,8 @@ public class Server {
         BanchoCommandRegistry.registerAnnotatedHandlers("com.osuserverlist.bjar.commands");
 
         BanchoCommandRegistry.finalizeCommandRegistration();
+
+        BanchoCommandHandler.server = instance; // Set the server instance for all command handlers
 
         Javalin app = Javalin.create(config -> {
             config.routes.exception(Exception.class, (e, ctx) -> {

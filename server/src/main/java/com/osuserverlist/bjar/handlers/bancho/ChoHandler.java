@@ -13,7 +13,7 @@ import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
-import com.osuserverlist.bjar.packets.client.BanchoPacketReader;
+import com.osuserverlist.bjar.packets.client.engine.BanchoPacketReader;
 import com.osuserverlist.bjar.packets.server.BanchoPacketWriter;
 import com.osuserverlist.bjar.packets.server.PacketSender;
 import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
@@ -99,12 +99,7 @@ public class ChoHandler implements Handler {
 
         Iterator<ServerPacketHandler> it = packetStack.descendingIterator();
         while (it.hasNext()) {
-            ServerPacketHandler packetHandler = it.next();
-            try {
-                packetHandler.handle(null, writer, player);
-            } catch (IOException e) {
-                logger.error("Error sending packet: {}", e.getMessage(), e);
-            }
+            it.next().handle(null, writer, player);
         }
 
         packetStack.clear();

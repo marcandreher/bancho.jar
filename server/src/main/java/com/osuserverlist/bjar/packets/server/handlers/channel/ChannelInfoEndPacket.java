@@ -10,7 +10,7 @@ public class ChannelInfoEndPacket implements ServerPacketHandler {
     final ServerPackets type = ServerPackets.CHANNEL_INFO_END;
 
     @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws java.io.IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) {
         writer.startPacket(type.getValue());
         writer.endPacket();
         return true;

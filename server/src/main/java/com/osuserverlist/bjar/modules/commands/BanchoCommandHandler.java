@@ -1,11 +1,18 @@
 package com.osuserverlist.bjar.modules.commands;
 
+import org.slf4j.Logger;
+
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
+import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
 
 public class BanchoCommandHandler {
+
+    public static Logger logger = LoggerFactory.getLogger(BanchoCommandHandler.class);
+
+    public static Server server;
 
     public void handle(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
     }

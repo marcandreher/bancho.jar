@@ -35,4 +35,4 @@ ENV JAVA_OPTS="--enable-native-access=ALL-UNNAMED"
 ENV JAVA_XMS=512m
 ENV JAVA_XMX=2g
 
-ENTRYPOINT ["sh", "-c", "exec java -Xms${JAVA_XMS} -Xmx${JAVA_XMX} ${JAVA_OPTS} -cp server.jar:lib/* com.osuserverlist.bjar.App"]
+ENTRYPOINT ["sh", "-c", "exec java -Xms${JAVA_XMS} -Xmx${JAVA_XMX} ${JAVA_OPTS} -cp server.jar:lib/* com.osuserverlist.bjar.App \"$@\"", "--"]

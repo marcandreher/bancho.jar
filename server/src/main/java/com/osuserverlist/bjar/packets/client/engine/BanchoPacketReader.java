@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.packets.client;
+package com.osuserverlist.bjar.packets.client.engine;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,8 +21,6 @@ import com.osuserverlist.bjar.models.osu.replay.ReplayFrameBundle;
 import com.osuserverlist.bjar.models.osu.replay.ScoreFrame;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.BanchoPacket;
-import com.osuserverlist.bjar.packets.client.engine.ClientPacketRegistry;
-import com.osuserverlist.bjar.packets.client.handlers.UnhandledPacket;
 
 public class BanchoPacketReader {
 
@@ -102,21 +100,27 @@ public class BanchoPacketReader {
 
         packetIds.add(currentPacketId);
 
-        logger.debug(
-                "Reading Packet: ID=({}) NAME=<{}>, Length=({}), Compressed={}",
-                currentPacketId,
-                ClientPackets.getNameById(currentPacketId),
-                currentPacketLength,
-                compressionFlag);
+        ClientPackets clientPacket = ClientPackets.getById(currentPacketId);
 
-        BanchoPacketHandler handler = ClientPacketRegistry.packetHandlers.getOrDefault(
-                ClientPackets.getById(currentPacketId),
-                new UnhandledPacket());
+        if (logger.isDebugEnabled()) {
+            logger.debug(
+                    "Reading Packet: ID=({}) NAME=<{}>, Length=({}), Compressed={}",
+                    currentPacketId,
+                    ClientPackets.getNameById(currentPacketId),
+                    currentPacketLength,
+                    compressionFlag);
+        }
+
+        BanchoPacketHandler handler = ClientPacketRegistry.packetHandlers.get(clientPacket);
+
+        if (handler == null) {
+            handler = ClientPacketRegistry.packetHandlers.get(ClientPackets.UNHANDLED_PACKET);
+        }
 
         BanchoPacket packet = new BanchoPacket(
                 currentPacketId,
                 compressionFlag,
-                ClientPackets.getById(currentPacketId));
+                clientPacket);
 
         return handler.handle(packet, this, player);
     }

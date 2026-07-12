@@ -16,21 +16,27 @@ import io.javalin.config.JavalinConfig;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class ServerWebApp {
 
-    private static final String HANDLER_PACKAGE = "com.osuserverlist.bjar.handlers";
+    private final String HANDLER_PACKAGE = "com.osuserverlist.bjar.handlers";
 
-    public static void registerRoutes(JavalinConfig app) {
-        registerAnnotatedHandlers(app);
+    public void registerRoutes(JavalinConfig app) {
+        registerAnnotatedHandlers(app, HANDLER_PACKAGE);
     }
 
-    private static void registerAnnotatedHandlers(JavalinConfig app) {
+    private void registerAnnotatedHandlers(JavalinConfig app, String packageName) {
         Map<RouteKey, List<HostHandler>> routesByPath = new HashMap<>();
 
         try (var scan = new ClassGraph()
                 .enableClassInfo()
                 .enableAnnotationInfo()
-                .acceptPackages(HANDLER_PACKAGE)
+                .acceptPackages(packageName)
                 .scan()) {
             for (var classInfo : scan.getClassesImplementing(Handler.class.getName())) {
                 Class<?> handlerClass = classInfo.loadClass();
@@ -60,44 +66,30 @@ public class ServerWebApp {
 
         for (var entry : routesByPath.entrySet()) {
             RouteKey key = entry.getKey();
-            String path = key.path;
+            String path = key.getPath();
             HostHandler[] handlers = entry.getValue().toArray(new HostHandler[0]);
 
-            registerRoute(app, key.method, path, handlers);
+            registerRoute(app, key.getMethod(), path, handlers);
         }
     }
 
-    private static void registerRoute(JavalinConfig app, String method, String path, HostHandler[] handlers) {
+    private void registerRoute(JavalinConfig app, String method, String path, HostHandler[] handlers) {
+        HostRouter router = HostRouter.build(handlers);
+
         switch (method) {
             case "POST":
-                app.routes.post(path, ctx -> dispatchByHost(ctx, handlers));
+                app.routes.post(path, router::dispatch);
                 break;
             case "DELETE":
-                app.routes.delete(path, ctx -> dispatchByHost(ctx, handlers));
+                app.routes.delete(path, router::dispatch);
                 break;
             default:
-                app.routes.get(path, ctx -> dispatchByHost(ctx, handlers));
+                app.routes.get(path, router::dispatch);
                 break;
         }
     }
 
-    private static void dispatchByHost(Context ctx, HostHandler[] handlers) throws Exception {
-        String host = extractHost(ctx);
-
-        int dotIndex = host.indexOf('.');
-        String subdomain = dotIndex > 0 ? host.substring(0, dotIndex) : host;
-
-        for (HostHandler hostHandler : handlers) {
-            if (matchesHost(host, subdomain, hostHandler.hosts)) {
-                hostHandler.handler.handle(ctx);
-                return;
-            }
-        }
-
-        ctx.status(404);
-    }
-
-    private static String normalizeMethod(String method) {
+    private String normalizeMethod(String method) {
         if (method == null || method.isBlank()) {
             return "GET";
         }
@@ -105,7 +97,7 @@ public class ServerWebApp {
         return method.trim().toUpperCase(Locale.ROOT);
     }
 
-    private static String[] normalizeHosts(String[] hosts) {
+    private String[] normalizeHosts(String[] hosts) {
         String[] normalized = new String[hosts.length];
         for (int i = 0; i < hosts.length; i++) {
             normalized[i] = hosts[i].toLowerCase(Locale.ROOT);
@@ -113,7 +105,7 @@ public class ServerWebApp {
         return normalized;
     }
 
-    private static Handler instantiateHandler(Class<?> handlerClass) {
+    private Handler instantiateHandler(Class<?> handlerClass) {
         try {
             return (Handler) handlerClass.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException
@@ -122,7 +114,7 @@ public class ServerWebApp {
         }
     }
 
-    private static String extractHost(Context ctx) {
+    private String extractHost(Context ctx) {
         String hostHeader = ctx.header("Host");
         if (hostHeader == null || hostHeader.isEmpty()) {
             return "";
@@ -133,66 +125,74 @@ public class ServerWebApp {
         return host.toLowerCase(Locale.ROOT);
     }
 
-    private static boolean matchesHost(String host, String subdomain, String[] allowedHosts) {
-        for (String allowed : allowedHosts) {
-            if (allowed.equals(host)) {
-                return true;
-            }
-
-            if (allowed.endsWith(".")) {
-                if (host.regionMatches(0, allowed, 0, allowed.length())) {
-                    return true;
-                }
-                continue;
-            }
-
-            if (allowed.equals(subdomain)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     private static final class HostHandler {
         private final String[] hosts;
         private final Handler handler;
+    }
 
-        private HostHandler(String[] hosts, Handler handler) {
-            this.hosts = hosts;
-            this.handler = handler;
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    private static final class HostRouter {
+        private final Map<String, Handler> exactHosts;
+        private final Map<String, Handler> subdomainHosts;
+        private final List<Map.Entry<String, Handler>> prefixWildcards;
+
+        static HostRouter build(HostHandler[] handlers) {
+            Map<String, Handler> exact = new HashMap<>();
+            Map<String, Handler> subdomain = new HashMap<>();
+            List<Map.Entry<String, Handler>> prefixes = new ArrayList<>();
+
+            for (HostHandler hh : handlers) {
+                for (String host : hh.hosts) {
+                    if (host.endsWith(".")) {
+                        prefixes.add(Map.entry(host, hh.handler));
+                    } else {
+                        exact.putIfAbsent(host, hh.handler);
+                        subdomain.putIfAbsent(host, hh.handler);
+                    }
+                }
+            }
+
+            // Longest prefix first, so a more specific wildcard is preferred
+            // over a shorter, more general one.
+            prefixes.sort((a, b) -> Integer.compare(b.getKey().length(), a.getKey().length()));
+
+            return new HostRouter(exact, subdomain, prefixes);
+        }
+
+        void dispatch(Context ctx) throws Exception {
+            String host = extractHost(ctx);
+
+            Handler handler = exactHosts.get(host);
+
+            if (handler == null) {
+                int dotIndex = host.indexOf('.');
+                String subdomain = dotIndex > 0 ? host.substring(0, dotIndex) : host;
+                handler = subdomainHosts.get(subdomain);
+            }
+
+            if (handler == null) {
+                for (Map.Entry<String, Handler> entry : prefixWildcards) {
+                    String prefix = entry.getKey();
+                    if (host.regionMatches(0, prefix, 0, prefix.length())) {
+                        handler = entry.getValue();
+                        break;
+                    }
+                }
+            }
+
+            if (handler != null) {
+                handler.handle(ctx);
+            } else {
+                ctx.status(404);
+            }
         }
     }
 
-    private static final class RouteKey {
-        private final String method;
-        private final String path;
-
-        private RouteKey(String method, String path) {
-            this.method = method;
-            this.path = path;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            }
-
-            if (!(other instanceof RouteKey)) {
-                return false;
-            }
-
-            RouteKey that = (RouteKey) other;
-            return method.equals(that.method) && path.equals(that.path);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = method.hashCode();
-            result = 31 * result + path.hashCode();
-            return result;
-        }
+    @Value
+    private static class RouteKey {
+        String method;
+        String path;
     }
 
 }

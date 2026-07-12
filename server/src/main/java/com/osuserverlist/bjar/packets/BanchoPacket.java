@@ -1,6 +1,6 @@
 package com.osuserverlist.bjar.packets;
 
-import com.osuserverlist.bjar.packets.client.ClientPackets;
+import com.osuserverlist.bjar.packets.client.engine.ClientPackets;
 
 public class BanchoPacket {
     public int id;

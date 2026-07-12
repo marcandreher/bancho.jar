@@ -1,7 +1,5 @@
 package com.osuserverlist.bjar.packets.server.handlers.multi;
 
-import java.io.IOException;
-
 import com.osuserverlist.bjar.models.essentials.Match;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
@@ -18,7 +16,7 @@ public class MatchUpdatePacket implements ServerPacketHandler {
     }
 
     @Override
-    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) throws IOException {
+    public boolean handle(BanchoPacket packet, BanchoPacketWriter writer, Player sender) {
         writer.startPacket(ServerPackets.UPDATE_MATCH.getValue());
         writer.writeMatch(match);
         writer.endPacket();

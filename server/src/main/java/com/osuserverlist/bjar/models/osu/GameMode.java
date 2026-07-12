@@ -29,9 +29,14 @@ public enum GameMode {
     public static GameMode fromValue(int modeVn, int mods) {
         int mode = modeVn;
 
-        if ((mods & Mods.Relax2.getValue()) != 0) {
+        boolean hasRelax2 = (mods & Mods.Relax2.getValue()) != 0;
+        boolean hasRelax  = (mods & Mods.Relax.getValue()) != 0;
+
+        if (hasRelax2 && modeVn == 0) {
+            // Autopilot only exists for osu!standard
             mode += 8;
-        } else if ((mods & Mods.Relax.getValue()) != 0) {
+        } else if (hasRelax) {
+            // Relax exists for all 4 modes
             mode += 4;
         }
 

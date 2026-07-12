@@ -10,6 +10,7 @@ import com.osuserverlist.bjar.models.osu.match.MatchSpecialMode;
 import com.osuserverlist.bjar.models.osu.match.MatchTeamType;
 import com.osuserverlist.bjar.models.osu.match.MatchType;
 import com.osuserverlist.bjar.models.osu.match.SlotStatus;
+import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
 import com.osuserverlist.bjar.packets.server.handlers.multi.MatchUpdatePacket;
 
 import lombok.Data;
@@ -46,13 +47,19 @@ public class Match {
         return String.format("<%s> (%d)", roomName, matchId);
     }
 
-    public Integer getSlot(Player player) {
+    public Integer getSlotIndex(Player player) {
         for (int i = 0; i < MAX_SLOTS; i++) {
             if (slots[i] != null && slots[i].getPlayerId() == player.getId()) {
                 return i;
             }
         }
         return null;
+    }
+
+    public MatchSlot getSlot(Player player) {
+        Integer slotIndex = getSlotIndex(player);
+        if (slotIndex == null) return null;
+        return slots[slotIndex];
     }
 
     public boolean isLoaded() {
@@ -72,6 +79,10 @@ public class Match {
             return i;
         }
         return null;
+    }
+
+    public void sendPacket(ServerPacketHandler packet) {
+        players.forEach(p -> p.sendPacket(packet));
     }
 
     public void enqueUpdate() {

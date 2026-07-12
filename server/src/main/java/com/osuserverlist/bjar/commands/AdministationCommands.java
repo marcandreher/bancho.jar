@@ -1,24 +1,24 @@
-package com.osuserverlist.bjar.commands.administration;
+package com.osuserverlist.bjar.commands;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.commands.BanchoCommand;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
+import com.osuserverlist.bjar.modules.commands.CommandCategory;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.repos.UserRepository;
 
-public class PrivilegeCommands extends BanchoCommandHandler {
+public class AdministationCommands extends BanchoCommandHandler {
 
     @BanchoCommand(
             name = "!privadd",
-            category = com.osuserverlist.bjar.modules.commands.CommandCategory.ADMINISTRATION,
+            category = CommandCategory.ADMINISTRATION,
             description = "Add privileges to a player",
             requiredPrivileges = Privileges.ADMINISTRATOR
     )
@@ -28,7 +28,7 @@ public class PrivilegeCommands extends BanchoCommandHandler {
 
     @BanchoCommand(
             name = "!privrm",
-            category = com.osuserverlist.bjar.modules.commands.CommandCategory.ADMINISTRATION,
+            category = CommandCategory.ADMINISTRATION,
             description = "Remove privileges from a player",
             requiredPrivileges = Privileges.ADMINISTRATOR
     )
@@ -54,10 +54,9 @@ public class PrivilegeCommands extends BanchoCommandHandler {
         try (MySQL mysql = Database.getConnection()) {
             UserRepository userRepo = new UserRepository(mysql);
 
-            Player targetPlayer = Server.getInstance()
-                    .playerManager
+            Player targetPlayer = server.playerManager
                     .getByFilter(player -> player.getUsername().equalsIgnoreCase(username));
-
+            int userId = targetPlayer != null ? targetPlayer.getId() : 0;
             if (targetPlayer != null) {
                 updateOnlinePlayer(userRepo, targetPlayer, privilege, grant);
             } else {
@@ -68,8 +67,11 @@ public class PrivilegeCommands extends BanchoCommandHandler {
                     return;
                 }
 
+                userId = user.getId();
                 updateOfflineUser(userRepo, user, privilege, grant);
             }
+
+            logger.info("Privilege change: {} {} privilege {} for user <{}>({})", grant ? "Added" : "Removed", privilege.name(), grant ? "to" : "from", username, userId);
 
             sendBotMessage(commandInfos, successMessage(username, privilege, grant));
 
@@ -77,14 +79,16 @@ public class PrivilegeCommands extends BanchoCommandHandler {
             e.printStackTrace();
             sendBotMessage(commandInfos, failureMessage(grant));
         }
+
+
     }
 
     private void updateOnlinePlayer(UserRepository userRepo, Player targetPlayer, Privileges privilege, boolean grant) throws Exception {
         if (grant) {
-            Server.getInstance().playerManager.addPriv(targetPlayer, privilege);
+            server.playerManager.addPriv(targetPlayer, privilege);
             userRepo.updateUserPrivileges(targetPlayer.getId(), targetPlayer.getServerPrivileges());
         } else {
-            Server.getInstance().playerManager.removePriv(targetPlayer, privilege);
+            server.playerManager.removePriv(targetPlayer, privilege);
             userRepo.updateUserPrivileges(targetPlayer.getId(), targetPlayer.getServerPrivileges());
         }
     }
