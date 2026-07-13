@@ -15,7 +15,7 @@ import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.packets.server.handlers.user.UserQuitPacket;
+import com.osuserverlist.bjar.packets.server.UserServerPackets.UserQuitPacket;
 
 public class PlayerManager {
     private final Map<String, Player> onlinePlayers = new ConcurrentHashMap<>();

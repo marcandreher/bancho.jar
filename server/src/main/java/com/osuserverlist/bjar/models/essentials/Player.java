@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
+import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPacket;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -66,14 +66,15 @@ public class Player {
 
     private long lastPing = System.currentTimeMillis();
 
-    private Deque<ServerPacketHandler> packetStack = new ConcurrentLinkedDeque<>();
+    private Deque<ServerPacket> packetStack = new ConcurrentLinkedDeque<>();
     private boolean inLobby = false;
     private boolean displayCityLocation = false;
     private boolean friendOnlyDms = false;
 
-    public void sendPacket(ServerPacketHandler handler) {
+    public void sendPacket(ServerPacket packet) {
         if(isBot) return;
-        packetStack.push(handler);
+
+        packetStack.push(packet);
     }
 
     @Override

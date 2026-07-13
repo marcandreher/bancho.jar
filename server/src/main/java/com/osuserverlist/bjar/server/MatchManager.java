@@ -15,13 +15,13 @@ import com.osuserverlist.bjar.models.essentials.MatchSlot;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.match.SlotStatus;
 import com.osuserverlist.bjar.modules.logger.LoggerFactory;
-import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelInfoPacket;
-import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelJoinSuccessPacket;
-import com.osuserverlist.bjar.packets.server.handlers.channel.ChannelRevokedPacket;
-import com.osuserverlist.bjar.packets.server.handlers.multi.DisposeMatchPacket;
-import com.osuserverlist.bjar.packets.server.handlers.multi.MatchJoinFailPacket;
-import com.osuserverlist.bjar.packets.server.handlers.multi.MatchJoinSuccessPacket;
-import com.osuserverlist.bjar.packets.server.handlers.multi.MatchTransferHostPacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoPacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelJoinSuccessPacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelRevokedPacket;
+import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.DisposeMatchPacket;
+import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchJoinFailPacket;
+import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchJoinSuccessPacket;
+import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchTransferHostPacket;
 
 public class MatchManager {
     private static final Logger logger = LoggerFactory.getLogger(MatchManager.class);

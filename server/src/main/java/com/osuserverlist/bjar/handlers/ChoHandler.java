@@ -1,0 +1,358 @@
+package com.osuserverlist.bjar.handlers;
+
+import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+
+import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.models.config.ServerConfiguration.WelcomeMessage;
+import com.osuserverlist.bjar.models.database.UserEntity;
+import com.osuserverlist.bjar.models.essentials.ModeStats;
+import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.models.osu.LoginResponse;
+import com.osuserverlist.bjar.models.osu.OsuClientParser;
+import com.osuserverlist.bjar.models.osu.Privileges;
+import com.osuserverlist.bjar.modules.BanchoPacketReader;
+import com.osuserverlist.bjar.modules.BanchoPacketWriter;
+import com.osuserverlist.bjar.modules.ServerPacketEngine;
+import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPacket;
+import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPackets;
+import com.osuserverlist.bjar.modules.database.Database;
+import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.geo.Country;
+import com.osuserverlist.bjar.modules.geo.GeoRegistry;
+import com.osuserverlist.bjar.modules.geo.GeoResponse;
+import com.osuserverlist.bjar.modules.logger.BuildInfo;
+import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import com.osuserverlist.bjar.modules.web.engine.Host;
+import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
+import com.osuserverlist.bjar.modules.web.engine.Path;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelAutojoinPacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoEndPacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoPacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelJoinSuccessPacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.SendMessagePacket;
+import com.osuserverlist.bjar.packets.server.LoginServerPackets.LoginReplyPacket;
+import com.osuserverlist.bjar.packets.server.LoginServerPackets.MenuIconPacket;
+import com.osuserverlist.bjar.packets.server.LoginServerPackets.PrivilegesPacket;
+import com.osuserverlist.bjar.packets.server.LoginServerPackets.ProtocolVersionPacket;
+import com.osuserverlist.bjar.packets.server.UserServerPackets.AccountRestrictedPacket;
+import com.osuserverlist.bjar.packets.server.UserServerPackets.FriendsListPacket;
+import com.osuserverlist.bjar.packets.server.UserServerPackets.UserPresenceBundlePacket;
+import com.osuserverlist.bjar.packets.server.UserServerPackets.UserPresencePacket;
+import com.osuserverlist.bjar.packets.server.UserServerPackets.UserPresenceSinglePacket;
+import com.osuserverlist.bjar.packets.server.UserServerPackets.UserStatsPacket;
+import com.osuserverlist.bjar.packets.server.UtilServerPackets.NotificationPacket;
+import com.osuserverlist.bjar.repos.UserRepository;
+
+import io.javalin.http.Context;
+import io.javalin.http.Handler;
+import io.javalin.http.HttpStatus;
+
+@Host({ "c.", "c4." })
+@Path("/")
+@HttpMethod("POST")
+public class ChoHandler implements Handler {
+
+    private static final Logger logger = LoggerFactory.getLogger(ChoHandler.class);
+
+    private static final String RESTRICTED_MSG = """
+            Your account is currently in restricted mode.
+            If you believe this is a mistake, or have waited a period
+            greater than 3 months, you may appeal via discord.""";
+
+    @Override
+    public void handle(@NotNull Context ctx) throws Exception {
+        String osuToken = ctx.header("osu-token");
+
+        if (osuToken == null) {
+            handleLogin(ctx);
+            return;
+        }
+
+        handlePackets(ctx, osuToken);
+    }
+
+    // ------------------------------------------------------------------
+    // Login
+    // ------------------------------------------------------------------
+
+    private void handleLogin(Context ctx) throws IOException, SQLException {
+        LoginResponse loginResponse = new LoginResponse(ctx);
+
+        if (!loginResponse.isSuccess()) {
+            sendLoginFailure(ctx, -1);
+            return;
+        }
+
+        Server server = Server.getInstance();
+
+        try (MySQL mysql = Database.getConnection()) {
+            UserRepository userRepository = new UserRepository(mysql);
+
+            UserEntity userEntity = userRepository.getUserByName(loginResponse.getUsername());
+            if (userEntity == null) {
+                sendLoginFailure(ctx, -1);
+                return;
+            }
+
+            boolean passwordMatches = OpenBSDBCrypt.checkPassword(
+                    userEntity.getPwBcrypt(),
+                    loginResponse.getPasswordMd5().toCharArray());
+
+            if (!passwordMatches) {
+                logger.warn("Failed login attempt for user: {} from IP: {}",
+                        loginResponse.getUsername(), loginResponse.getIp());
+                sendLoginFailure(ctx, -1);
+                return;
+            }
+
+            LocalDate osuVer = OsuClientParser.parseOsuVersionDate(loginResponse.getBuildName());
+            String osuStream = loginResponse.getBuildName();
+
+            userRepository.insertIngameLogin(userEntity.getId(), loginResponse.getIp(),
+                    osuVer.format(DateTimeFormatter.ISO_LOCAL_DATE), osuStream);
+
+            GeoResponse geoLocResponse = GeoRegistry.getProvider().getCountryCode(loginResponse.getIp());
+
+            Player existingPlayer = server.playerManager.getById(userEntity.getId());
+            if (existingPlayer != null) {
+                server.playerManager.disconnect(existingPlayer);
+            }
+
+            // Set country if missing (XX)
+            if (userEntity.getCountry().equalsIgnoreCase("XX")) {
+                Country country = Country.getById(geoLocResponse.getCountryId());
+                userRepository.updateUserCountry(userEntity.getId(), country.name().toLowerCase());
+            }
+
+            Player player = new Player(userEntity.getId(), false, loginResponse.getUuid());
+            player.setTimezone(Integer.parseInt(loginResponse.getUtcOffset()));
+            player.setCountry((short) geoLocResponse.getCountryId());
+            player.setLongitude(geoLocResponse.getLongitude());
+            player.setLatitude(geoLocResponse.getLatitude());
+            player.setDisplayCityLocation(loginResponse.isDisplayCityLocation());
+            player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
+            player.setUsername(userEntity.getName());
+            player.setServerPrivileges(userEntity.getPriv());
+            int newPrivs = Privileges.addPrivilege(userEntity.getPriv(), Privileges.SUPPORTER);
+            player.setClientPrivileges(Privileges.toClientPrivileges(newPrivs));
+
+            player.setApiIdent(String.format("%s|%s", player.getUsername(), loginResponse.getPasswordMd5()));
+
+            player.sendPacket(new ProtocolVersionPacket());
+            player.sendPacket(new LoginReplyPacket(player.getId()));
+            player.sendPacket(new PrivilegesPacket(player.getClientPrivileges()));
+
+            loadPlayerStats(mysql, player);
+
+            player.sendPacket(new UserPresencePacket(player.getId()));
+            player.sendPacket(new UserStatsPacket(player));
+            player.sendPacket(new FriendsListPacket(userRepository.getFriendIds(player.getId())));
+
+            joinAvailableChannels(server, player);
+
+            player.sendPacket(new ChannelInfoEndPacket());
+            player.sendPacket(new UserPresenceBundlePacket());
+
+            server.playerManager.add(player);
+
+            notifyOtherPlayers(server, player);
+
+            server.achievementManager.loadForPlayer(player, mysql);
+
+            sendWelcomeMessages(server, player);
+
+            if (!Privileges.hasAny(player.getServerPrivileges(), Privileges.UNRESTRICTED)) {
+                player.sendPacket(new AccountRestrictedPacket());
+                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), RESTRICTED_MSG,
+                        player.getUsername(), server.botPlayer.getId()));
+            }
+
+            player.sendPacket(new MenuIconPacket());
+
+            logger.info("User {} logged in successfully from IP: {}", player.toString(), loginResponse.getIp());
+
+            BanchoPacketWriter writer = new BanchoPacketWriter();
+            handlePendingPackets(writer, player);
+
+            ctx.header("cho-token", loginResponse.getUuid())
+                    .status(HttpStatus.OK)
+                    .contentType("application/octet-stream")
+                    .result(writer.getPackets());
+        }
+    }
+
+    private void loadPlayerStats(MySQL mysql, Player player) throws SQLException {
+        ResultSet statsRs = mysql
+                .query("SELECT * FROM `stats` WHERE `id` = ? AND `mode` IN (0,1,2,3,4,5,6,8)", player.getId())
+                .executeQuery();
+
+        boolean[] statsFound = new boolean[9];
+
+        while (statsRs.next()) {
+            int mode = statsRs.getInt("mode");
+            ModeStats modeStats = ModeStats.fromResultSet(statsRs, mode, player);
+            player.getModeStats()[mode] = modeStats;
+            statsFound[mode] = true;
+        }
+
+        for (int i = 0; i <= 8; i++) {
+            if (i == 7) {
+                continue;
+            }
+            if (!statsFound[i]) {
+                logger.warn("Stats not found for player ID={} mode={}", player.getId(), i);
+            }
+        }
+    }
+
+    private void joinAvailableChannels(Server server, Player player) {
+        server.channelManager.getAll().forEach(channel -> {
+            if (channel.getReadPriv() > player.getServerPrivileges()) {
+                return; // Skip channels the player doesn't have access to
+            }
+
+            if (!channel.isVisible()) {
+                return;
+            }
+
+            if (channel.isAutoJoin()) {
+                player.sendPacket(new ChannelAutojoinPacket(channel.getName()));
+                player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(),
+                        channel.getPlayerCount() + 1));
+                player.sendPacket(new ChannelJoinSuccessPacket(channel.getName()));
+                server.channelManager.joinChannel(channel.getName(), player);
+            } else {
+                player.sendPacket(new ChannelInfoPacket(channel.getName(), channel.getDescription(),
+                        channel.getPlayerCount()));
+            }
+        });
+    }
+
+    private void notifyOtherPlayers(Server server, Player player) {
+        List<Player> toNotify = new ArrayList<>();
+
+        server.playerManager.getAll().forEach(p -> {
+            if (p.getId() == player.getId()) {
+                return;
+            }
+            if (p.isBot()) {
+                player.sendPacket(new UserPresencePacket(p.getId()));
+                return;
+            }
+
+            toNotify.add(p);
+        });
+
+        if (!toNotify.isEmpty()) {
+            server.scheduler.schedule(() -> {
+                for (Player p : toNotify) {
+                    p.sendPacket(new UserPresenceSinglePacket(player.getId()));
+                }
+            }, 100, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private void sendWelcomeMessages(Server server, Player player) {
+        WelcomeMessage welcomeConfig = server.config.getWelcomeMessage();
+
+        if (welcomeConfig.isNotificationEnabled()) {
+            String notificationMessage = welcomeConfig.getNotificationMessage().replace("%version%", BuildInfo.VERSION);
+            player.sendPacket(new NotificationPacket(notificationMessage));
+        }
+
+        if (welcomeConfig.isBotEnabled()) {
+            String botMessage = welcomeConfig.getBotMessage().replace("%version%", BuildInfo.VERSION);
+            player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), botMessage,
+                    player.getUsername(), server.botPlayer.getId()));
+        }
+    }
+
+    private void sendLoginFailure(Context ctx, int loginState) throws IOException {
+        BanchoPacketWriter writer = new BanchoPacketWriter();
+        writer.startPacket(ServerPackets.LOGIN_REPLY);
+        writer.writeInt(loginState);
+        writer.endPacket();
+
+        ctx.status(HttpStatus.OK)
+                .header("cho-token", "")
+                .contentType("application/octet-stream")
+                .result(writer.getPackets());
+    }
+
+    // ------------------------------------------------------------------
+    // Packet exchange (already-connected players)
+    // ------------------------------------------------------------------
+
+    private static void handlePackets(Context ctx, String osuToken) {
+        BanchoPacketWriter packetWriter = new BanchoPacketWriter();
+
+        Server server = Server.getInstance();
+        Player player = server.playerManager.get(osuToken);
+
+        if (player == null) {
+            packetWriter.startPacket(ServerPackets.SWITCH_SERVER);
+            packetWriter.endPacket();
+            ctx.status(HttpStatus.OK).result(packetWriter.getPackets());
+            return;
+        }
+
+        byte[] requestBody = ctx.bodyAsBytes();
+        if (requestBody.length > 0) {
+            try {
+                BanchoPacketReader reader = new BanchoPacketReader(requestBody, player);
+
+                while (reader.hasMorePackets()) {
+                    try {
+                        boolean success = reader.nextPacket();
+                        if (!success) {
+                            logger.warn("Failed to process packet for player ID={}", player.getId());
+                        }
+                    } catch (IOException e) {
+                        logger.error("Error reading packet: {}", e.getMessage());
+                        // Continue processing other packets even if one fails
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Unexpected error processing packets: {}", e.getMessage(), e);
+            }
+        }
+
+        handlePendingPackets(packetWriter, player);
+
+        ctx.result(packetWriter.getPackets())
+                .status(HttpStatus.OK)
+                .contentType("application/octet-stream");
+    }
+
+    /**
+     * Flushes any packets queued on the player's packet stack into the given
+     * writer, in the order they were pushed.
+     */
+    public static void handlePendingPackets(BanchoPacketWriter writer, Player player) {
+        Deque<ServerPacket> packetStack = player.getPacketStack();
+
+        if (packetStack.isEmpty()) {
+            return;
+        }
+
+        Iterator<ServerPacket> it = packetStack.descendingIterator();
+        while (it.hasNext()) {
+            ServerPacketEngine.write(it.next(), writer, player);
+        }
+
+        packetStack.clear();
+    }
+}

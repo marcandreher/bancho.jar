@@ -191,7 +191,7 @@ CREATE TABLE
 		`id` bigint UNSIGNED NOT NULL,
 		`map_md5` char(32) NOT NULL,
 		`score` int NOT NULL,
-		`pp` float (7, 3) NOT NULL,
+		`pp` float (9, 3) NOT NULL,
 		`acc` float (6, 3) NOT NULL,
 		`max_combo` int NOT NULL,
 		`mods` int NOT NULL,

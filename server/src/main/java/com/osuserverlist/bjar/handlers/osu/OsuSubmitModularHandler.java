@@ -33,8 +33,8 @@ import com.osuserverlist.bjar.modules.redis.Redis;
 import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
-import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
-import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.SendMessagePacket;
+import com.osuserverlist.bjar.packets.server.UserServerPackets.UserStatsPacket;
 import com.osuserverlist.bjar.repos.AchievementRepository;
 import com.osuserverlist.bjar.repos.ScoreRepository;
 

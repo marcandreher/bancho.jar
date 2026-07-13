@@ -10,8 +10,8 @@ import com.osuserverlist.bjar.models.osu.AntiCheatFlags.LastFMFlags;
 import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
-import com.osuserverlist.bjar.packets.server.handlers.chat.SendMessagePacket;
-import com.osuserverlist.bjar.packets.server.handlers.util.NotificationPacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.SendMessagePacket;
+import com.osuserverlist.bjar.packets.server.UtilServerPackets.NotificationPacket;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;

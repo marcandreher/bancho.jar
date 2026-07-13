@@ -21,7 +21,7 @@ import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.web.engine.Host;
 import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
 import com.osuserverlist.bjar.modules.web.engine.Path;
-import com.osuserverlist.bjar.packets.server.handlers.user.UserStatsPacket;
+import com.osuserverlist.bjar.packets.server.UserServerPackets.UserStatsPacket;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;

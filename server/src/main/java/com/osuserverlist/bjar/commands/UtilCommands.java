@@ -12,7 +12,7 @@ import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
 import com.osuserverlist.bjar.modules.commands.CommandCategory;
 import com.osuserverlist.bjar.modules.logger.BuildInfo;
-import com.osuserverlist.bjar.packets.server.handlers.util.NotificationPacket;
+import com.osuserverlist.bjar.packets.server.UtilServerPackets.NotificationPacket;
 
 public class UtilCommands extends BanchoCommandHandler {
 

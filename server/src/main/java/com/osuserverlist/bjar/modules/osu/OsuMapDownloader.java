@@ -5,6 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -12,33 +15,40 @@ import okhttp3.Response;
 public final class OsuMapDownloader {
 
     private static final Path MAP_DIRECTORY = Path.of("data", "maps");
+    private static final Logger logger = LoggerFactory.getLogger(OsuMapDownloader.class);
 
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
             .connectTimeout(Duration.ofSeconds(10))
             .readTimeout(Duration.ofSeconds(30))
             .build();
 
-    public static byte[] downloadMap(long mapId) throws IOException {
+    public static byte[] downloadMap(long mapId) {
         Path mapFile = MAP_DIRECTORY.resolve(mapId + ".osu");
 
-        if (Files.exists(mapFile)) {
-            return Files.readAllBytes(mapFile);
-        }
-
-        Request request = new Request.Builder()
-                .url("https://osu.ppy.sh/osu/" + mapId)
-                .build();
-
-        try (Response response = CLIENT.newCall(request).execute()) {
-            if (!response.isSuccessful() || response.body() == null) {
-                return null;
+        try {
+            if (Files.exists(mapFile)) {
+                return Files.readAllBytes(mapFile);
             }
 
-            byte[] data = response.body().bytes();
+            Request request = new Request.Builder()
+                    .url("https://osu.ppy.sh/osu/" + mapId)
+                    .build();
 
-            Files.write(mapFile, data);
+            try (Response response = CLIENT.newCall(request).execute()) {
+                if (!response.isSuccessful() || response.body() == null) {
+                    return null;
+                }
 
-            return data;
+                byte[] data = response.body().bytes();
+
+                Files.write(mapFile, data);
+
+                return data;
+            }
+        } catch (IOException e) {
+            logger.error("Failed to download or save map with ID: " + mapId, e);
+            return null;
         }
+
     }
 }

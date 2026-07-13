@@ -10,8 +10,8 @@ import com.osuserverlist.bjar.models.osu.match.MatchSpecialMode;
 import com.osuserverlist.bjar.models.osu.match.MatchTeamType;
 import com.osuserverlist.bjar.models.osu.match.MatchType;
 import com.osuserverlist.bjar.models.osu.match.SlotStatus;
-import com.osuserverlist.bjar.packets.server.ServerPacketHandler;
-import com.osuserverlist.bjar.packets.server.handlers.multi.MatchUpdatePacket;
+import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPacket;
+import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchUpdatePacket;
 
 import lombok.Data;
 
@@ -81,7 +81,7 @@ public class Match {
         return null;
     }
 
-    public void sendPacket(ServerPacketHandler packet) {
+    public void sendPacket(ServerPacket packet) {
         players.forEach(p -> p.sendPacket(packet));
     }
 

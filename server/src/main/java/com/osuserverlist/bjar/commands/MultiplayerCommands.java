@@ -19,7 +19,9 @@ import com.osuserverlist.bjar.modules.commands.BanchoCommand;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
 import com.osuserverlist.bjar.modules.commands.CommandCategory;
-import com.osuserverlist.bjar.packets.server.handlers.multi.MatchTransferHostPacket;
+import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchTransferHostPacket;
+
+
 
 @BanchoCommand(
         name = "!mp",

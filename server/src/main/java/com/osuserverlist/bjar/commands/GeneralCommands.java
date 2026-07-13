@@ -1,6 +1,5 @@
 package com.osuserverlist.bjar.commands;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.List;
@@ -55,18 +54,18 @@ public class GeneralCommands extends BanchoCommandHandler {
                 return;
             }
 
-            sendBotMessage(commandInfos, String.format("Selected beatmap: %s - %s [%s]",
-                    beatmap.getArtist(), beatmap.getTitle(), beatmap.getVersion()));
+            sendBotMessage(commandInfos, String.format("Selected beatmap: %s",
+                    beatmap.toEmbed()));
 
             sendBotMessage(commandInfos, calculatePpBreakdown(sender, beatmap, mods));
-        } catch (SQLException | IOException e) {
+        } catch (SQLException e) {
             logger.error("Failed to fetch Data", e);
             sendBotMessage(commandInfos, "An error occurred while fetching data.");
         }
     }
 
     /** Builds a "PP | 100% - x.xx | 95% - x.xx | ..." breakdown from 100% down to 80% accuracy. */
-    private String calculatePpBreakdown(Player sender, BeatmapEntity beatmap, int mods) throws IOException {
+    private String calculatePpBreakdown(Player sender, BeatmapEntity beatmap, int mods) {
         IPerformanceCalculator calculator = new OsuNativePerformanceCalculator();
         byte[] mapData = OsuMapDownloader.downloadMap(beatmap.getId());
 

@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import com.osuserverlist.bjar.models.config.ServerConfiguration;
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPacketRegistry;
+import com.osuserverlist.bjar.modules.ServerPacketEngine;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry;
 import com.osuserverlist.bjar.modules.database.Database;
@@ -18,7 +20,6 @@ import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
 import com.osuserverlist.bjar.modules.web.BanchoWebLogger;
 import com.osuserverlist.bjar.modules.web.ServerWebApp;
-import com.osuserverlist.bjar.packets.client.engine.ClientPacketRegistry;
 import com.osuserverlist.bjar.server.AchievementManager;
 import com.osuserverlist.bjar.server.ChannelManager;
 import com.osuserverlist.bjar.server.MatchManager;
@@ -55,6 +56,7 @@ public class Server {
         instance = new Server();
 
         ClientPacketRegistry.scanAndRegister();
+        ServerPacketEngine.registerHandlers();
 
         instance.osuAPIHandler = new OsuAPIHandler(dotenv.get("OSU_API_KEY"));
 
