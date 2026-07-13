@@ -1,7 +1,7 @@
-## Roadmap
-
 > [!WARNING]  
 > At the moment the server is not recommended to use in production
+
+## Roadmap
 
 - [x] Authentication
 - [x] Leaderboards
@@ -35,6 +35,7 @@
 ### Backend
 
 - [ ] API
+- [ ] Action Notifications (Pubsub)
 - [ ] Plugin Framework
 - [x] Asset downloading
 - [x] Configuration
@@ -42,7 +43,23 @@
     - [x] Seasonal & Main Menu Icon
     - [x] .env for Secrets
 
-## Shoutouts
+### Key Directories
 
-- [Lekuruu](https://github.com/Lekuruu) for the awesome [bancho-documentation](https://github.com/Lekuruu/bancho-documentation)
-- [bancho.py](https://github.com/osuAkatsuki/bancho.py) we are using the bancho.py database structure (modified)
+| Directory | Description |
+|-----------|-------------|
+| `commands` | Bancho command handlers |
+| `handlers` | Web handlers |
+| `models` | Data class files |
+| `modules` | Utility classes |
+| `packets` | Packet writers/handlers |
+| `repos` | Database repository utilities |
+| `server` | Application services |
+
+## Acknowledgements
+
+This project builds upon the work of several open-source projects and contributors. We'd like to thank:
+
+- **[7mochi](https://github.com/7mochi)** for developing **[osu-native-jar](https://github.com/7mochi/osu-native-jar)** and **[osz2.jar](https://github.com/7mochi/osz2.jar)**.
+- **[Lekuruu](https://github.com/Lekuruu)** for maintaining the excellent **[bancho-documentation](https://github.com/Lekuruu/bancho-documentation)**.
+- **[osuAkatsuki](https://github.com/osuAkatsuki)** and the **[bancho.py](https://github.com/osuAkatsuki/bancho.py)** project, whose database schema and parts of the server logic served as a foundation for this project (heavily modified).
+- **[ekgame](https://github.com/ekgame)** for creating **[bancho-api](https://github.com/ekgame/bancho-api)**, the first Java Bancho implementation, which inspired parts of this project.

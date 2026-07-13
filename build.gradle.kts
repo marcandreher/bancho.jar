@@ -19,6 +19,9 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(25))
     }
+
+    withJavadocJar()
+    withSourcesJar()
 }
 
 application {
@@ -79,12 +82,12 @@ dependencies {
 
 publishing {
     publications {
-        create<MavenPublication>("shadow") {
-            artifact(tasks.shadowJar)
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
 
-            groupId = "de.marcandreher"
-            artifactId = "banchojar"
-            version = "0.1.3"
+            artifact(tasks.shadowJar) {
+                classifier = "all"
+            }
         }
     }
 }
@@ -133,4 +136,14 @@ tasks.register<Copy>("copyDeps") {
 
 tasks.build {
     dependsOn(tasks.jar, "copyDeps")
+}
+
+tasks.javadoc {
+    (options as StandardJavadocDocletOptions).apply {
+        addBooleanOption("Xdoclint:none", true)
+        addStringOption("encoding", "UTF-8")
+        links("https://docs.oracle.com/en/java/javase/25/docs/api/")
+    }
+
+    isFailOnError = false
 }
