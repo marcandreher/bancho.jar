@@ -1,4 +1,7 @@
-package com.osuserverlist.bjar.modules.crypt;
+package com.osuserverlist.bjar.modules;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import org.bouncycastle.crypto.engines.RijndaelEngine;
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
@@ -8,8 +11,25 @@ import org.bouncycastle.crypto.paddings.ZeroBytePadding;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 
-public class Rijndael32CBC {
-    public static byte[] encrypt(byte[] plaintext, byte[] key, byte[] iv) throws Exception {
+public class Cryptography {
+    public static String generateChecksum(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(input.getBytes());
+
+            // Convert byte array into hex string
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : digest) {
+                hexString.append(String.format("%02x", b));
+            }
+
+            return hexString.toString(); // 32 characters
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("MD5 algorithm not found", e);
+        }
+    }
+
+    public static byte[] encryptRijndaelCBC(byte[] plaintext, byte[] key, byte[] iv) throws Exception {
        RijndaelEngine engine = new RijndaelEngine(256);
        CBCModeCipher cbc = CBCBlockCipher.newInstance(engine);
        PaddedBufferedBlockCipher cipher = new PaddedBufferedBlockCipher(cbc, new ZeroBytePadding());
@@ -25,7 +45,7 @@ public class Rijndael32CBC {
        return result;
     }
 
-    public static byte[] decrypt(byte[] ciphertext, byte[] key, byte[] iv) throws Exception {
+    public static byte[] decryptRijndaelCBC(byte[] ciphertext, byte[] key, byte[] iv) throws Exception {
        RijndaelEngine engine = new RijndaelEngine(256);
        CBCModeCipher cbc = CBCBlockCipher.newInstance(engine);
        PaddedBufferedBlockCipher cipher = new PaddedBufferedBlockCipher(cbc, new ZeroBytePadding());

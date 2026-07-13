@@ -4,16 +4,16 @@ import java.io.IOException;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.GameMode;
 import com.osuserverlist.bjar.models.osu.Mods;
-import com.osuserverlist.bjar.models.osu.PresenceFilter;
-import com.osuserverlist.bjar.modules.BanchoPacketReader;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPacket;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPackets;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import com.osuserverlist.bjar.models.osu.OsuClientModels.PresenceFilter;
+import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacket;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserPresencePacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserStatsPacket;
@@ -53,7 +53,7 @@ public class UserStatsPresencePackets {
             return true;
         }
 
-        player.setPresenceFilter(filter.getId());
+        player.setPresenceFilter(filter.id);
         return true;
     }
 

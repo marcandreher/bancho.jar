@@ -7,15 +7,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.database.ChannelEntity;
-import com.osuserverlist.bjar.models.essentials.BanchoChannel;
+import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 
 public class ChannelManager {
-    private final Map<String, BanchoChannel> channels = new ConcurrentHashMap<>();
+    private final Map<String, Channel> channels = new ConcurrentHashMap<>();
     private final static Logger logger = LoggerFactory.getLogger(ChannelManager.class);
 
     public void populate(MySQL mysql) throws SQLException {
@@ -24,7 +24,7 @@ public class ChannelManager {
         while (channelRs.next()) {
             ChannelEntity defaultChannel = ChannelEntity.fromResultSet(channelRs);
         
-            BanchoChannel channel = BanchoChannel.builder()
+            Channel channel = Channel.builder()
                     .id(String.valueOf(defaultChannel.getId()))
                     .name(defaultChannel.getName())
                     .alias(defaultChannel.getAlias())
@@ -41,7 +41,7 @@ public class ChannelManager {
         }
 
         // Only for allowing joining
-        BanchoChannel highlightChannel = BanchoChannel.builder()
+        Channel highlightChannel = Channel.builder()
                 .id("highlight")
                 .name("#highlight")
                 .alias("#highlight")
@@ -58,16 +58,16 @@ public class ChannelManager {
         logger.info("Loaded <{}> channels", channels.size());
     }
 
-    public void add(BanchoChannel channel) {
+    public void add(Channel channel) {
         channels.put(channel.getName(), channel);
     }
 
-    public BanchoChannel get(String channelName) {
+    public Channel get(String channelName) {
         return channels.get(channelName);
     }
 
     public void joinChannel(String channelName, Player player) {
-        BanchoChannel channel = channels.get(channelName);
+        Channel channel = channels.get(channelName);
         if (channel != null) {
             channel.getPlayers().add(player);
         }
@@ -76,21 +76,21 @@ public class ChannelManager {
     }
 
     public void forceJoinChannel(String channelName, Player player) {
-        BanchoChannel channel = channels.get(channelName);
+        Channel channel = channels.get(channelName);
         if (channel != null) {
             channel.getPlayers().add(player);
         }
     }
 
     public void forceLeaveChannel(String channelName, Player player) {
-        BanchoChannel channel = channels.get(channelName);
+        Channel channel = channels.get(channelName);
         if (channel != null) {
             channel.getPlayers().remove(player);
         }
     }
 
     public void leaveChannel(String channelName, Player player) {
-        BanchoChannel channel = channels.get(channelName);
+        Channel channel = channels.get(channelName);
         if (channel != null) {
             channel.getPlayers().remove(player);
         }
@@ -102,7 +102,7 @@ public class ChannelManager {
         channels.remove(channelName);
     }
 
-    public Collection<BanchoChannel> getAll() {
+    public Collection<Channel> getAll() {
         return channels.values();
     }
 

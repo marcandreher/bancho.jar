@@ -1,6 +1,6 @@
 package com.osuserverlist.bjar.packets;
 
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPackets;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
 
 import lombok.AllArgsConstructor;
 

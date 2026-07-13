@@ -8,6 +8,7 @@ import lombok.Data;
 
 @Data
 public class SubmitResponse {
+    private static Decoder decoder = Base64.getDecoder();
     private String token;
     private boolean exitedOut;
     private int failTime;
@@ -32,7 +33,6 @@ public class SubmitResponse {
         submitResponse.setScoreTime(Integer.parseInt(ctx.formParam("st")));
         submitResponse.setOsuVersion(ctx.formParam("osuver"));
 
-        Decoder decoder = Base64.getDecoder();
         submitResponse.setVisualSettings(decoder.decode(ctx.formParam("fs")));
         submitResponse.setIv(decoder.decode(ctx.formParam("iv")));
         submitResponse.setClientHash(decoder.decode(ctx.formParam("s")));

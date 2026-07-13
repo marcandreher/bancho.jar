@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 import com.osuserverlist.bjar.Server;
-import com.osuserverlist.bjar.models.essentials.BanchoChannel;
+import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Match;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
@@ -48,7 +48,7 @@ public class PlayerManager {
 
     public void disconnect(Player player) {
         Server server = Server.getInstance();
-        for (BanchoChannel channel : server.channelManager.getAll()) {
+        for (Channel channel : server.channelManager.getAll()) {
             if (channel.getPlayers().contains(player)) {
                 server.channelManager.leaveChannel(channel.getName(), player);
             }

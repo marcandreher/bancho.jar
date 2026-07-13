@@ -6,20 +6,20 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.config.ServerConfiguration;
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPacketRegistry;
-import com.osuserverlist.bjar.modules.ServerPacketEngine;
+import com.osuserverlist.bjar.modules.WebEngine;
+import com.osuserverlist.bjar.modules.WebEngine.BanchoWebLogger;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
-import com.osuserverlist.bjar.modules.web.BanchoWebLogger;
-import com.osuserverlist.bjar.modules.web.ServerWebApp;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacketRegistry;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine;
 import com.osuserverlist.bjar.server.AchievementManager;
 import com.osuserverlist.bjar.server.ChannelManager;
 import com.osuserverlist.bjar.server.MatchManager;
@@ -55,7 +55,7 @@ public class Server {
     public static Server start(Dotenv dotenv, ProductionLevel level) {
         instance = new Server();
 
-        ClientPacketRegistry.scanAndRegister();
+        ClientPacketRegistry.registerDefaultHandlers();;
         ServerPacketEngine.registerHandlers();
 
         instance.osuAPIHandler = new OsuAPIHandler(dotenv.get("OSU_API_KEY"));
@@ -103,7 +103,8 @@ public class Server {
             config.concurrency.useVirtualThreads = true;
             config.requestLogger.http(new BanchoWebLogger());
 
-            ServerWebApp.registerRoutes(config);
+            // Register annotated handlers for the web server
+            WebEngine.registerDefaultHandlers(config);
 
             if (level == ProductionLevel.DEVELOPMENT) {
                 config.bundledPlugins.enableRouteOverview("/routes");

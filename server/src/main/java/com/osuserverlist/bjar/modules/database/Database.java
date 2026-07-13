@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.config.DatabaseConfiguration;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 

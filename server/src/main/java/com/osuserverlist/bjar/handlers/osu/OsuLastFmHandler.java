@@ -7,9 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.AntiCheatFlags.LastFMFlags;
-import com.osuserverlist.bjar.modules.web.engine.Host;
-import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
-import com.osuserverlist.bjar.modules.web.engine.Path;
+import com.osuserverlist.bjar.modules.WebEngine.Host;
+import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
+import com.osuserverlist.bjar.modules.WebEngine.Path;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.SendMessagePacket;
 import com.osuserverlist.bjar.packets.server.UtilServerPackets.NotificationPacket;
 

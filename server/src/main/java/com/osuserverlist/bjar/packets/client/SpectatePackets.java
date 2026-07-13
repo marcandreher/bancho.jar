@@ -3,13 +3,13 @@ package com.osuserverlist.bjar.packets.client;
 import java.io.IOException;
 
 import com.osuserverlist.bjar.Server;
-import com.osuserverlist.bjar.models.essentials.BanchoChannel;
+import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.replay.ReplayFrameBundle;
-import com.osuserverlist.bjar.modules.BanchoPacketReader;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPacket;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPackets;
-import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPacket;
+import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacket;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPacket;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelJoinSuccessPacket;
@@ -73,7 +73,7 @@ public class SpectatePackets {
             currentHost.getSpectators().remove(player);
 
             String oldChannelName = "#spec_" + currentHost.getId();
-            BanchoChannel oldChannel = server.channelManager.get(oldChannelName);
+            Channel oldChannel = server.channelManager.get(oldChannelName);
 
             if (oldChannel != null) {
                 server.channelManager.forceLeaveChannel(oldChannelName, player);
@@ -89,10 +89,10 @@ public class SpectatePackets {
         }
 
         String channelName = "#spec_" + newHost.getId();
-        BanchoChannel channel = server.channelManager.get(channelName);
+        Channel channel = server.channelManager.get(channelName);
 
         if (channel == null) {
-            channel = BanchoChannel.builder().id(channelName).alias("#spectator").name(channelName)
+            channel = Channel.builder().id(channelName).alias("#spectator").name(channelName)
                     .description("Spectator channel for " + newHost.getUsername())
                     .autoJoin(false)
                     .readPriv(0)
@@ -162,7 +162,7 @@ public class SpectatePackets {
         host.sendPacket(new SpectatorLeftPacket(player.getId()));
 
         String channelName = "#spec_" + host.getId();
-        BanchoChannel channel = server.channelManager.get(channelName);
+        Channel channel = server.channelManager.get(channelName);
 
         if (channel != null) {
             server.channelManager.forceLeaveChannel(channelName, player);

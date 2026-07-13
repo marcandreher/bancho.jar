@@ -3,15 +3,15 @@ package com.osuserverlist.bjar.packets.client;
 import java.sql.SQLException;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.BanchoPacketReader;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPacket;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPackets;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacket;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.FriendsListPacket;
 import com.osuserverlist.bjar.repos.UserRepository;

@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.AchievementEntity;
@@ -20,19 +21,17 @@ import com.osuserverlist.bjar.models.essentials.Score;
 import com.osuserverlist.bjar.models.osu.GameMode;
 import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.models.osu.SubmitResponse;
+import com.osuserverlist.bjar.modules.Cryptography;
+import com.osuserverlist.bjar.modules.Redis;
+import com.osuserverlist.bjar.modules.WebEngine.Host;
+import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
+import com.osuserverlist.bjar.modules.WebEngine.Path;
 import com.osuserverlist.bjar.modules.achievements.MevlEvaluator;
 import com.osuserverlist.bjar.modules.calculations.IPerformanceCalculator;
 import com.osuserverlist.bjar.modules.calculations.OsuNativePerformanceCalculator;
-import com.osuserverlist.bjar.modules.crypt.ChecksumUtil;
-import com.osuserverlist.bjar.modules.crypt.Rijndael32CBC;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuMapDownloader;
-import com.osuserverlist.bjar.modules.redis.Redis;
-import com.osuserverlist.bjar.modules.web.engine.Host;
-import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
-import com.osuserverlist.bjar.modules.web.engine.Path;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.SendMessagePacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserStatsPacket;
 import com.osuserverlist.bjar.repos.AchievementRepository;
@@ -59,7 +58,7 @@ public class OsuSubmitModularHandler implements Handler {
         keyStr = String.format("%-32s", keyStr).substring(0, 32);
         byte[] aesKey = keyStr.getBytes(StandardCharsets.UTF_8);
 
-        byte[] decryptedBytes = Rijndael32CBC.decrypt(submitResponse.getScoreEncrypted(), aesKey,
+        byte[] decryptedBytes = Cryptography.decryptRijndaelCBC(submitResponse.getScoreEncrypted(), aesKey,
                 submitResponse.getIv());
         String decrypted = new String(decryptedBytes, StandardCharsets.UTF_8);
         String[] data = decrypted.split(":");
@@ -99,7 +98,7 @@ public class OsuSubmitModularHandler implements Handler {
             byte[] mapData = OsuMapDownloader.downloadMap(s.getBeatmapId());
             double pp = ppCalculator.calculate(s, mapData);
             s.setPp(pp);
-            s.setChecksum(ChecksumUtil.generateChecksum(s.toString()));
+            s.setChecksum(Cryptography.generateChecksum(s.toString()));
 
             ScoreRepository scoreRepo = new ScoreRepository(mysql);
 

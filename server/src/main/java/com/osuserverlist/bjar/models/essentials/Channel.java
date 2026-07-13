@@ -8,7 +8,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class BanchoChannel {
+public class Channel {
     private String id;
     private String name;
     private String alias;

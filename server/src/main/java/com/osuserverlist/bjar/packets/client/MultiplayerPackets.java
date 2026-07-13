@@ -5,10 +5,11 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
-import com.osuserverlist.bjar.models.essentials.BanchoChannel;
+import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Match;
 import com.osuserverlist.bjar.models.essentials.MatchSlot;
 import com.osuserverlist.bjar.models.essentials.Player;
@@ -16,12 +17,11 @@ import com.osuserverlist.bjar.models.osu.Mods;
 import com.osuserverlist.bjar.models.osu.match.MatchSpecialMode;
 import com.osuserverlist.bjar.models.osu.match.MatchTeams;
 import com.osuserverlist.bjar.models.osu.match.SlotStatus;
-import com.osuserverlist.bjar.modules.BanchoPacketReader;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPacket;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPackets;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacket;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelJoinSuccessPacket;
@@ -66,7 +66,7 @@ public class MultiplayerPackets {
         Server.getInstance().matchManager.add(match);
 
         String channelName = "#multi_" + match.getMatchId();
-        BanchoChannel matchChannel = BanchoChannel.builder()
+        Channel matchChannel = Channel.builder()
                 .id(channelName)
                 .name(channelName)
                 .alias("#multiplayer")

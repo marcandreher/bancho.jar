@@ -7,11 +7,11 @@ import java.time.Duration;
 
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
+import com.osuserverlist.bjar.modules.Application.BuildInfo;
 import com.osuserverlist.bjar.modules.commands.BanchoCommand;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
 import com.osuserverlist.bjar.modules.commands.CommandCategory;
-import com.osuserverlist.bjar.modules.logger.BuildInfo;
 import com.osuserverlist.bjar.packets.server.UtilServerPackets.NotificationPacket;
 
 public class UtilCommands extends BanchoCommandHandler {

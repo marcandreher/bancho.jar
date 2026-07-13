@@ -10,7 +10,7 @@ import com.osuserverlist.bjar.models.osu.match.MatchSpecialMode;
 import com.osuserverlist.bjar.models.osu.match.MatchTeamType;
 import com.osuserverlist.bjar.models.osu.match.MatchType;
 import com.osuserverlist.bjar.models.osu.match.SlotStatus;
-import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPacket;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPacket;
 import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchUpdatePacket;
 
 import lombok.Data;

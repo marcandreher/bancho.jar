@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.moandjiezana.toml.Toml;
 import com.moandjiezana.toml.TomlWriter;
-import com.osuserverlist.bjar.models.osu.ActionStatus;
+import com.osuserverlist.bjar.models.osu.OsuClientModels.ActionStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

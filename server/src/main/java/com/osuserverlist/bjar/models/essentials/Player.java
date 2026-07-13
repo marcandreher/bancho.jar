@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPacket;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPacket;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

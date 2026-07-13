@@ -5,17 +5,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
+import com.osuserverlist.bjar.modules.Application.BuildInfo;
+import com.osuserverlist.bjar.modules.Logging.LoggerConfiguration;
+import com.osuserverlist.bjar.modules.Redis;
 import com.osuserverlist.bjar.modules.assets.AchievementDownloader;
 import com.osuserverlist.bjar.modules.assets.DefaultAssetsDownloader;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.Database.ServerTimezone;
-import com.osuserverlist.bjar.modules.logger.BuildInfo;
-import com.osuserverlist.bjar.modules.logger.LoggerConfiguration;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.recalc.RecalcRunnable;
-import com.osuserverlist.bjar.modules.redis.Redis;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -24,6 +24,8 @@ import io.github.cdimascio.dotenv.Dotenv;
  * Entrypoint
  */
 public class App {
+
+    public static final String MAIN_PACKAGE = "com.osuserverlist.bjar";
 
     public static final String HEADER = """
              ██          ▄           ██              ▀▀       ▄

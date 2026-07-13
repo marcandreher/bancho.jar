@@ -3,11 +3,11 @@ package com.osuserverlist.bjar.packets.server;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.config.ServerConfiguration.MenuIcon;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.BanchoPacketWriter;
-import com.osuserverlist.bjar.modules.ServerPacketEngine.PacketHandler;
-import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPacket;
-import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPacketHandler;
-import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPackets;
+import com.osuserverlist.bjar.modules.packets.BanchoPacketWriter;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.PacketHandler;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPacket;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPacketHandler;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPackets;
 
 import lombok.Value;
 

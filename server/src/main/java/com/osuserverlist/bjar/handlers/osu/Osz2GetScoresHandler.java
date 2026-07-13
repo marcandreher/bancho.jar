@@ -6,21 +6,21 @@ import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
 import com.osuserverlist.bjar.models.osu.GameMode;
-import com.osuserverlist.bjar.models.osu.LeaderboardType;
 import com.osuserverlist.bjar.models.osu.MapWebRankedStatus;
 import com.osuserverlist.bjar.models.osu.Mods;
+import com.osuserverlist.bjar.models.osu.OsuClientModels.LeaderboardType;
+import com.osuserverlist.bjar.modules.WebEngine.Host;
+import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
+import com.osuserverlist.bjar.modules.WebEngine.Path;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
-import com.osuserverlist.bjar.modules.web.engine.Host;
-import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
-import com.osuserverlist.bjar.modules.web.engine.Path;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserStatsPacket;
 
 import io.javalin.http.Context;

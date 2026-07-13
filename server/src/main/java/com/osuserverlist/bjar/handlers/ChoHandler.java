@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.config.ServerConfiguration.WelcomeMessage;
@@ -21,23 +22,21 @@ import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.LoginResponse;
-import com.osuserverlist.bjar.models.osu.OsuClientParser;
 import com.osuserverlist.bjar.models.osu.Privileges;
-import com.osuserverlist.bjar.modules.BanchoPacketReader;
-import com.osuserverlist.bjar.modules.BanchoPacketWriter;
-import com.osuserverlist.bjar.modules.ServerPacketEngine;
-import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPacket;
-import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPackets;
+import com.osuserverlist.bjar.modules.Application.BuildInfo;
+import com.osuserverlist.bjar.modules.GeoLocation;
+import com.osuserverlist.bjar.modules.GeoLocation.Country;
+import com.osuserverlist.bjar.modules.GeoLocation.GeoResponse;
+import com.osuserverlist.bjar.modules.WebEngine.Host;
+import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
+import com.osuserverlist.bjar.modules.WebEngine.Path;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.modules.geo.Country;
-import com.osuserverlist.bjar.modules.geo.GeoRegistry;
-import com.osuserverlist.bjar.modules.geo.GeoResponse;
-import com.osuserverlist.bjar.modules.logger.BuildInfo;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
-import com.osuserverlist.bjar.modules.web.engine.Host;
-import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
-import com.osuserverlist.bjar.modules.web.engine.Path;
+import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
+import com.osuserverlist.bjar.modules.packets.BanchoPacketWriter;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPacket;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPackets;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelAutojoinPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoEndPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoPacket;
@@ -89,7 +88,7 @@ public class ChoHandler implements Handler {
     // ------------------------------------------------------------------
 
     private void handleLogin(Context ctx) throws IOException, SQLException {
-        LoginResponse loginResponse = new LoginResponse(ctx);
+        LoginResponse loginResponse = LoginResponse.parse(ctx);
 
         if (!loginResponse.isSuccess()) {
             sendLoginFailure(ctx, -1);
@@ -118,13 +117,13 @@ public class ChoHandler implements Handler {
                 return;
             }
 
-            LocalDate osuVer = OsuClientParser.parseOsuVersionDate(loginResponse.getBuildName());
+            LocalDate osuVer = LoginResponse.parseOsuVersionDate(loginResponse.getBuildName());
             String osuStream = loginResponse.getBuildName();
 
             userRepository.insertIngameLogin(userEntity.getId(), loginResponse.getIp(),
                     osuVer.format(DateTimeFormatter.ISO_LOCAL_DATE), osuStream);
 
-            GeoResponse geoLocResponse = GeoRegistry.getProvider().getCountryCode(loginResponse.getIp());
+            GeoResponse geoLocResponse = GeoLocation.provider.getCountryCode(loginResponse.getIp());
 
             Player existingPlayer = server.playerManager.getById(userEntity.getId());
             if (existingPlayer != null) {

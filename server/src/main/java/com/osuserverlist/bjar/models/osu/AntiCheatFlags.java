@@ -6,9 +6,6 @@ public final class AntiCheatFlags {
     }
 
     public static final class ClientFlags {
-        private ClientFlags() {
-        }
-
         /** No flags sent. */
         public static final int CLEAN = 0;
 
@@ -41,9 +38,6 @@ public final class AntiCheatFlags {
     }
 
     public static final class LastFMFlags {
-        private LastFMFlags() {
-        }
-
         public static final int RUN_WITH_LD_FLAG = 1 << 14;
         public static final int CONSOLE_OPEN = 1 << 15;
         public static final int EXTRA_THREADS = 1 << 16;

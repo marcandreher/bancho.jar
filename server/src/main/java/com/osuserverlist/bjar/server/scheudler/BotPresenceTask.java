@@ -20,7 +20,7 @@ public class BotPresenceTask implements Runnable {
 
         Random random = new Random();
         PresenceInfo presenceInfo = config.getPresenceInfos().get(random.nextInt(config.getPresenceInfos().size()));
-        server.botPlayer.setAction((byte)presenceInfo.getActionStatus().getId());
+        server.botPlayer.setAction((byte)presenceInfo.getActionStatus().id);
         server.botPlayer.setActionText(presenceInfo.getDetails());
     }
 

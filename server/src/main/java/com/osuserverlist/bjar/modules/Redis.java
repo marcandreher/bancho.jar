@@ -1,16 +1,16 @@
-package com.osuserverlist.bjar.modules.redis;
+package com.osuserverlist.bjar.modules;
 
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
-
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import org.slf4j.LoggerFactory;
 
 import lombok.Data;
 import redis.clients.jedis.RedisClient;
 
 public class Redis {
     private final static Logger logger = LoggerFactory.getLogger(Redis.class);
+
     private static RedisClient redisClient;
     private static RedisConfiguration config;
 
@@ -44,6 +44,5 @@ public class Redis {
         private String host;
         private int port;
     }
-
 
 }

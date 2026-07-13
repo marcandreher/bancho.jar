@@ -1,5 +1,9 @@
-package com.osuserverlist.bjar.modules.web;
+package com.osuserverlist.bjar.modules;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,30 +11,58 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import com.osuserverlist.bjar.modules.web.engine.Host;
-import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
-import com.osuserverlist.bjar.modules.web.engine.Path;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.App;
+
+import ch.qos.logback.classic.Logger;
 import io.github.classgraph.ClassGraph;
 import io.javalin.config.JavalinConfig;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-
+import io.javalin.http.RequestLogger;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import lombok.experimental.UtilityClass;
 
-@UtilityClass
-public class ServerWebApp {
+public class WebEngine {
 
-    private final String HANDLER_PACKAGE = "com.osuserverlist.bjar.handlers";
+    private static final String HANDLER_PACKAGE = App.MAIN_PACKAGE + "." + "handlers";
 
-    public void registerRoutes(JavalinConfig app) {
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public static @interface Host {
+        String[] value();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public static @interface HttpMethod {
+        String[] value();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public static @interface Path {
+        String value();
+    }
+
+    public static class BanchoWebLogger implements RequestLogger {
+        private static final Logger logger = (Logger) LoggerFactory.getLogger(BanchoWebLogger.class);
+
+        @Override
+        public void handle(@NotNull Context ctx, @NotNull Float executionTimeMs) throws Exception {
+            logger.info(String.format("%s %s - %s (%.2f ms)", ctx.method().toString(), ctx.url(),
+                    ctx.status().toString(), executionTimeMs));
+        }
+    }
+
+    public static void registerDefaultHandlers(JavalinConfig app) {
         registerAnnotatedHandlers(app, HANDLER_PACKAGE);
     }
 
-    private void registerAnnotatedHandlers(JavalinConfig app, String packageName) {
+    public static void registerAnnotatedHandlers(JavalinConfig app, String packageName) {
         Map<RouteKey, List<HostHandler>> routesByPath = new HashMap<>();
 
         try (var scan = new ClassGraph()
@@ -73,7 +105,7 @@ public class ServerWebApp {
         }
     }
 
-    private void registerRoute(JavalinConfig app, String method, String path, HostHandler[] handlers) {
+    private static void registerRoute(JavalinConfig app, String method, String path, HostHandler[] handlers) {
         HostRouter router = HostRouter.build(handlers);
 
         switch (method) {
@@ -89,7 +121,7 @@ public class ServerWebApp {
         }
     }
 
-    private String normalizeMethod(String method) {
+    private static String normalizeMethod(String method) {
         if (method == null || method.isBlank()) {
             return "GET";
         }
@@ -97,7 +129,7 @@ public class ServerWebApp {
         return method.trim().toUpperCase(Locale.ROOT);
     }
 
-    private String[] normalizeHosts(String[] hosts) {
+    private static String[] normalizeHosts(String[] hosts) {
         String[] normalized = new String[hosts.length];
         for (int i = 0; i < hosts.length; i++) {
             normalized[i] = hosts[i].toLowerCase(Locale.ROOT);
@@ -105,24 +137,13 @@ public class ServerWebApp {
         return normalized;
     }
 
-    private Handler instantiateHandler(Class<?> handlerClass) {
+    private static Handler instantiateHandler(Class<?> handlerClass) {
         try {
             return (Handler) handlerClass.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException
                 | NoSuchMethodException ex) {
             throw new IllegalStateException("Failed to instantiate handler: " + handlerClass.getName(), ex);
         }
-    }
-
-    private String extractHost(Context ctx) {
-        String hostHeader = ctx.header("Host");
-        if (hostHeader == null || hostHeader.isEmpty()) {
-            return "";
-        }
-
-        int colonIndex = hostHeader.indexOf(':');
-        String host = colonIndex >= 0 ? hostHeader.substring(0, colonIndex) : hostHeader;
-        return host.toLowerCase(Locale.ROOT);
     }
 
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -160,6 +181,17 @@ public class ServerWebApp {
             return new HostRouter(exact, subdomain, prefixes);
         }
 
+        private String extractHost(Context ctx) {
+            String hostHeader = ctx.header("Host");
+            if (hostHeader == null || hostHeader.isEmpty()) {
+                return "";
+            }
+
+            int colonIndex = hostHeader.indexOf(':');
+            String host = colonIndex >= 0 ? hostHeader.substring(0, colonIndex) : hostHeader;
+            return host.toLowerCase(Locale.ROOT);
+        }
+
         void dispatch(Context ctx) throws Exception {
             String host = extractHost(ctx);
 
@@ -188,6 +220,7 @@ public class ServerWebApp {
             }
         }
     }
+    
 
     @Value
     private static class RouteKey {

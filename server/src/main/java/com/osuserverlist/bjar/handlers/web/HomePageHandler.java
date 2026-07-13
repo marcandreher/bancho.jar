@@ -8,10 +8,10 @@ import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
 import com.osuserverlist.bjar.Server;
-import com.osuserverlist.bjar.modules.ClientPacketEngine;
-import com.osuserverlist.bjar.modules.web.engine.Host;
-import com.osuserverlist.bjar.modules.web.engine.HttpMethod;
-import com.osuserverlist.bjar.modules.web.engine.Path;
+import com.osuserverlist.bjar.modules.WebEngine.Host;
+import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
+import com.osuserverlist.bjar.modules.WebEngine.Path;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;

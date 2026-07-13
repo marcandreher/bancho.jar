@@ -1,9 +1,9 @@
 package com.osuserverlist.bjar.server.scheudler;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.Server;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 
 public class AutoDisconnectTask implements Runnable {
 

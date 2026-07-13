@@ -7,14 +7,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.Server;
-import com.osuserverlist.bjar.models.essentials.BanchoChannel;
+import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Match;
 import com.osuserverlist.bjar.models.essentials.MatchSlot;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.match.SlotStatus;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelJoinSuccessPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelRevokedPacket;
@@ -78,7 +78,7 @@ public class MatchManager {
         match.getSlots()[freeSlot].setStatus((byte) SlotStatus.NOT_READY.value);
         match.enqueUpdate();
 
-        BanchoChannel matchChannel = server.channelManager.get("#multi_" + match.getMatchId());
+        Channel matchChannel = server.channelManager.get("#multi_" + match.getMatchId());
         if (matchChannel == null) {
             logger.warn("Player {} attempted to join match {} with no associated channel", player.getUsername(), match.toString());
             return;

@@ -5,15 +5,14 @@ import java.util.Collection;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.database.AchievementEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.repos.AchievementRepository;
 
 public class AchievementManager {
-
     private final static Logger logger = LoggerFactory.getLogger(AchievementManager.class);
     private List<AchievementEntity> achievements;
 

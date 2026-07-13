@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.modules;
+package com.osuserverlist.bjar.modules.packets;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.essentials.Match;
 import com.osuserverlist.bjar.models.osu.match.MatchSpecialMode;
 import com.osuserverlist.bjar.models.osu.replay.ScoreFrame;
-import com.osuserverlist.bjar.modules.ServerPacketEngine.ServerPackets;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPackets;
 
 public class BanchoPacketWriter {
 

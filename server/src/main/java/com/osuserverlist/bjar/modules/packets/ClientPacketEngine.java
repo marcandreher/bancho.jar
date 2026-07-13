@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.modules;
+package com.osuserverlist.bjar.modules.packets;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -16,6 +16,7 @@ import java.util.EnumMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 
@@ -24,7 +25,7 @@ import lombok.Value;
 
 public class ClientPacketEngine {
 
-    private static final String HANDLER_PACKAGE = "com.osuserverlist.bjar.packets.client";
+    private static final String HANDLER_PACKAGE = App.MAIN_PACKAGE + "." + "packets.client";
 
     public static final EnumMap<ClientPackets, BanchoPacketHandler> packetHandlers = new EnumMap<>(ClientPackets.class);
     public static final EnumMap<ClientPackets, ClientMetadata> packetMetadata = new EnumMap<>(ClientPackets.class);
@@ -122,7 +123,11 @@ public class ClientPacketEngine {
         private static final MethodType HANDLER_METHOD_TYPE = MethodType.methodType(
                 boolean.class, BanchoPacket.class, BanchoPacketReader.class, Player.class);
 
-        public static void scanAndRegister() {
+        public static void registerDefaultHandlers() {
+            registerAnnotatedHandlers(HANDLER_PACKAGE);
+        }
+
+        public static void registerAnnotatedHandlers(String handlerPackage) {
             packetHandlers.clear();
             packetMetadata.clear();
 
@@ -132,7 +137,7 @@ public class ClientPacketEngine {
                     .enableClassInfo()
                     .enableMethodInfo()
                     .enableAnnotationInfo()
-                    .acceptPackages(HANDLER_PACKAGE)
+                    .acceptPackages(handlerPackage)
                     .scan()) {
 
                 int clientPacketCount = 0;

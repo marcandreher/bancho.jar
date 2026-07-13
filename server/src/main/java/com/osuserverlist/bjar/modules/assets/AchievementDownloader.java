@@ -6,8 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
-
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import org.slf4j.LoggerFactory;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

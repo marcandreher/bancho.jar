@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.modules;
+package com.osuserverlist.bjar.modules.packets;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.essentials.Match;
 import com.osuserverlist.bjar.models.essentials.MatchSlot;
@@ -19,9 +20,8 @@ import com.osuserverlist.bjar.models.osu.replay.ReplayAction;
 import com.osuserverlist.bjar.models.osu.replay.ReplayFrame;
 import com.osuserverlist.bjar.models.osu.replay.ReplayFrameBundle;
 import com.osuserverlist.bjar.models.osu.replay.ScoreFrame;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.BanchoPacketHandler;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPackets;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.BanchoPacketHandler;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 
 public class BanchoPacketReader {

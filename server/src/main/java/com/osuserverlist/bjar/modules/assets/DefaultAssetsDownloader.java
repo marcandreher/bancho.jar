@@ -5,8 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
-
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
+import org.slf4j.LoggerFactory;
 
 import okhttp3.OkHttpClient;
 

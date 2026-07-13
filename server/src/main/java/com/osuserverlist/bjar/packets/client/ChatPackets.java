@@ -8,12 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.Server;
-import com.osuserverlist.bjar.models.essentials.BanchoChannel;
+import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.BanchoPacketReader;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPacket;
-import com.osuserverlist.bjar.modules.ClientPacketEngine.ClientPackets;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor;
+import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacket;
+import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelJoinSuccessPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.SendMessagePacket;
@@ -26,7 +26,7 @@ public class ChatPackets {
     public boolean joinChannel(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         String channelName = reader.readString();
 
-        BanchoChannel channel = Server.getInstance().channelManager.get(channelName);
+        Channel channel = Server.getInstance().channelManager.get(channelName);
         if (channel == null) {
             logger.warn("Player {} tried to join a not existing channel", player.toString());
             return true;
@@ -53,7 +53,7 @@ public class ChatPackets {
         }
 
         Server server = Server.getInstance();
-        BanchoChannel channel = server.channelManager.get(channelName);
+        Channel channel = server.channelManager.get(channelName);
         if (channel == null) {
             logger.warn("Player {} tried to leave a not existing channel {}", player.toString(), channelName);
             return true;
@@ -71,7 +71,7 @@ public class ChatPackets {
         String target = reader.readString();
         
 
-        BanchoChannel channel = resolveChannel(player, target);
+        Channel channel = resolveChannel(player, target);
         if (channel == null) {
             logger.warn("Player {} sent a message to a non-existing channel {}", player, target);
             return true;
@@ -116,7 +116,7 @@ public class ChatPackets {
         return true;
     }
 
-    public BanchoChannel resolveChannel(Player player, String target) {
+    public Channel resolveChannel(Player player, String target) {
         Server server = Server.getInstance();
 
         if ("#spectator".equals(target)) {
@@ -139,7 +139,7 @@ public class ChatPackets {
             return server.channelManager.get("#multi_" + player.getMatch().getMatchId());
         }
 
-        BanchoChannel channel = server.channelManager.get(target);
+        Channel channel = server.channelManager.get(target);
         if (channel == null) {
             logger.warn("Channel not found for target: {}", target);
         }

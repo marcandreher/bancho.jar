@@ -7,9 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 
 import io.github.classgraph.ClassGraph;
 import lombok.AllArgsConstructor;

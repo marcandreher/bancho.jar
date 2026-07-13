@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.essentials.Score;
 import com.osuserverlist.bjar.models.osu.GameMode;
@@ -17,7 +18,6 @@ import com.osuserverlist.bjar.modules.calculations.IPerformanceCalculator;
 import com.osuserverlist.bjar.modules.calculations.OsuNativePerformanceCalculator;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
-import com.osuserverlist.bjar.modules.logger.LoggerFactory;
 import com.osuserverlist.bjar.modules.osu.OsuMapDownloader;
 
 public class ScoreRecalculator {
