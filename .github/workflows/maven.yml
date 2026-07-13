@@ -21,9 +21,7 @@ jobs:
           cache: 'gradle'
 
       - name: Make wrapper executable
-        working-directory: server
         run: chmod +x gradlew
 
       - name: Build JAR
-        working-directory: server
         run: ./gradlew shadowJar --no-daemon

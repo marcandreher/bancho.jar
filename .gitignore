@@ -9,7 +9,7 @@
 /.idea
 /.vscode
 /.github/modernize
-server/dependency-reduced-pom.xml
-server/.gradle/
-server/build
-server/bin
+/dependency-reduced-pom.xml
+/.gradle/
+/build
+/bin
