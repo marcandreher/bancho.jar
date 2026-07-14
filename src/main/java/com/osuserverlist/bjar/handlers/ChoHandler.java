@@ -3,13 +3,11 @@ package com.osuserverlist.bjar.handlers;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +57,10 @@ import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.http.HttpStatus;
 
+/**
+ * Handles the Bancho client protocol: initial login (no {@code osu-token}
+ * header) and subsequent packet exchange for already-connected players.
+ */
 @Host({ "c.", "c4." })
 @Path("/")
 @HttpMethod("POST")
@@ -71,16 +73,19 @@ public class ChoHandler implements Handler {
             If you believe this is a mistake, or have waited a period
             greater than 3 months, you may appeal via discord.""";
 
+    private static final int[] STATS_MODES = { 0, 1, 2, 3, 4, 5, 6, 8 };
+
+    private static final int LOGIN_FAILED = -1;
+
     @Override
     public void handle(@NotNull Context ctx) throws Exception {
         String osuToken = ctx.header("osu-token");
 
         if (osuToken == null) {
             handleLogin(ctx);
-            return;
+        } else {
+            handlePacketExchange(ctx, osuToken);
         }
-
-        handlePackets(ctx, osuToken);
     }
 
     // ------------------------------------------------------------------
@@ -91,7 +96,7 @@ public class ChoHandler implements Handler {
         LoginResponse loginResponse = LoginResponse.parse(ctx);
 
         if (!loginResponse.isSuccess()) {
-            sendLoginFailure(ctx, -1);
+            sendLoginFailure(ctx, LOGIN_FAILED);
             return;
         }
 
@@ -100,55 +105,17 @@ public class ChoHandler implements Handler {
         try (MySQL mysql = Database.getConnection()) {
             UserRepository userRepository = new UserRepository(mysql);
 
-            UserEntity userEntity = userRepository.getUserByName(loginResponse.getUsername());
+            UserEntity userEntity = authenticate(userRepository, loginResponse);
             if (userEntity == null) {
-                sendLoginFailure(ctx, -1);
+                sendLoginFailure(ctx, LOGIN_FAILED);
                 return;
             }
 
-            boolean passwordMatches = OpenBSDBCrypt.checkPassword(
-                    userEntity.getPwBcrypt(),
-                    loginResponse.getPasswordMd5().toCharArray());
+            GeoResponse geoLocResponse = resolveGeoLocation(userRepository, userEntity, loginResponse);
 
-            if (!passwordMatches) {
-                logger.warn("Failed login attempt for user: {} from IP: {}",
-                        loginResponse.getUsername(), loginResponse.getIp());
-                sendLoginFailure(ctx, -1);
-                return;
-            }
+            disconnectExistingSession(server, userEntity);
 
-            LocalDate osuVer = LoginResponse.parseOsuVersionDate(loginResponse.getBuildName());
-            String osuStream = loginResponse.getBuildName();
-
-            userRepository.insertIngameLogin(userEntity.getId(), loginResponse.getIp(),
-                    osuVer.format(DateTimeFormatter.ISO_LOCAL_DATE), osuStream);
-
-            GeoResponse geoLocResponse = GeoLocation.provider.getCountryCode(loginResponse.getIp());
-
-            Player existingPlayer = server.playerManager.getById(userEntity.getId());
-            if (existingPlayer != null) {
-                server.playerManager.disconnect(existingPlayer);
-            }
-
-            // Set country if missing (XX)
-            if (userEntity.getCountry().equalsIgnoreCase("XX")) {
-                Country country = Country.getById(geoLocResponse.getCountryId());
-                userRepository.updateUserCountry(userEntity.getId(), country.name().toLowerCase());
-            }
-
-            Player player = new Player(userEntity.getId(), false, loginResponse.getUuid());
-            player.setTimezone(Integer.parseInt(loginResponse.getUtcOffset()));
-            player.setCountry((short) geoLocResponse.getCountryId());
-            player.setLongitude(geoLocResponse.getLongitude());
-            player.setLatitude(geoLocResponse.getLatitude());
-            player.setDisplayCityLocation(loginResponse.isDisplayCityLocation());
-            player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
-            player.setUsername(userEntity.getName());
-            player.setServerPrivileges(userEntity.getPriv());
-            int newPrivs = Privileges.addPrivilege(userEntity.getPriv(), Privileges.SUPPORTER);
-            player.setClientPrivileges(Privileges.toClientPrivileges(newPrivs));
-
-            player.setApiIdent(String.format("%s|%s", player.getUsername(), loginResponse.getPasswordMd5()));
+            Player player = buildPlayer(userEntity, loginResponse, geoLocResponse);
 
             player.sendPacket(new ProtocolVersionPacket());
             player.sendPacket(new LoginReplyPacket(player.getId()));
@@ -169,19 +136,13 @@ public class ChoHandler implements Handler {
 
             notifyOtherPlayers(server, player);
 
-            server.achievementManager.loadForPlayer(player, mysql);
-
             sendWelcomeMessages(server, player);
-
-            if (!Privileges.hasAny(player.getServerPrivileges(), Privileges.UNRESTRICTED)) {
-                player.sendPacket(new AccountRestrictedPacket());
-                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), RESTRICTED_MSG,
-                        player.getUsername(), server.botPlayer.getId()));
-            }
-
+            sendRestrictionNoticeIfNeeded(server, player);
             player.sendPacket(new MenuIconPacket());
 
-            logger.info("User {} logged in successfully from IP: {}", player.toString(), loginResponse.getIp());
+            logger.info("User {} logged in successfully from IP: {}", player, loginResponse.getIp());
+
+            scheduleBackgroundLoginTasks(server, player, userEntity, loginResponse);
 
             BanchoPacketWriter writer = new BanchoPacketWriter();
             handlePendingPackets(writer, player);
@@ -191,6 +152,104 @@ public class ChoHandler implements Handler {
                     .contentType("application/octet-stream")
                     .result(writer.getPackets());
         }
+    }
+
+    /**
+     * Looks up the user and verifies their password. Returns {@code null}
+     * (and logs a warning) if either step fails.
+     */
+    private UserEntity authenticate(UserRepository userRepository, LoginResponse loginResponse) throws SQLException {
+        UserEntity userEntity = userRepository.getUserByName(loginResponse.getUsername());
+        if (userEntity == null) {
+            return null;
+        }
+
+        boolean passwordMatches = OpenBSDBCrypt.checkPassword(
+                userEntity.getPwBcrypt(),
+                loginResponse.getPasswordMd5().toCharArray());
+
+        if (!passwordMatches) {
+            logger.warn("Failed login attempt for user: {} from IP: {}",
+                    loginResponse.getUsername(), loginResponse.getIp());
+            return null;
+        }
+
+        return userEntity;
+    }
+
+    /**
+     * Resolves the player's geo-location and backfills the user's stored
+     * country if it hasn't been set yet (i.e. is still {@code XX}).
+     */
+    private GeoResponse resolveGeoLocation(UserRepository userRepository, UserEntity userEntity,
+            LoginResponse loginResponse) throws SQLException {
+        GeoResponse geoLocResponse = GeoLocation.provider.getCountryCode(loginResponse.getIp());
+
+        if (userEntity.getCountry().equalsIgnoreCase("XX")) {
+            Country country = Country.getById(geoLocResponse.getCountryId());
+            userRepository.updateUserCountry(userEntity.getId(), country.name().toLowerCase());
+        }
+
+        return geoLocResponse;
+    }
+
+    private void disconnectExistingSession(Server server, UserEntity userEntity) {
+        Player existingPlayer = server.playerManager.getById(userEntity.getId());
+        if (existingPlayer != null) {
+            server.playerManager.disconnect(existingPlayer);
+        }
+    }
+
+    private Player buildPlayer(UserEntity userEntity, LoginResponse loginResponse, GeoResponse geoLocResponse) {
+        Player player = new Player(userEntity.getId(), false, loginResponse.getUuid());
+
+        player.setTimezone(Integer.parseInt(loginResponse.getUtcOffset()));
+        player.setCountry((short) geoLocResponse.getCountryId());
+        player.setLongitude(geoLocResponse.getLongitude());
+        player.setLatitude(geoLocResponse.getLatitude());
+        player.setDisplayCityLocation(loginResponse.isDisplayCityLocation());
+        player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
+        player.setUsername(userEntity.getName());
+        player.setServerPrivileges(userEntity.getPriv());
+
+        int clientPrivs = Privileges.addPrivilege(userEntity.getPriv(), Privileges.SUPPORTER);
+        player.setClientPrivileges(Privileges.toClientPrivileges(clientPrivs));
+
+        player.setApiIdent(String.format("%s|%s", player.getUsername(), loginResponse.getPasswordMd5()));
+
+        return player;
+    }
+
+    private void sendRestrictionNoticeIfNeeded(Server server, Player player) {
+        if (Privileges.hasAny(player.getServerPrivileges(), Privileges.UNRESTRICTED)) {
+            return;
+        }
+
+        player.sendPacket(new AccountRestrictedPacket());
+        player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), RESTRICTED_MSG,
+                player.getUsername(), server.botPlayer.getId()));
+    }
+
+    /**
+     * Queues non-critical, response-blocking work (login logging, achievement
+     * loading) to run after the login response has already been sent to the
+     * client, since neither is needed before the client can start playing.
+     */
+    private void scheduleBackgroundLoginTasks(Server server, Player player, UserEntity userEntity,
+            LoginResponse loginResponse) {
+        server.executor.submit(() -> {
+            try (MySQL con = Database.getConnection()) {
+                UserRepository userRepo = new UserRepository(con);
+                userRepo.insertIngameLogin(userEntity.getId(), loginResponse.getIp(),
+                        LoginResponse.parseOsuVersionDate(loginResponse.getBuildName())
+                                .format(DateTimeFormatter.ISO_LOCAL_DATE),
+                        loginResponse.getBuildName());
+
+                server.achievementManager.loadForPlayer(player, con);
+            } catch (SQLException e) {
+                logger.error("Error running background login tasks for user {}: {}", player, e.getMessage());
+            }
+        });
     }
 
     private void loadPlayerStats(MySQL mysql, Player player) throws SQLException {
@@ -207,23 +266,16 @@ public class ChoHandler implements Handler {
             statsFound[mode] = true;
         }
 
-        for (int i = 0; i <= 8; i++) {
-            if (i == 7) {
-                continue;
-            }
-            if (!statsFound[i]) {
-                logger.warn("Stats not found for player ID={} mode={}", player.getId(), i);
+        for (int mode : STATS_MODES) {
+            if (!statsFound[mode]) {
+                logger.warn("Stats not found for player ID={} mode={}", player.getId(), mode);
             }
         }
     }
 
     private void joinAvailableChannels(Server server, Player player) {
         server.channelManager.getAll().forEach(channel -> {
-            if (channel.getReadPriv() > player.getServerPrivileges()) {
-                return; // Skip channels the player doesn't have access to
-            }
-
-            if (!channel.isVisible()) {
+            if (channel.getReadPriv() > player.getServerPrivileges() || !channel.isVisible()) {
                 return;
             }
 
@@ -240,6 +292,10 @@ public class ChoHandler implements Handler {
         });
     }
 
+    /**
+     * Sends the newly-connected player's presence to every other online,
+     * non-bot player, off the request thread.
+     */
     private void notifyOtherPlayers(Server server, Player player) {
         List<Player> toNotify = new ArrayList<>();
 
@@ -251,24 +307,26 @@ public class ChoHandler implements Handler {
                 player.sendPacket(new UserPresencePacket(p.getId()));
                 return;
             }
-
             toNotify.add(p);
         });
 
-        if (!toNotify.isEmpty()) {
-            server.scheduler.schedule(() -> {
-                for (Player p : toNotify) {
-                    p.sendPacket(new UserPresenceSinglePacket(player.getId()));
-                }
-            }, 100, TimeUnit.MILLISECONDS);
+        if (toNotify.isEmpty()) {
+            return;
         }
+
+        server.executor.submit(() -> {
+            for (Player p : toNotify) {
+                p.sendPacket(new UserPresenceSinglePacket(player.getId()));
+            }
+        });
     }
 
     private void sendWelcomeMessages(Server server, Player player) {
         WelcomeMessage welcomeConfig = server.config.getWelcomeMessage();
 
         if (welcomeConfig.isNotificationEnabled()) {
-            String notificationMessage = welcomeConfig.getNotificationMessage().replace("%version%", BuildInfo.VERSION);
+            String notificationMessage = welcomeConfig.getNotificationMessage()
+                    .replace("%version%", BuildInfo.VERSION);
             player.sendPacket(new NotificationPacket(notificationMessage));
         }
 
@@ -295,7 +353,7 @@ public class ChoHandler implements Handler {
     // Packet exchange (already-connected players)
     // ------------------------------------------------------------------
 
-    private static void handlePackets(Context ctx, String osuToken) {
+    private static void handlePacketExchange(Context ctx, String osuToken) {
         BanchoPacketWriter packetWriter = new BanchoPacketWriter();
 
         Server server = Server.getInstance();
@@ -315,8 +373,7 @@ public class ChoHandler implements Handler {
 
                 while (reader.hasMorePackets()) {
                     try {
-                        boolean success = reader.nextPacket();
-                        if (!success) {
+                        if (!reader.nextPacket()) {
                             logger.warn("Failed to process packet for player ID={}", player.getId());
                         }
                     } catch (IOException e) {

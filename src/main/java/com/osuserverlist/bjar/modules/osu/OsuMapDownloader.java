@@ -8,6 +8,8 @@ import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.Server;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -41,14 +43,23 @@ public final class OsuMapDownloader {
 
                 byte[] data = response.body().bytes();
 
-                Files.write(mapFile, data);
+                scheduleDiskCache(mapFile, data, mapId);
 
                 return data;
             }
         } catch (IOException e) {
-            logger.error("Failed to download or save map with ID: " + mapId, e);
+            logger.error("Failed to download map with ID: " + mapId, e);
             return null;
         }
+    }
 
+    private static void scheduleDiskCache(Path mapFile, byte[] data, long mapId) {
+        Server.getInstance().executor.submit(() -> {
+            try {
+                Files.write(mapFile, data);
+            } catch (IOException e) {
+                logger.error("Failed to cache downloaded map to disk for ID: " + mapId, e);
+            }
+        });
     }
 }

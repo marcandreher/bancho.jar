@@ -577,7 +577,7 @@ public class MultiplayerPackets {
 
         if (match.getLoadTimeoutTask() == null) {
             match.setLoadTimeoutTask(
-                    Server.getInstance().scheduler.schedule(() -> {
+                    Server.getInstance().executor.schedule(() -> {
                         sendMatchAllPlayersLoadedPacket(match);
                         match.setLoadTimeoutTask(null);
                     }, 30, TimeUnit.SECONDS));

@@ -1,5 +1,6 @@
 package com.osuserverlist.bjar.models.database;
 
+import java.io.Serializable;
 import java.sql.ResultSet;
 
 import lombok.Data;
@@ -11,6 +12,8 @@ public class AchievementEntity {
     private String name;
     private String description;
     private String condition;
+
+    private Serializable conditionCompiled;
 
     public static AchievementEntity fromResultSet(ResultSet achievementResult) throws java.sql.SQLException {
         AchievementEntity achievement = new AchievementEntity();

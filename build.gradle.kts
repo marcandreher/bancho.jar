@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.osuserverlist"
-version = "1.1.3-SNAPSHOT"
+version = "1.1.4-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -30,19 +30,19 @@ application {
 
 val lombokVersion = "1.18.46"
 val javalinVersion = "7.2.2"
-val okhttpVersion = "5.3.0"
+val okhttpVersion = "5.4.0"
 val dotenvVersion = "5.2.2"
 val toml4jVersion = "0.7.3"
 val mysqlVersion = "9.7.0"
-val hikariVersion = "7.0.2"
-val jedisVersion = "7.5.2"
+val hikariVersion = "7.1.0"
+val jedisVersion = "7.5.3"
 val ousuApiVersion = "2.1"
 val osuNativeJarVersion = "0.0.9"
-val bcprovVersion = "1.80"
-val kotlinVersion = "1.9.24"
+val bcprovVersion = "1.84"
+val kotlinVersion = "2.3.21"
 val classgraphVersion = "4.8.184"
-val logbackVersion = "1.5.33"
-val jacksonVersion = "2.21.2"
+val logbackVersion = "1.5.38"
+val jacksonVersion = "3.2.1"
 val mvelVersion = "2.5.2.Final"
 
 dependencies {
@@ -75,7 +75,7 @@ dependencies {
 
     implementation("redis.clients:jedis:$jedisVersion")
 
-    implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+    implementation("tools.jackson.core:jackson-databind:$jacksonVersion")
 
     implementation("org.mvel:mvel2:$mvelVersion")
 }

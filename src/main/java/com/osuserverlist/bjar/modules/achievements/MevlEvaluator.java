@@ -1,5 +1,6 @@
 package com.osuserverlist.bjar.modules.achievements;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,15 +11,13 @@ import com.osuserverlist.bjar.models.essentials.Score;
 
 public class MevlEvaluator {
     
-    public boolean evaluate(String condition, Score score, BeatmapEntity beatmap) {
-        condition = PythonMevlRewriter.rewrite(condition);
-
+    public boolean evaluate(Serializable condition, Score score, BeatmapEntity beatmap) {
         Map<String, Object> vars = new HashMap<>();
 
         vars.put("score", MevlScore.from(score, beatmap));
         vars.put("mode_vn", score.getMode());
 
-        Object result = MVEL.eval(condition, vars);
+        Object result = MVEL.executeExpression(condition, vars);
 
         return Boolean.TRUE.equals(result);
     }

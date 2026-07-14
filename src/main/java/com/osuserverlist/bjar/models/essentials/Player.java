@@ -34,8 +34,10 @@ public class Player {
     private boolean relaxEnabled = false;
 
     private ModeStats[] modeStats = new ModeStats[9];
+
     private Set<Integer> unlockedAchievements = ConcurrentHashMap.newKeySet();
     private Set<Player> spectators = ConcurrentHashMap.newKeySet();
+    
     private Player spectating = null;
     private Match match = null;
     private boolean stealth = false;

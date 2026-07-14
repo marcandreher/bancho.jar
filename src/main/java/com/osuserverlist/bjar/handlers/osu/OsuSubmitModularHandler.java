@@ -157,10 +157,6 @@ public class OsuSubmitModularHandler implements Handler {
                 }
             }
 
-            // Save replay file
-            byte[] fileBytes = fileUpload.content().readAllBytes();
-            Files.write(Paths.get("data/replays").resolve(s.getId() + ".osr"), fileBytes);
-
             ModeStats playerStats = p.getModeStats()[realGameMode.getValue()];
             ModeStats oldStats = new ModeStats(playerStats); // deep-copy before mutation
 
@@ -173,51 +169,21 @@ public class OsuSubmitModularHandler implements Handler {
                 playerStats.addUnrankedScore(s);
             }
 
-            mysql.exec(
-                    "UPDATE stats SET plays = ?, tscore = ?, rscore = ?, acc = ?, max_combo = ?, " +
-                    "pp = ?, total_hits = ? WHERE id = ? AND mode = ?",
-                    playerStats.getPlayCount(), playerStats.getTotalScore(), playerStats.getRankedScore(),
-                    playerStats.getAccuracy(), playerStats.getMaxCombo(),
-                    (int) Math.ceil(playerStats.getPp()), playerStats.getTotalHits(),
-                    p.getId(), realGameMode.getValue());
-
             p.sendPacket(new UserStatsPacket(p));
 
             // ---- Build response ----
 
-            List<String> ret = new ArrayList<>();
-
-            ret.add(String.join("|",
-                    "beatmapId:"       + beatmap.getId(),
-                    "beatmapSetId:"    + beatmap.getSetId(),
-                    "beatmapPlaycount:"+ beatmap.getPlays(),
-                    "beatmapPasscount:"+ beatmap.getPasses(),
-                    "approvedDate:"    + beatmap.getLastUpdate()));
-
-            // Beatmap chart
             List<String> chart1 = new ArrayList<>();
             chart1.add("chartId:beatmap");
             chart1.add("chartUrl:https://osu.ppy.sh/b/" + beatmap.getId());
             chart1.add("chartName:Beatmap Ranking");
-
-            if (isPersonalBest) {
-                chart1.add(addChart("rank",     prevMapRank,                        rank));
-                chart1.add(addChart("score",    hasPreviousBest ? bestScore.getScore() : 0, s.getScore()));
-                chart1.add(addChart("maxCombo", hasPreviousBest ? bestScore.getMax_combo() : 0, s.getMax_combo()));
-                chart1.add(addChart("accuracy", hasPreviousBest ? bestScore.getAccuracy() * 100 : 0, s.getAccuracy() * 100));
-                chart1.add(addChart("pp",       hasPreviousBest ? (int) Math.ceil(bestScore.getPp()) : 0, (int) Math.ceil(s.getPp())));
-            } else {
-                chart1.add(addChart("rank",     prevMapRank,                        rank));
-                chart1.add(addChart("score",    hasPreviousBest ? bestScore.getScore() : 0, s.getScore()));
-                chart1.add(addChart("maxCombo", hasPreviousBest ? bestScore.getMax_combo() : 0, s.getMax_combo()));
-                chart1.add(addChart("accuracy", hasPreviousBest ? bestScore.getAccuracy() * 100 : 0, s.getAccuracy() * 100));
-                chart1.add(addChart("pp",       hasPreviousBest ? (int) Math.ceil(bestScore.getPp()) : 0, (int) Math.ceil(s.getPp())));
-            }
-
+            chart1.add(addChart("rank",     prevMapRank,                        rank));
+            chart1.add(addChart("score",    hasPreviousBest ? bestScore.getScore() : 0, s.getScore()));
+            chart1.add(addChart("maxCombo", hasPreviousBest ? bestScore.getMax_combo() : 0, s.getMax_combo()));
+            chart1.add(addChart("accuracy", hasPreviousBest ? bestScore.getAccuracy() * 100 : 0, s.getAccuracy() * 100));
+            chart1.add(addChart("pp",       hasPreviousBest ? (int) Math.ceil(bestScore.getPp()) : 0, (int) Math.ceil(s.getPp())));
             chart1.add("onlineScoreId:" + s.getId());
-            ret.add(String.join("|", chart1));
 
-            // User chart
             List<String> chart2 = new ArrayList<>();
             chart2.add("chartId:overall");
             chart2.add("chartUrl:https://osu.ppy.sh/u/" + s.getPlayerId());
@@ -239,17 +205,18 @@ public class OsuSubmitModularHandler implements Handler {
                 chart2.add(addChart("totalScore",  playerStats.getTotalScore(),                 playerStats.getTotalScore()));
                 chart2.add(addChart("pp",          (int) Math.ceil(playerStats.getPp()),        (int) Math.ceil(playerStats.getPp())));
             }
+
+            List<AchievementEntity> newlyUnlocked = new ArrayList<>();
             List<String> achievementStr = new ArrayList<>();
-            AchievementRepository achievementRepo = new AchievementRepository(mysql);
 
             for (AchievementEntity achievement : server.achievementManager.getAll()) {
-                if(!s.isPassed()) break;
+                if (!s.isPassed()) break;
                 if (p.getUnlockedAchievements().contains(achievement.getId()))
                     continue;
 
-                if (jexlEvaluator.evaluate(achievement.getCondition(), s, beatmap)) {
-                    achievementRepo.addAchievementToPlayer(p.getId(), achievement.getId());
+                if (jexlEvaluator.evaluate(achievement.getConditionCompiled(), s, beatmap)) {
                     p.getUnlockedAchievements().add(achievement.getId());
+                    newlyUnlocked.add(achievement);
 
                     achievementStr.add(
                         achievement.getFile()
@@ -285,10 +252,47 @@ public class OsuSubmitModularHandler implements Handler {
             responseLines.add(String.join("|", chart2));
 
             ctx.result(String.join("\n", responseLines));
+
+            scheduleBackgroundSubmitTasks(server, p, s, realGameMode, playerStats, fileUpload, newlyUnlocked);
         } catch (SQLException e) {
             ctx.status(500).result("An error occurred while processing the score.");
             logger.error("Error processing score submission", e);
         }
+    }
+
+    /**
+     * Save replay file, update player stats, and persist any newly unlocked achievements in the background.
+     * This is done asynchronously to avoid blocking the main request thread.
+     */
+    private void scheduleBackgroundSubmitTasks(Server server, Player p, Score s, GameMode realGameMode,
+            ModeStats playerStats, UploadedFile fileUpload, List<AchievementEntity> newlyUnlocked) {
+        server.executor.submit(() -> {
+            try {
+                byte[] fileBytes = fileUpload.content().readAllBytes();
+                Files.write(Paths.get("data/replays").resolve(s.getId() + ".osr"), fileBytes);
+            } catch (Exception e) {
+                logger.error("Error saving replay file for score {}: {}", s.getId(), e.getMessage());
+            }
+
+            try (MySQL mysql = Database.getConnection()) {
+                mysql.exec(
+                        "UPDATE stats SET plays = ?, tscore = ?, rscore = ?, acc = ?, max_combo = ?, " +
+                        "pp = ?, total_hits = ? WHERE id = ? AND mode = ?",
+                        playerStats.getPlayCount(), playerStats.getTotalScore(), playerStats.getRankedScore(),
+                        playerStats.getAccuracy(), playerStats.getMaxCombo(),
+                        (int) Math.ceil(playerStats.getPp()), playerStats.getTotalHits(),
+                        p.getId(), realGameMode.getValue());
+
+                if (!newlyUnlocked.isEmpty()) {
+                    AchievementRepository achievementRepo = new AchievementRepository(mysql);
+                    for (AchievementEntity achievement : newlyUnlocked) {
+                        achievementRepo.addAchievementToPlayer(p.getId(), achievement.getId());
+                    }
+                }
+            } catch (SQLException e) {
+                logger.error("Error persisting submission side effects for user {}: {}", p, e.getMessage());
+            }
+        });
     }
 
     private String addChart(String name, Object prev, Object after) {

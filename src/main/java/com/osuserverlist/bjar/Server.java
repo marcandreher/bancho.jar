@@ -48,9 +48,8 @@ public class Server {
     public ChannelManager channelManager = new ChannelManager();
     public MatchManager matchManager = new MatchManager();
     public AchievementManager achievementManager = new AchievementManager();
-    public ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
     public OsuDirectAPI osuDirectAPI = new OsuDirectAPI();
-    
+    public ScheduledExecutorService executor = Executors.newScheduledThreadPool(6);
 
     public static Server start(Dotenv dotenv, ProductionLevel level) {
         instance = new Server();
@@ -65,8 +64,8 @@ public class Server {
 
         instance.domain = dotenv.get("DOMAIN");
 
-        instance.scheduler.scheduleAtFixedRate(new AutoDisconnectTask(), 0, 60, TimeUnit.SECONDS);
-        instance.scheduler.scheduleAtFixedRate(new SendChannelInfoTask(), 0, 8, TimeUnit.SECONDS);
+        instance.executor.scheduleAtFixedRate(new AutoDisconnectTask(), 0, 60, TimeUnit.SECONDS);
+        instance.executor.scheduleAtFixedRate(new SendChannelInfoTask(), 0, 8, TimeUnit.SECONDS);
 
         try (MySQL mysql = Database.getConnection()) {
 
@@ -76,8 +75,7 @@ public class Server {
 
             instance.botPlayer = botPlayer;
 
-            instance.scheduler.scheduleAtFixedRate(new BotPresenceTask(), 0, 60, TimeUnit.SECONDS);
-
+            instance.executor.scheduleAtFixedRate(new BotPresenceTask(), 0, 60, TimeUnit.SECONDS);
 
             instance.channelManager.populate(mysql);
             instance.achievementManager.populate(mysql);
@@ -117,7 +115,7 @@ public class Server {
 
     public static void stop() {
         if (instance != null) {
-            instance.scheduler.shutdown();
+            instance.executor.shutdown(); // Gracefully shutdown the executor service
             logger.info("Server stopped");
         }
     }

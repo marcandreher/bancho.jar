@@ -15,8 +15,8 @@ import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.database.MySQL;
 
 public class ChannelManager {
-    private final Map<String, Channel> channels = new ConcurrentHashMap<>();
     private final static Logger logger = LoggerFactory.getLogger(ChannelManager.class);
+    private final Map<String, Channel> channels = new ConcurrentHashMap<>();
 
     public void populate(MySQL mysql) throws SQLException {
         ResultSet channelRs = mysql.query("SELECT * FROM `channels`").executeQuery();
@@ -66,6 +66,22 @@ public class ChannelManager {
         return channels.get(channelName);
     }
 
+    public void removeChannel(String channelName) {
+        channels.remove(channelName);
+    }
+
+    public Collection<Channel> getAll() {
+        return channels.values();
+    }
+
+    /**
+     * Gracefully joins a channel.
+     *
+     * <p>Updates the channel info to players by marking it as dirty</p>
+     *
+     * @param channelName the name of the channel to join
+     * @param player the player joining the channel
+     */
     public void joinChannel(String channelName, Player player) {
         Channel channel = channels.get(channelName);
         if (channel != null) {
@@ -75,20 +91,14 @@ public class ChannelManager {
         channel.setDirty(true);
     }
 
-    public void forceJoinChannel(String channelName, Player player) {
-        Channel channel = channels.get(channelName);
-        if (channel != null) {
-            channel.getPlayers().add(player);
-        }
-    }
-
-    public void forceLeaveChannel(String channelName, Player player) {
-        Channel channel = channels.get(channelName);
-        if (channel != null) {
-            channel.getPlayers().remove(player);
-        }
-    }
-
+    /**
+     * Gracefully leaves a channel.
+     *
+     * <p>Updates the channel info to players by marking it as dirty</p>
+     *
+     * @param channelName the name of the channel to leave
+     * @param player the player leaving the channel
+     */
     public void leaveChannel(String channelName, Player player) {
         Channel channel = channels.get(channelName);
         if (channel != null) {
@@ -98,12 +108,34 @@ public class ChannelManager {
         channel.setDirty(true);
     }
 
-    public void removeChannel(String channelName) {
-        channels.remove(channelName);
+    /**
+     * Forcefully joins a channel.
+     *
+     * <p>Never updates the channel info to players</p>
+     *
+     * @param channelName the name of the channel to join
+     * @param player the player joining the channel
+     */
+    public void forceJoinChannel(String channelName, Player player) {
+        Channel channel = channels.get(channelName);
+        if (channel != null) {
+            channel.getPlayers().add(player);
+        }
     }
 
-    public Collection<Channel> getAll() {
-        return channels.values();
+    /**
+     * Forcefully leaves a channel.
+     *
+     * <p>Never updates the channel info to players</p>
+     *
+     * @param channelName the name of the channel to leave
+     * @param player the player leaving the channel
+     */
+    public void forceLeaveChannel(String channelName, Player player) {
+        Channel channel = channels.get(channelName);
+        if (channel != null) {
+            channel.getPlayers().remove(player);
+        }
     }
 
 }

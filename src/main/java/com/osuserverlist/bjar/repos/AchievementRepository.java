@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.osuserverlist.bjar.models.database.AchievementEntity;
-import com.osuserverlist.bjar.modules.achievements.PythonMevlRewriter;
 import com.osuserverlist.bjar.modules.database.MySQL;
 
 public class AchievementRepository {
@@ -24,7 +23,6 @@ public class AchievementRepository {
         ResultSet achievementResult = mysql.query(GET_ALL_ACHIEVEMENTS_QUERY).executeQuery();
         while (achievementResult.next()) {
             AchievementEntity achievement = AchievementEntity.fromResultSet(achievementResult);
-            achievement.setCondition(PythonMevlRewriter.rewrite(achievement.getCondition()));
             achievements.add(achievement);
         }
 

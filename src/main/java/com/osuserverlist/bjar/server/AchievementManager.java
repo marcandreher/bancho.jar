@@ -4,11 +4,13 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
+import org.mvel2.MVEL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.database.AchievementEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.modules.achievements.PythonMevlRewriter;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.repos.AchievementRepository;
 
@@ -20,6 +22,10 @@ public class AchievementManager {
         AchievementRepository achievementRepo = new AchievementRepository(mysql);
         
         achievements = achievementRepo.getAll();
+        achievements.forEach(achievement -> {
+            achievement.setCondition(PythonMevlRewriter.rewrite(achievement.getCondition()));
+            achievement.setConditionCompiled(MVEL.compileExpression(achievement.getCondition()));
+        });
 
         logger.info("Loaded <{}> achievements", achievements.size());
     }

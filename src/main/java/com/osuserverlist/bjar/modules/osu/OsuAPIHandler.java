@@ -8,7 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
+import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 
 import me.skiincraft.api.ousu.OusuAPI;
@@ -37,13 +39,7 @@ public class OsuAPIHandler {
 
         Beatmap osuBeatmap = osuAPI.getBeatmap(beatmapId).get();
 
-        cacheMapset(mysql, osuBeatmap.getBeatmapSetId());
-
-        BeatmapEntity map = getMapById(mysql, beatmapId);
-
-        return map != null
-                ? map
-                : BeatmapEntity.fromBeatmap(osuBeatmap);
+        return cacheRequestedMapAndDeferSet(mysql, osuBeatmap);
     }
 
     public BeatmapEntity getBeatmapByHash(MySQL mysql, String beatmapHash) throws SQLException {
@@ -61,13 +57,34 @@ public class OsuAPIHandler {
             return null;
         }
 
-        cacheMapset(mysql, osuBeatmap.getBeatmapSetId());
+        return cacheRequestedMapAndDeferSet(mysql, osuBeatmap);
+    }
 
-        BeatmapEntity map = getMapByHash(mysql, beatmapHash);
+    /**
+     * Caches just the specific beatmap the caller asked for (one cheap
+     * insert, already have all the data from the API response) and returns
+     * it immediately. Fetching and caching the rest of the mapset's
+     * difficulties is deferred to the background executor since the caller
+     * doesn't need them to proceed.
+     */
+    private BeatmapEntity cacheRequestedMapAndDeferSet(MySQL mysql, Beatmap osuBeatmap) throws SQLException {
+        BeatmapEntity map = BeatmapEntity.fromBeatmap(osuBeatmap);
 
-        return map != null
-                ? map
-                : BeatmapEntity.fromBeatmap(osuBeatmap);
+        insertMap(mysql, map);
+
+        scheduleMapsetCaching(osuBeatmap.getBeatmapSetId());
+
+        return map;
+    }
+
+    private void scheduleMapsetCaching(long setId) {
+        Server.getInstance().executor.submit(() -> {
+            try (MySQL con = Database.getConnection()) {
+                cacheMapset(con, setId);
+            } catch (SQLException e) {
+                logger.error("Error caching beatmap set <{}>: {}", setId, e.getMessage());
+            }
+        });
     }
 
     private BeatmapEntity getMapById(MySQL mysql, long beatmapId) throws SQLException {
@@ -118,6 +135,7 @@ public class OsuAPIHandler {
 
                 for (Beatmap beatmap : beatmapSet.getAsList()) {
                     insertMap(mysql, BeatmapEntity.fromBeatmap(beatmap));
+                    
                     beatmapCount++;
                 }
 
@@ -138,9 +156,9 @@ public class OsuAPIHandler {
         }
     }
 
-    private void insertMap(MySQL mysql, BeatmapEntity map) throws SQLException {
+    private void insertMap(MySQL mysql, BeatmapEntity map) {
         mysql.exec(
-                "INSERT INTO `maps` (`id`, `set_id`, `status`, `md5`, `artist`, `title`, `version`, `creator`, `filename`, `last_update`, `total_length`, `max_combo`, `frozen`, `plays`, `passes`, `mode`, `bpm`, `cs`, `ar`, `od`, `hp`, `diff`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT IGNORE INTO `maps` (`id`, `set_id`, `status`, `md5`, `artist`, `title`, `version`, `creator`, `filename`, `last_update`, `total_length`, `max_combo`, `frozen`, `plays`, `passes`, `mode`, `bpm`, `cs`, `ar`, `od`, `hp`, `diff`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 map.getId(),
                 map.getSetId(),
                 map.getStatus(),
