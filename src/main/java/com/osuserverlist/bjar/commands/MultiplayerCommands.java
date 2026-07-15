@@ -20,6 +20,7 @@ import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
 import com.osuserverlist.bjar.modules.commands.CommandCategory;
 import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchTransferHostPacket;
+import com.osuserverlist.bjar.packets.server.UtilServerPackets.GetAttentionPacket;
 
 
 
@@ -149,6 +150,7 @@ public class MultiplayerCommands extends BanchoCommandHandler {
         }
 
         server.matchManager.joinMatch(match, targetPlayer);
+        targetPlayer.sendPacket(new GetAttentionPacket());
         sendBotMessage(commandInfos, "Player " + targetPlayerName + " has been forced to join the match.");
     }
 

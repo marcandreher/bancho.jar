@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.Server;
-import com.osuserverlist.bjar.models.config.ServerConfiguration.WelcomeMessage;
+import com.osuserverlist.bjar.models.ConfigModels.ServerConfiguration.WelcomeMessage;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;

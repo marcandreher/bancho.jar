@@ -22,11 +22,11 @@ import com.osuserverlist.bjar.models.osu.GameMode;
 import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.models.osu.SubmitResponse;
 import com.osuserverlist.bjar.modules.Cryptography;
+import com.osuserverlist.bjar.modules.MevlParser;
 import com.osuserverlist.bjar.modules.Redis;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
 import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
 import com.osuserverlist.bjar.modules.WebEngine.Path;
-import com.osuserverlist.bjar.modules.achievements.MevlEvaluator;
 import com.osuserverlist.bjar.modules.calculations.IPerformanceCalculator;
 import com.osuserverlist.bjar.modules.calculations.OsuNativePerformanceCalculator;
 import com.osuserverlist.bjar.modules.database.Database;
@@ -48,7 +48,6 @@ public class OsuSubmitModularHandler implements Handler {
 
     private final static Logger logger = LoggerFactory.getLogger(OsuSubmitModularHandler.class);
     private final static IPerformanceCalculator ppCalculator = new OsuNativePerformanceCalculator();
-    private final static MevlEvaluator jexlEvaluator = new MevlEvaluator();
 
     @Override
     public void handle(@NotNull Context ctx) throws Exception {
@@ -213,7 +212,7 @@ public class OsuSubmitModularHandler implements Handler {
                 if (p.getUnlockedAchievements().contains(achievement.getId()))
                     continue;
 
-                if (jexlEvaluator.evaluate(achievement.getConditionCompiled(), s, beatmap)) {
+                if (MevlParser.evaluate(achievement.getConditionCompiled(), s, beatmap)) {
                     p.getUnlockedAchievements().add(achievement.getId());
                     newlyUnlocked.add(achievement);
 

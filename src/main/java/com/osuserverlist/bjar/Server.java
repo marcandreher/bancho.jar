@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.osuserverlist.bjar.models.config.ServerConfiguration;
+import com.osuserverlist.bjar.models.ConfigModels.ServerConfiguration;
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.WebEngine;
@@ -20,6 +20,7 @@ import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacketRegistry;
 import com.osuserverlist.bjar.modules.packets.ServerPacketEngine;
+import com.osuserverlist.bjar.packets.server.UtilServerPackets.RestartPacket;
 import com.osuserverlist.bjar.server.AchievementManager;
 import com.osuserverlist.bjar.server.ChannelManager;
 import com.osuserverlist.bjar.server.MatchManager;
@@ -116,6 +117,10 @@ public class Server {
     }
 
     public static void stop() {
+        instance.playerManager.getAll().forEach(player -> {
+            player.sendPacket(new RestartPacket(10000));
+        });
+
         if (instance != null) {
             instance.executor.shutdown(); // Gracefully shutdown the executor service
             logger.info("Server stopped");

@@ -1,8 +1,26 @@
 package com.osuserverlist.bjar.modules;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.osuserverlist.bjar.App;
+
 public class Application {
+    private static final Logger logger = LoggerFactory.getLogger(Application.class);
+    public static String HEADER = "";
+
+    static {
+        try (InputStream in = App.class.getResourceAsStream("/header.txt")) {
+            HEADER = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            logger.error("Failed to read header.txt", e);
+        }
+    }
 
     public static class BuildInfo {
 

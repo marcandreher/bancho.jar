@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
 import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.modules.Application;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
 import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
 import com.osuserverlist.bjar.modules.WebEngine.Path;
@@ -53,7 +54,8 @@ public class HomePageHandler implements Handler {
     public void handle(@NotNull Context ctx) {
         String html = indexTemplate
                 .replace("%players%", String.valueOf(Server.getInstance().playerManager.getAll().size()))
-                .replace("%packets%", packetList);
+                .replace("%packets%", packetList)
+                .replace("%header%", Application.HEADER);
 
         ctx.contentType("text/html").result(html);
     }

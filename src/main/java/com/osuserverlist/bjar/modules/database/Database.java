@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.osuserverlist.bjar.models.config.DatabaseConfiguration;
+import com.osuserverlist.bjar.models.ConfigModels.DatabaseConfiguration;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -88,9 +88,9 @@ public class Database {
 
         try {
             dataSource = new HikariDataSource(hikariConfig);
-        } catch (Exception e) {
-            logger.error("Error while setting up the connection pool: ", e);
-            System.exit(0);
+        } catch (Exception _) { 
+            logger.error("Failed to connect to Database (" + url + ")");
+            System.exit(1);
         }
 
         try (MySQL connection = getConnection()) {

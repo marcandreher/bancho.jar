@@ -46,6 +46,7 @@ public class MultiplayerPackets {
     @ClientPacket(ClientPackets.PART_LOBBY)
     public boolean leaveLobby(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         player.setInLobby(false);
+        player.sendPacket(new ChannelRevokedPacket("#lobby"));
         return true;
     }
 

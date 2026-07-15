@@ -122,6 +122,7 @@ tasks.jar {
 }
 
 tasks.shadowJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archiveFileName.set("server-shaded.jar")
 
     manifest {

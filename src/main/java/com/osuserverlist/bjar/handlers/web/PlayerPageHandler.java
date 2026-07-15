@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.jetbrains.annotations.NotNull;
 
 import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.modules.Application;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
 import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
 import com.osuserverlist.bjar.modules.WebEngine.Path;
@@ -34,7 +35,7 @@ public class PlayerPageHandler implements Handler {
             playerHtml.append(player.getUsername()).append(" (").append(player.getId()).append(")").append("<br>");
         });
 
-        String html = indexTemplate.replace("%players%", playerHtml.toString());
+        String html = indexTemplate.replace("%players%", playerHtml.toString()).replace("%header%", Application.HEADER);
         ctx.html(html);
     }
 }

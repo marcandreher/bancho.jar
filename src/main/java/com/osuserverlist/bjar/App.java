@@ -1,6 +1,8 @@
 package com.osuserverlist.bjar;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -10,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.modules.Application.BuildInfo;
 import com.osuserverlist.bjar.modules.Logging.LoggerConfiguration;
+import com.osuserverlist.bjar.modules.Application;
 import com.osuserverlist.bjar.modules.Redis;
 import com.osuserverlist.bjar.modules.assets.AchievementDownloader;
 import com.osuserverlist.bjar.modules.assets.DefaultAssetsDownloader;
@@ -26,19 +29,10 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class App {
 
     public static final String MAIN_PACKAGE = "com.osuserverlist.bjar";
-
-    public static final String HEADER = """
-             ██          ▄           ██              ▀▀       ▄
-             ████▄ ▄▀▀█▄ ████▄ ▄███▀ ████▄ ▄███▄     ██ ▄▀▀█▄ ████▄
-             ██ ██ ▄█▀██ ██ ██ ██    ██ ██ ██ ██     ██ ▄█▀██ ██
-            ▄████▀▄▀█▄██▄██ ▀█▄▀███▄▄██ ██▄▀███▀ ██  ██ ▀█▄██ █▀
-                                                     ██
-                                                   ▀▀▀      """;
-
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public void main(String[] args) {
-        System.out.println(HEADER);
+        System.out.println(Application.HEADER);
         logger.info("Bancho.jar <v" + BuildInfo.VERSION + "> built on (" + BuildInfo.BUILD_TIME + ")");
         logger.info("Running on Java <" + BuildInfo.JAVA_VERSION + "> with Gradle <" + BuildInfo.GRADLE_VERSION + ">");
 
@@ -95,5 +89,11 @@ public class App {
 
         // Main bjar entrypoint
         Server.start(dotenv, level);
+
+        Runnable shutdownHook = () -> {
+            Server.stop();
+        };
+        
+        Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook));
     }
 }

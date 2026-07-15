@@ -1,7 +1,7 @@
 package com.osuserverlist.bjar.packets.server;
 
 import com.osuserverlist.bjar.Server;
-import com.osuserverlist.bjar.models.config.ServerConfiguration.MenuIcon;
+import com.osuserverlist.bjar.models.ConfigModels.ServerConfiguration.MenuIcon;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.packets.BanchoPacketWriter;
 import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.PacketHandler;
