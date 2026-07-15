@@ -52,7 +52,7 @@ public class OsuSearchHandler implements Handler {
             return;
         }
 
-        HttpUrl.Builder url = HttpUrl.parse(server.osuDirectAPI.getSearchEndpoint())
+        HttpUrl.Builder url = HttpUrl.parse(server.enviromentConfig.getSearchEndpoint())
                 .newBuilder()
                 .addQueryParameter("amount", "100")
                 .addQueryParameter("offset", String.valueOf(page * 100));

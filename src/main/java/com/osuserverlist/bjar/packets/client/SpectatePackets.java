@@ -14,12 +14,7 @@ import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelJoinSuccessPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelRevokedPacket;
-import com.osuserverlist.bjar.packets.server.SpectateServerPackets.CantSpectatePacket;
-import com.osuserverlist.bjar.packets.server.SpectateServerPackets.FellowSpectatorJoinedPacket;
-import com.osuserverlist.bjar.packets.server.SpectateServerPackets.FellowSpectatorLeftPacket;
-import com.osuserverlist.bjar.packets.server.SpectateServerPackets.SpectateFramesPacket;
-import com.osuserverlist.bjar.packets.server.SpectateServerPackets.SpectatorJoinedPacket;
-import com.osuserverlist.bjar.packets.server.SpectateServerPackets.SpectatorLeftPacket;
+import com.osuserverlist.bjar.packets.server.SpectateServerPackets.*;
 
 public class SpectatePackets {
     

@@ -7,14 +7,17 @@ import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
@@ -26,6 +29,7 @@ import com.osuserverlist.bjar.repos.UserRepository;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
+import lombok.AllArgsConstructor;
 
 @Host("osu.")
 @Path("/users")
@@ -33,6 +37,21 @@ import io.javalin.http.Handler;
 public class IngameRegistrationHandler implements Handler {
 
     private static final Logger logger = LoggerFactory.getLogger(IngameRegistrationHandler.class);
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[\\w \\[\\]-]{2,15}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+
+    private static final int MIN_USERNAME_LENGTH = 2;
+    private static final int MAX_USERNAME_LENGTH = 15;
+    private static final int MIN_PASSWORD_LENGTH = 8;
+    private static final int MAX_PASSWORD_LENGTH = 32;
+    private static final int MIN_UNIQUE_PASSWORD_CHARS = 3;
+    private static final int MAX_EMAIL_LENGTH = 254; // RFC 5321 limit
+
+    private static final int FIRST_REAL_USER_ID = 3;
+    private static final int[] GAME_MODES_TO_SEED = { 0, 1, 2, 3, 4, 5, 6, 8 };
+    private static final int BCRYPT_COST = 12;
 
     @Override
     public void handle(@NotNull Context ctx) throws Exception {
@@ -40,78 +59,42 @@ public class IngameRegistrationHandler implements Handler {
         String email = ctx.formParam("user[user_email]");
         String password = ctx.formParam("user[password]");
         Integer check = ctx.formParamAsClass("check", Integer.class).getOrNull();
-        int checkValue = check != null ? check : 0;
+
+        // "check" is used by the in-game client to validate fields before
+        // the final submission. check == 0 means "actually register now".
+        boolean isFinalSubmission = (check == null || check == 0);
 
         if (username == null || email == null || password == null) {
-            ctx.status(400).result("Missing required params");
+            ctx.status(400).result(AccountRegistrationResultCode.MISSING_REQUIRED_PARAMS.code);
             return;
         }
 
         Map<String, List<String>> errors = new HashMap<>();
+        validateUsername(username, errors);
+        validatePassword(password, errors);
+        validateEmail(email, errors);
 
-        // Username validation
-        if (!username.matches("^[\\w \\[\\]-]{2,15}$")) {
-            errors.computeIfAbsent("username", k -> new ArrayList<>())
-                    .add("Must be 2-15 characters in length.");
+        if (!Server.getInstance().enviromentConfig.isIngameRegistrationEnabled()) {
+            errors.put("password", List.of("In-game registration is currently disabled."));
         }
 
-        if (username.contains("_") && username.contains(" ")) {
-            errors.computeIfAbsent("username", k -> new ArrayList<>())
-                    .add("May contain '_' or ' ', but not both.");
-        }
-
-        // Password validation (matches bancho.py)
-        if (password.length() < 8 || password.length() > 32) {
-            errors.computeIfAbsent("password", k -> new ArrayList<>())
-                    .add("Must be 8-32 characters in length.");
-        }
-
-        if (password.chars().distinct().count() <= 3) {
-            errors.computeIfAbsent("password", k -> new ArrayList<>())
-                    .add("Must have more than 3 unique characters.");
-        }
-
-        // Validation failed
         if (!errors.isEmpty()) {
-            ctx.status(400).json(Map.of(
-                    "form_error",
-                    Map.of("user", errors)));
+            ctx.status(400).json(
+                    Map.of(
+                            "form_error",
+                            Map.of(
+                                    "user",
+                                    formatErrors(errors))));
             return;
         }
 
-        // Only register when check == 0
-        if (checkValue == 0) {
-            MessageDigest md;
-            try {
-                md = MessageDigest.getInstance("MD5");
-            } catch (NoSuchAlgorithmException e) {
-                logger.error("MD5 algorithm not found", e);
-                ctx.status(500).result("Internal Server Error");
-                return;
-            }
-            byte[] md5Bytes = md.digest(password.getBytes(StandardCharsets.UTF_8));
+        if (isFinalSubmission) {
+            String bcryptHash = hashPassword(password);
 
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : md5Bytes) {
-                hexString.append(String.format("%02x", b));
-            }
-
-            String md5Hex = hexString.toString();
-
-            byte[] salt = new byte[16];
-            new SecureRandom().nextBytes(salt);
-
-            String bcryptHash = OpenBSDBCrypt.generate(
-                    md5Hex.toCharArray(),
-                    salt,
-                    12);
-
-            handleRegistration(username, email, bcryptHash, errors);
+            registerUser(username, email, bcryptHash, errors);
 
             if (!errors.isEmpty()) {
-                ctx.status(400).json(Map.of(
-                        "form_error",
-                        Map.of("user", errors)));
+                ctx.status(400).json(Map.of("form_error", Map.of("user", formatErrors(errors))));
                 return;
             }
         }
@@ -119,55 +102,142 @@ public class IngameRegistrationHandler implements Handler {
         ctx.status(200).result("ok");
     }
 
-    private void handleRegistration(String username, String email, String bcryptHash,
+    private void validateUsername(String username, Map<String, List<String>> errors) {
+        if (!USERNAME_PATTERN.matcher(username).matches()) {
+            addError(errors, "username", "Must be "
+                    + MIN_USERNAME_LENGTH + "-" + MAX_USERNAME_LENGTH + " characters in length.");
+        }
+
+        if (username.contains("_") && username.contains(" ")) {
+            addError(errors, "username", "May contain '_' or ' ', but not both.");
+        }
+    }
+
+    private void validatePassword(String password, Map<String, List<String>> errors) {
+        if (password.length() < MIN_PASSWORD_LENGTH || password.length() > MAX_PASSWORD_LENGTH) {
+            addError(errors, "password", "Must be "
+                    + MIN_PASSWORD_LENGTH + "-" + MAX_PASSWORD_LENGTH + " characters in length.");
+        }
+
+        if (password.chars().distinct().count() <= MIN_UNIQUE_PASSWORD_CHARS) {
+            addError(errors, "password", "Must have more than "
+                    + MIN_UNIQUE_PASSWORD_CHARS + " unique characters.");
+        }
+    }
+
+    private void validateEmail(String email, Map<String, List<String>> errors) {
+        String trimmed = email.trim();
+
+        if (trimmed.isEmpty()) {
+            addError(errors, "user_email", "Must not be empty.");
+            return;
+        }
+
+        if (trimmed.length() > MAX_EMAIL_LENGTH) {
+            addError(errors, "user_email", "Must be at most " + MAX_EMAIL_LENGTH + " characters in length.");
+        }
+
+        if (!EMAIL_PATTERN.matcher(trimmed).matches()) {
+            addError(errors, "user_email", "Must be a valid email address.");
+        }
+    }
+
+    private void addError(Map<String, List<String>> errors, String field, String message) {
+        errors.computeIfAbsent(field, k -> new ArrayList<>()).add(message);
+    }
+
+    private String hashPassword(String password) {
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            // MD5 is a guaranteed JDK algorithm; this should never happen.
+            throw new IllegalStateException("MD5 algorithm not found", e);
+        }
+
+        byte[] md5Bytes = md.digest(password.getBytes(StandardCharsets.UTF_8));
+        String md5Hex = HexFormat.of().formatHex(md5Bytes);
+
+        byte[] salt = new byte[16];
+        SECURE_RANDOM.nextBytes(salt);
+
+        return OpenBSDBCrypt.generate(md5Hex.toCharArray(), salt, BCRYPT_COST);
+    }
+
+    private void registerUser(String username, String email, String bcryptHash,
             Map<String, List<String>> errors) {
         try (MySQL mysql = Database.getConnection()) {
             UserRepository userRepository = new UserRepository(mysql);
-            UserEntity existingUser = userRepository.getUserByNameOrMail(username, email);
-            if (existingUser != null) {
-                if (existingUser.getName().equalsIgnoreCase(username)) {
-                    errors.computeIfAbsent("username", k -> new ArrayList<>())
-                            .add("Username is already taken.");
-                }
-                if (existingUser.getEmail().equalsIgnoreCase(email)) {
-                    errors.computeIfAbsent("email", k -> new ArrayList<>())
-                            .add("Email is already registered.");
-                }
 
+            if (rejectIfConflicting(userRepository, username, email, errors)) {
                 return;
             }
 
             userRepository.insertUser(username, username.toLowerCase().replaceAll(" ", "_"), email, bcryptHash);
-
             Integer userId = mysql.lastInsertId();
 
-            if(userId == 3) {
-                // First user gets all privileges
-                int privs = Privileges.allPrivsToInt();
-                userRepository.updateUserPrivileges(userId, privs);
-            }
-
             if (userId == null) {
-                logger.error("Failed to retrieve last insert ID for user: " + username);
-                errors.computeIfAbsent("database", k -> new ArrayList<>())
-                        .add("An error occurred while creating the account. Please try again.");
+                logger.error("Failed to retrieve last insert ID for user: {}", username);
+                addError(errors, "database", "An error occurred while creating the account. Please try again.");
                 return;
             }
 
-            for (int i = 0; i <= 8; i++) {
-                if (i == 7)
-                    continue;
-
-                userRepository.insertStats(userId, i);
-            }
+            bootstrapNewUser(userRepository, userId);
 
             logger.info("Registered new user: <{}>({})", username, userId);
         } catch (SQLException e) {
             logger.error("Database error during registration for user: " + username, e);
-            errors.computeIfAbsent("database", k -> new ArrayList<>())
-                    .add("An error occurred while creating the account. Please try again.");
+            addError(errors, "database", "An error occurred while creating the account. Please try again.");
         }
-
     }
 
+    /**
+     * Returns true (and populates errors) if the username or email is already
+     * taken.
+     */
+    private boolean rejectIfConflicting(UserRepository userRepository, String username, String email,
+            Map<String, List<String>> errors) throws SQLException {
+        UserEntity existingUser = userRepository.getUserByNameOrMail(username, email);
+        if (existingUser == null) {
+            return false;
+        }
+
+        if (existingUser.getName().equalsIgnoreCase(username)) {
+            addError(errors, "username", "Username is already taken.");
+        }
+        if (existingUser.getEmail().equalsIgnoreCase(email)) {
+            addError(errors, "user_email", "Email is already registered.");
+        }
+        return true;
+    }
+
+    private void bootstrapNewUser(UserRepository userRepository, int userId) throws SQLException {
+        if (userId == FIRST_REAL_USER_ID) {
+            userRepository.updateUserPrivileges(userId, Privileges.allPrivsToInt());
+        }
+
+        for (int mode : GAME_MODES_TO_SEED) {
+            userRepository.insertStats(userId, mode);
+        }
+    }
+
+    private Map<String, List<String>> formatErrors(Map<String, List<String>> errors) {
+        Map<String, List<String>> formatted = new HashMap<>();
+
+        for (Map.Entry<String, List<String>> entry : errors.entrySet()) {
+            formatted.put(entry.getKey(), List.of(String.join("\n", entry.getValue())));
+        }
+
+        return formatted;
+    }
+
+    @AllArgsConstructor
+    public enum AccountRegistrationResultCode {
+        OK("ok"),
+        MISSING_REQUIRED_PARAMS("missing_required_params"),
+        INGAME_REGISTRATION_DISABLED("ingame_registration_disabled"),
+        VALIDATION_FAILED("validation_failed");
+
+        public final String code;
+    }
 }

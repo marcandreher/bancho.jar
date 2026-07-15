@@ -40,6 +40,10 @@ public class BeatmapEntity {
         return String.format("[https://osu.%s/beatmapsets/%s#/%s %s - %s [%s]]", Server.getInstance().domain, setId, id, artist, title, version);
     }
 
+    public static String toEmbed(long id, long setId, String artist, String title, String version) {
+        return String.format("[https://osu.%s/beatmapsets/%s#/%s %s - %s [%s]]", Server.getInstance().domain, setId, id, artist, title, version);
+    }
+
     public static BeatmapEntity fromBeatmap(Beatmap beatmap) {
         BeatmapEntity beatmapEntity = new BeatmapEntity();
         beatmapEntity.id = beatmap.getBeatmapId();

@@ -25,7 +25,7 @@ public class OsuDownloadHandler implements Handler {
         }
 
         Server server = Server.getInstance();
-        String dlEndpoint = server.osuDirectAPI.getDlEndpoint();
+        String dlEndpoint = server.enviromentConfig.getDlEndpoint();
 
         if (dlEndpoint == null || dlEndpoint.isBlank()) {
             ctx.status(503).result("Download endpoint not configured.");

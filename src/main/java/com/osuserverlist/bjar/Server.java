@@ -48,7 +48,7 @@ public class Server {
     public ChannelManager channelManager = new ChannelManager();
     public MatchManager matchManager = new MatchManager();
     public AchievementManager achievementManager = new AchievementManager();
-    public OsuDirectAPI osuDirectAPI = new OsuDirectAPI();
+    public EnviromentConfig enviromentConfig = new EnviromentConfig();
     public ScheduledExecutorService executor = Executors.newScheduledThreadPool(6);
 
     public static Server start(Dotenv dotenv, ProductionLevel level) {
@@ -59,8 +59,9 @@ public class Server {
 
         instance.osuAPIHandler = new OsuAPIHandler(dotenv.get("OSU_API_KEY"));
 
-        instance.osuDirectAPI.setSearchEndpoint(dotenv.get("DIRECT_SEARCH"));
-        instance.osuDirectAPI.setDlEndpoint(dotenv.get("DIRECT_DL"));
+        instance.enviromentConfig.setSearchEndpoint(dotenv.get("DIRECT_SEARCH"));
+        instance.enviromentConfig.setDlEndpoint(dotenv.get("DIRECT_DL"));
+        instance.enviromentConfig.setIngameRegistrationEnabled(Boolean.parseBoolean(dotenv.get("INGAME_REGISTRATION_ENABLED")));
 
         instance.domain = dotenv.get("DOMAIN");
 
@@ -106,6 +107,7 @@ public class Server {
 
             if (level == ProductionLevel.DEVELOPMENT) {
                 config.bundledPlugins.enableRouteOverview("/routes");
+                config.bundledPlugins.enableDevLogging();
             }
         });
 
@@ -121,8 +123,9 @@ public class Server {
     }
 
     @Data
-    public static class OsuDirectAPI {
+    public static class EnviromentConfig {
         private String searchEndpoint;
         private String dlEndpoint;
+        private boolean ingameRegistrationEnabled;
     }
 }

@@ -23,19 +23,8 @@ import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacket;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
 import com.osuserverlist.bjar.packets.BanchoPacket;
-import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoPacket;
-import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelJoinSuccessPacket;
-import com.osuserverlist.bjar.packets.server.ChatServerPackets.SendMessagePacket;
-import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchAllPlayersLoadedPacket;
-import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchCompletePacket;
-import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchJoinFailPacket;
-import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchJoinSuccessPacket;
-import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchPlayerFailedPacket;
-import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchScoreUpdatePacket;
-import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchStartClientPacket;
-import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchTransferHostPacket;
-import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchUpdatePacket;
-import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.NewMatchPacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.*;
+import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.*;
 
 public class MultiplayerPackets {
 

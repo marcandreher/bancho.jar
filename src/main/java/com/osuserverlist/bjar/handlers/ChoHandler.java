@@ -100,6 +100,8 @@ public class ChoHandler implements Handler {
             return;
         }
 
+        // TODO: fix issue where client is sending login request twice even after login to c4 or any other subdom
+
         Server server = Server.getInstance();
 
         try (MySQL mysql = Database.getConnection()) {

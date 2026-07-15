@@ -15,7 +15,6 @@ import com.osuserverlist.bjar.models.osu.replay.ScoreFrame;
 import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPackets;
 
 public class BanchoPacketWriter {
-
     private static final Logger logger = LoggerFactory.getLogger(BanchoPacketWriter.class);
 
     private final List<byte[]> packets = new ArrayList<>();
@@ -95,19 +94,11 @@ public class BanchoPacketWriter {
     }
 
     public void writeShort(int value) {
-        writeShortLE(value);
-    }
-
-    public void writeInt(int value) {
-        writeIntLE(value);
-    }
-
-    public void writeShortLE(int value) {
         output.write(value & 0xFF);
         output.write((value >> 8) & 0xFF);
     }
 
-    public void writeIntLE(int value) {
+    public void writeInt(int value) {
         // Little-endian: Low byte first, then high bytes
         output.write(value & 0xFF); // Low byte first
         output.write((value >> 8) & 0xFF);
@@ -115,11 +106,7 @@ public class BanchoPacketWriter {
         output.write((value >> 24) & 0xFF); // Most significant byte last
     }
 
-    public void writeByteLE(int value) {
-        output.write(value & 0xFF);
-    }
-
-    public void writeLongLE(long value) {
+    public void writeLong(long value) {
         output.write((int) (value & 0xFF));
         output.write((int) ((value >> 8) & 0xFF));
         output.write((int) ((value >> 16) & 0xFF));
@@ -130,12 +117,8 @@ public class BanchoPacketWriter {
         output.write((int) ((value >> 56) & 0xFF));
     }
 
-    public void writeLong(long value) {
-        writeLongLE(value);
-    }
-
     public void writeFloat(float value) {
-        writeIntLE(Float.floatToRawIntBits(value));
+        writeInt(Float.floatToRawIntBits(value));
     }
 
     public void writeBytes(byte[] data) {
@@ -146,14 +129,29 @@ public class BanchoPacketWriter {
         }
     }
 
+    /**
+     * Writes a boolean value to the output stream. The boolean is represented as a single byte: 1 for true and 0 for false.
+     * 
+     * @param value The boolean to write.
+     */
     public void writeBoolean(boolean value) {
         writeByte(value ? 1 : 0);
     }
 
+    /**
+     * Writes a double to the output stream. The double is converted to its raw long bits representation and written as 8 bytes in little-endian order.
+     * 
+     * @param value The double to write.
+     */
     public void writeDouble(double value) {
-        writeLongLE(Double.doubleToRawLongBits(value));
+        writeLong(Double.doubleToRawLongBits(value));
     }
 
+    /**
+     * Writes a string to the output stream. The string is prefixed with its length as an unsigned LEB128 integer.
+     * 
+     * @param str The string to write. If null or empty, a length of 0 is written.
+     */
     public void writeString(String str) {
         if (str == null || str.isEmpty()) {
             writeByte(0x00); // Empty/null string indicator
@@ -176,38 +174,31 @@ public class BanchoPacketWriter {
         }
     }
 
+    /**
+     * Writes a list of integers to the output stream. The list is prefixed with its length as an unsigned short (2 bytes, little-endian).
+     * 
+     * @param values The list of integers to write. If null, a length of 0 is written.
+     */
     public void writeIntList(List<Integer> values) {
         if (values == null) {
-            writeShortLE((short) 0);
+            writeShort((short) 0);
             return;
         }
 
         // Length (uShort)
-        writeShortLE((short) values.size());
+        writeShort((short) values.size());
 
         // Integers
         for (int value : values) {
-            writeIntLE(value);
+            writeInt(value);
         }
     }
 
     /**
-     * Writes an unsigned LEB128 encoded integer.
-     * ULEB128 is a variable-length encoding for unsigned integers.
+     * Writes a osu! Match object to the output stream. Match objects represent the state of a multiplayer match, including player slots, host information, and match settings.
      * 
-     * @param value The value to encode
+     * @param match The Match object containing the match data to write.
      */
-    private void writeUleb128(int value) {
-        do {
-            byte b = (byte) (value & 0x7F);
-            value >>= 7;
-            if (value != 0) {
-                b |= 0x80; // Set the continuation bit
-            }
-            writeByte(b);
-        } while (value != 0);
-    }
-
     public void writeMatch(Match match) {
         writeShort(match.getMatchId());
         writeBoolean(match.isInProgress());
@@ -254,6 +245,11 @@ public class BanchoPacketWriter {
         writeInt(match.getSeed());
     }
 
+    /**
+     * Writes a osu! Score Frame to the output stream. ScoreFrames are used in replays and spectating to represent the state of a player's score at a specific point in time.
+     * 
+     * @param scoreFrame The ScoreFrame object containing the score data to write.
+     */
     public void writeScoreFrame(ScoreFrame scoreFrame) throws IOException {
         writeInt(scoreFrame.getTime());
         writeByte(scoreFrame.getId());
@@ -278,6 +274,23 @@ public class BanchoPacketWriter {
             writeDouble(scoreFrame.getComboPortion());
             writeDouble(scoreFrame.getBonusPortion());
         }
+    }
+
+    /**
+     * Writes an unsigned LEB128 encoded integer.
+     * ULEB128 is a variable-length encoding for unsigned integers.
+     * 
+     * @param value The value to encode
+     */
+    private void writeUleb128(int value) {
+        do {
+            byte b = (byte) (value & 0x7F);
+            value >>= 7;
+            if (value != 0) {
+                b |= 0x80; // Set the continuation bit
+            }
+            writeByte(b);
+        } while (value != 0);
     }
 
 }

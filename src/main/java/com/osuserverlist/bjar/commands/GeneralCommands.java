@@ -1,6 +1,5 @@
 package com.osuserverlist.bjar.commands;
 
-import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -20,20 +19,16 @@ import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerComm
 import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry;
 import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry.CommandInfo;
 import com.osuserverlist.bjar.modules.commands.CommandCategory;
-import com.osuserverlist.bjar.modules.database.Database;
-import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.osu.OsuMapDownloader;
+
+import me.skiincraft.api.ousu.entity.beatmap.Beatmap;
 
 public class GeneralCommands extends BanchoCommandHandler {
 
-    @BanchoCommand(
-            name = "!with",
-            category = CommandCategory.GENERAL,
-            description = "Shows PPCount of last nped map"
-    )
+    @BanchoCommand(name = "!with", category = CommandCategory.GENERAL, description = "Shows PPCount of last nped map")
     public void with(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
         if (sender.getLastNpBeatmapId() == 0) {
-            sendBotMessage(commandInfos, "No beatmap selected. Please select a beatmap first.");
+            sendBotMessage(commandInfos, "No beatmap selected. Please select a beatmap with /np first.");
             return;
         }
 
@@ -47,27 +42,26 @@ public class GeneralCommands extends BanchoCommandHandler {
             }
         }
 
-        try (MySQL mysql = Database.getConnection()) {
-            BeatmapEntity beatmap = server.osuAPIHandler.getBeatmapById(mysql, sender.getLastNpBeatmapId());
-            if (beatmap == null) {
-                sendBotMessage(commandInfos, "Beatmap not found in database.");
-                return;
-            }
-
-            sendBotMessage(commandInfos, String.format("Selected beatmap: %s",
-                    beatmap.toEmbed()));
-
-            sendBotMessage(commandInfos, calculatePpBreakdown(sender, beatmap, mods));
-        } catch (SQLException e) {
-            logger.error("Failed to fetch Data", e);
-            sendBotMessage(commandInfos, "An error occurred while fetching data.");
+        Beatmap beatmap = server.osuAPIHandler.getRawBeatmapById(sender.getLastNpBeatmapId());
+        if (beatmap == null) {
+            sendBotMessage(commandInfos, "Beatmap not found.");
+            return;
         }
+
+        sendBotMessage(commandInfos, String.format("Selected beatmap: %s",
+                BeatmapEntity.toEmbed(beatmap.getBeatmapId(), beatmap.getBeatmapSetId(), beatmap.getArtist(), beatmap.getTitle(), beatmap.getVersion())));
+
+        sendBotMessage(commandInfos, calculatePpBreakdown(sender, beatmap, mods));
+
     }
 
-    /** Builds a "PP | 100% - x.xx | 95% - x.xx | ..." breakdown from 100% down to 80% accuracy. */
-    private String calculatePpBreakdown(Player sender, BeatmapEntity beatmap, int mods) {
+    /**
+     * Builds a "PP | 100% - x.xx | 95% - x.xx | ..." breakdown from 100% down to
+     * 80% accuracy.
+     */
+    private String calculatePpBreakdown(Player sender, Beatmap beatmap, int mods) {
         IPerformanceCalculator calculator = new OsuNativePerformanceCalculator();
-        byte[] mapData = OsuMapDownloader.downloadMap(beatmap.getId());
+        byte[] mapData = OsuMapDownloader.downloadMap(beatmap.getBeatmapId());
 
         StringBuilder breakdown = new StringBuilder("PP | ");
         for (int acc = 100; acc >= 80; acc -= 5) {
@@ -75,6 +69,8 @@ public class GeneralCommands extends BanchoCommandHandler {
             score.setMode(sender.getGameMode());
             score.setAccuracy(acc / 100.0);
             score.setMax_combo(beatmap.getMaxCombo());
+            int hitObjectCount = beatmap.getCircles() + beatmap.getSliders() + beatmap.getSpinners();
+            score.setN300(hitObjectCount);
             score.setMods(mods);
 
             double pp = calculator.calculate(score, mapData);
@@ -85,12 +81,7 @@ public class GeneralCommands extends BanchoCommandHandler {
         return breakdown.toString();
     }
 
-    @BanchoCommand(
-            name = "!help",
-            category = CommandCategory.GENERAL,
-            description = "Lists all available commands with their descriptions.",
-            isHidden = true
-    )
+    @BanchoCommand(name = "!help", category = CommandCategory.GENERAL, description = "Lists all available commands with their descriptions.", isHidden = true)
     public void help(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
         Map<CommandCategory, List<CommandInfo>> commandsByCategory = BanchoCommandRegistry.getAllCommands()
                 .stream()
@@ -124,7 +115,8 @@ public class GeneralCommands extends BanchoCommandHandler {
         if (!multiplayerCommands.isEmpty()) {
             help.append("== Multiplayer (!mp) ==\n");
             for (MultiplayerCommandInfo commandInfo : multiplayerCommands) {
-                help.append("  !mp ").append(commandInfo.name()).append(" - ").append(commandInfo.description()).append('\n');
+                help.append("  !mp ").append(commandInfo.name()).append(" - ").append(commandInfo.description())
+                        .append('\n');
             }
         }
 

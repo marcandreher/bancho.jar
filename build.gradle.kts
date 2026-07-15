@@ -42,7 +42,7 @@ val bcprovVersion = "1.84"
 val kotlinVersion = "2.3.21"
 val classgraphVersion = "4.8.184"
 val logbackVersion = "1.5.38"
-val jacksonVersion = "3.2.1"
+val jacksonVersion = "2.21.2"
 val mvelVersion = "2.5.2.Final"
 
 dependencies {
@@ -75,7 +75,7 @@ dependencies {
 
     implementation("redis.clients:jedis:$jedisVersion")
 
-    implementation("tools.jackson.core:jackson-databind:$jacksonVersion")
+    implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
 
     implementation("org.mvel:mvel2:$mvelVersion")
 }

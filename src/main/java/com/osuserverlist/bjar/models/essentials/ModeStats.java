@@ -6,10 +6,11 @@ import java.sql.SQLException;
 import com.osuserverlist.bjar.modules.Redis;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class ModeStats {
-
     private int mode = 0;
     private long rankedScore = 0;
     private float accuracy = 0;
@@ -19,18 +20,13 @@ public class ModeStats {
     private long globalRank = 0;
     private int pp = 0;
     private int totalHits = 0;
+    private int playtime = 0;
 
-    public ModeStats() {
-        this.mode = 0;
-        this.rankedScore = 0;
-        this.accuracy = 0;
-        this.playCount = 0;
-        this.totalScore = 0;
-        this.maxCombo = 0;
-        this.globalRank = 0;
-        this.pp = 0;
-        this.totalHits = 0;
-    }
+    private int xhCount = 0;
+    private int xCount = 0;
+    private int shCount = 0;
+    private int sCount = 0;
+    private int aCount = 0;
 
     public ModeStats(ModeStats stats) {
         this.mode = stats.mode;
@@ -42,6 +38,7 @@ public class ModeStats {
         this.globalRank = stats.globalRank;
         this.pp = stats.pp;
         this.totalHits = stats.totalHits;
+        this.playtime = stats.playtime;
     }
 
     public static ModeStats fromResultSet(ResultSet modeResult, int i, Player player) throws SQLException {
@@ -53,6 +50,14 @@ public class ModeStats {
         stats.setMaxCombo(modeResult.getInt("max_combo"));
         stats.setPp(modeResult.getInt("pp"));
         stats.setTotalHits(modeResult.getInt("total_hits"));
+        stats.setPlaytime(modeResult.getInt("playtime"));
+
+        stats.setXhCount(modeResult.getInt("xh_count"));
+        stats.setXCount(modeResult.getInt("x_count"));
+        stats.setShCount(modeResult.getInt("sh_count"));
+        stats.setSCount(modeResult.getInt("s_count"));
+        stats.setACount(modeResult.getInt("a_count"));
+
         Long rank = Redis.getClient().zrevrank(
                 "bjar:leaderboard:" + i,
                 String.valueOf(player.getId()));
@@ -61,31 +66,51 @@ public class ModeStats {
         return stats;
     }
 
-    public void addUnrankedScore(Score s) {
+    public void addScore(Score s) {
         totalScore += s.getScore();
         playCount++;
+        playtime += s.getPlaytime() / 100000;
         totalHits += s.getN300()
                 + s.getN100()
                 + s.getN50()
                 + s.getNmiss();
+
+        if(s.isPassed()) {
+            maxCombo = Math.max(maxCombo, s.getMax_combo());
+
+            if (accuracy == 0) {
+                accuracy = (float) s.getAccuracy();
+            } else {
+                accuracy = calculateAccuracy((float) s.getAccuracy(), accuracy);
+            }
+
+            switch(Grade.fromString(s.getGrade())) {
+                case XH:
+                    xhCount++;
+                    break;
+                case X:
+                    xCount++;
+                    break;
+                case SH:
+                    shCount++;
+                    break;
+                case S:
+                    sCount++;
+                    break;
+                case A:
+                    aCount++;
+                    break;
+                default:
+                    break;
+
+            }
+        }
     }
 
     public void addRankedScore(Score s, double pp) {
-        totalScore += s.getScore();
-
+        addScore(s);
         rankedScore += s.getScore();
 
-        playCount++;
-        maxCombo = Math.max(maxCombo, s.getMax_combo());
-        totalHits += s.getN300()
-                + s.getN100()
-                + s.getN50()
-                + s.getNmiss();
-        if (accuracy == 0) {
-            accuracy = (float) s.getAccuracy();
-        } else {
-            accuracy = calculateAccuracy((float) s.getAccuracy(), accuracy);
-        }
         this.pp = (int) pp;
     }
 
@@ -97,5 +122,32 @@ public class ModeStats {
             totalAcc /= 100.0f; // Convert from percentage to decimal if needed
         }
         return (scoreAcc + totalAcc) / 2;
+    }
+
+    public enum Grade {
+        XH, X, SH, S, A, B, C, D;
+
+        public static Grade fromString(String gradeStr) {
+            switch (gradeStr) {
+                case "XH":
+                    return XH;
+                case "X":
+                    return X;
+                case "SH":
+                    return SH;
+                case "S":
+                    return S;
+                case "A":
+                    return A;
+                case "B":
+                    return B;
+                case "C":
+                    return C;
+                case "D":
+                    return D;
+                default:
+                    throw new IllegalArgumentException("Unknown grade: " + gradeStr);
+            }
+        }
     }
 }

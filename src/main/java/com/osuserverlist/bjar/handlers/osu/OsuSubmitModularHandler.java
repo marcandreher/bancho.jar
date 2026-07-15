@@ -160,13 +160,12 @@ public class OsuSubmitModularHandler implements Handler {
             ModeStats playerStats = p.getModeStats()[realGameMode.getValue()];
             ModeStats oldStats = new ModeStats(playerStats); // deep-copy before mutation
 
-            if (isPersonalBest && s.isPassed()) {
+            playerStats.addScore(s);
+            if (isPersonalBest && s.isPassed() && beatmap.getStatus() == 1) {
                 playerStats.addRankedScore(s, totalPp);
                 Redis.getClient().zadd("bjar:leaderboard:" + realGameMode.getValue(), totalPp, String.valueOf(p.getId()));
                 Long redisRank = Redis.getClient().zrevrank("bjar:leaderboard:" + realGameMode.getValue(), String.valueOf(p.getId()));
                 playerStats.setGlobalRank((redisRank != null ? Math.toIntExact(redisRank) : -1) + 1);
-            } else {
-                playerStats.addUnrankedScore(s);
             }
 
             p.sendPacket(new UserStatsPacket(p));
@@ -277,10 +276,12 @@ public class OsuSubmitModularHandler implements Handler {
             try (MySQL mysql = Database.getConnection()) {
                 mysql.exec(
                         "UPDATE stats SET plays = ?, tscore = ?, rscore = ?, acc = ?, max_combo = ?, " +
-                        "pp = ?, total_hits = ? WHERE id = ? AND mode = ?",
+                        "pp = ?, total_hits = ?, playtime = ?, xh_count = ?, x_count = ?, sh_count = ?, s_count = ?, a_count = ? WHERE id = ? AND mode = ?",
                         playerStats.getPlayCount(), playerStats.getTotalScore(), playerStats.getRankedScore(),
                         playerStats.getAccuracy(), playerStats.getMaxCombo(),
                         (int) Math.ceil(playerStats.getPp()), playerStats.getTotalHits(),
+                        playerStats.getPlaytime(), playerStats.getXhCount(), playerStats.getXCount(),
+                        playerStats.getShCount(), playerStats.getSCount(), playerStats.getACount(),
                         p.getId(), realGameMode.getValue());
 
                 if (!newlyUnlocked.isEmpty()) {

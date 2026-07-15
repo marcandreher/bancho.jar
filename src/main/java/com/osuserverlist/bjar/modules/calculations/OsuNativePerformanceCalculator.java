@@ -31,7 +31,7 @@ public class OsuNativePerformanceCalculator implements IPerformanceCalculator {
         scoreInfo.setCountMeh(s.getN50());
         scoreInfo.setCountPerfect(s.getNgeki());
         scoreInfo.setCountGood(s.getNkatu());
-
+        
         ModsCollection mods = ModsCollection.create();
 
         for(String mod : Mods.convertMods(s.getMods()))

@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
 public class WebEngine {
-
+    private static final Logger logger = (Logger) LoggerFactory.getLogger(WebEngine.class);
     private static final String HANDLER_PACKAGE = App.MAIN_PACKAGE + "." + "handlers";
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -49,8 +49,6 @@ public class WebEngine {
     }
 
     public static class BanchoWebLogger implements RequestLogger {
-        private static final Logger logger = (Logger) LoggerFactory.getLogger(BanchoWebLogger.class);
-
         @Override
         public void handle(@NotNull Context ctx, @NotNull Float executionTimeMs) throws Exception {
             logger.info(String.format("%s %s - %s (%.2f ms)", ctx.method().toString(), ctx.url(),
@@ -221,11 +219,9 @@ public class WebEngine {
         }
     }
     
-
     @Value
     private static class RouteKey {
         String method;
         String path;
     }
-
 }

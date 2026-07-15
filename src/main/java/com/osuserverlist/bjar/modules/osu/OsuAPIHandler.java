@@ -42,6 +42,14 @@ public class OsuAPIHandler {
         return cacheRequestedMapAndDeferSet(mysql, osuBeatmap);
     }
 
+    public Beatmap getRawBeatmapById(long beatmapId) {
+        try {
+            return osuAPI.getBeatmap(beatmapId).get();
+        } catch (BeatmapException e) {
+            return null;
+        }
+    }
+
     public BeatmapEntity getBeatmapByHash(MySQL mysql, String beatmapHash) throws SQLException {
         BeatmapEntity cachedMap = getMapByHash(mysql, beatmapHash);
 
