@@ -48,7 +48,6 @@ import com.osuserverlist.bjar.packets.server.UserServerPackets.AccountRestricted
 import com.osuserverlist.bjar.packets.server.UserServerPackets.FriendsListPacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserPresenceBundlePacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserPresencePacket;
-import com.osuserverlist.bjar.packets.server.UserServerPackets.UserPresenceSinglePacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserStatsPacket;
 import com.osuserverlist.bjar.packets.server.UtilServerPackets.NotificationPacket;
 import com.osuserverlist.bjar.repos.UserRepository;
@@ -125,7 +124,7 @@ public class ChoHandler implements Handler {
 
             loadPlayerStats(mysql, player);
 
-            player.sendPacket(new UserPresencePacket(player.getId()));
+            player.sendPacket(new UserPresencePacket(player));
             player.sendPacket(new UserStatsPacket(player));
             player.sendPacket(new FriendsListPacket(userRepository.getFriendIds(player.getId())));
 
@@ -306,7 +305,7 @@ public class ChoHandler implements Handler {
                 return;
             }
             if (p.isBot()) {
-                player.sendPacket(new UserPresencePacket(p.getId()));
+                player.sendPacket(new UserPresencePacket(p));
                 return;
             }
             toNotify.add(p);
@@ -318,7 +317,7 @@ public class ChoHandler implements Handler {
 
         server.executor.submit(() -> {
             for (Player p : toNotify) {
-                p.sendPacket(new UserPresenceSinglePacket(player.getId()));
+                p.sendPacket(new UserPresencePacket(player));
             }
         });
     }

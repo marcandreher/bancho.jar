@@ -6,10 +6,10 @@ import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
-import com.osuserverlist.bjar.modules.commands.BanchoCommand;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
-import com.osuserverlist.bjar.modules.commands.CommandCategory;
+import com.osuserverlist.bjar.modules.Commands.BanchoCommand;
+import com.osuserverlist.bjar.modules.Commands.BanchoCommandHandler;
+import com.osuserverlist.bjar.modules.Commands.CommandCategory;
+import com.osuserverlist.bjar.modules.Commands.Session;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.repos.UserRepository;
@@ -21,8 +21,8 @@ public class ModerationCommands extends BanchoCommandHandler {
             description = "Restrict a player",
             requiredPrivileges = Privileges.MODERATOR
     )
-    public void restrict(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
-        handleRestriction(sender, commandInfos, args, true);
+    public void restrict(Player sender, Session session, String[] args) {
+        handleRestriction(sender, session, args, true);
     }
 
     @BanchoCommand(
@@ -31,8 +31,8 @@ public class ModerationCommands extends BanchoCommandHandler {
             description = "Unrestrict a player",
             requiredPrivileges = Privileges.MODERATOR
     )
-    public void unrestrict(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
-        handleRestriction(sender, commandInfos, args, false);
+    public void unrestrict(Player sender, Session session, String[] args) {
+        handleRestriction(sender, session, args, false);
     }
 
     @BanchoCommand(
@@ -41,60 +41,60 @@ public class ModerationCommands extends BanchoCommandHandler {
         description = "Kick a player from the server", 
         requiredPrivileges = Privileges.MODERATOR
     )
-    public void kick(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
+    public void kick(Player sender, Session session, String[] args) {
         if(args.length == 0) {
-            sendBotMessage(commandInfos, "Usage: !kick <username>");
+            session.sendAnswer("Usage: !kick <username>");
             return;
         }
 
         String username = args[0];
 
-        Player targetPlayer = server.playerManager.getByFilter(p -> p.getUsername().equalsIgnoreCase(username));
+        Player targetPlayer = session.server.playerManager.getByFilter(p -> p.getUsername().equalsIgnoreCase(username));
 
         if (targetPlayer == null) {
-            sendBotMessage(commandInfos, "Player not found: " + username);
+            session.sendAnswer("Player not found: " + username);
             return;
         }
 
         logger.info("Player {} has been kicked by {}", targetPlayer.toString(), sender.toString());
 
-        server.playerManager.disconnect(targetPlayer);
-        sendBotMessage(commandInfos, "Player " + username + " has been kicked from the server.");
+        session.server.playerManager.disconnect(targetPlayer);
+        session.sendAnswer("Player " + username + " has been kicked from the server.");
     }
 
     private void handleRestriction(
             Player sender,
-            PlayerCommandInfo[] commandInfos,
+            Session session,
             String[] args,
             boolean restrict
     ) {
         if (args.length < 2) {
-            sendBotMessage(commandInfos, usageMessage(restrict));
+            session.sendAnswer(usageMessage(restrict));
             return;
         }
 
         String username = args[0];
         String reason = getReason(args);
 
-        if (!isValidReason(commandInfos, reason)) {
+        if (!isValidReason(session, reason)) {
             return;
         }
 
         try (MySQL mysql = Database.getConnection()) {
             UserRepository userRepo = new UserRepository(mysql);
 
-            Player targetPlayer = server.playerManager.getByFilter(
+            Player targetPlayer = session.server.playerManager.getByFilter(
                     player -> player.getUsername().equalsIgnoreCase(username)
             );
 
             if (targetPlayer != null) {
-                updateOnlinePlayer(server, userRepo, targetPlayer, restrict);
+                updateOnlinePlayer(session.server, userRepo, targetPlayer, restrict);
                 logRestrictionAction(targetPlayer.toString(), sender.toString(), reason, restrict);
             } else {
                 UserEntity user = userRepo.getUserByName(username);
 
                 if (user == null) {
-                    sendBotMessage(commandInfos, "Player not found: " + username);
+                    session.sendAnswer("Player not found: " + username);
                     return;
                 }
 
@@ -102,11 +102,11 @@ public class ModerationCommands extends BanchoCommandHandler {
                 logRestrictionAction(user.toString(), sender.toString(), reason, restrict);
             }
 
-            sendBotMessage(commandInfos, successMessage(username, reason, restrict));
+            session.sendAnswer(successMessage(username, reason, restrict));
 
         } catch (Exception e) {
             e.printStackTrace();
-            sendBotMessage(commandInfos, failureMessage(username, restrict));
+            session.sendAnswer(failureMessage(username, restrict));
         }
     }
 
@@ -157,14 +157,14 @@ public class ModerationCommands extends BanchoCommandHandler {
         return String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();
     }
 
-    private boolean isValidReason(PlayerCommandInfo[] commandInfos, String reason) {
+    private boolean isValidReason(Session session, String reason) {
         if (reason.isEmpty()) {
-            sendBotMessage(commandInfos, "Reason cannot be empty.");
+            session.sendAnswer("Reason cannot be empty.");
             return false;
         }
 
         if (reason.length() > 100) {
-            sendBotMessage(commandInfos, "Reason cannot exceed 100 characters.");
+            session.sendAnswer("Reason cannot exceed 100 characters.");
             return false;
         }
 

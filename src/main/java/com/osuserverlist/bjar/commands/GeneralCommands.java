@@ -11,14 +11,14 @@ import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
 import com.osuserverlist.bjar.models.osu.Mods;
+import com.osuserverlist.bjar.modules.Commands;
+import com.osuserverlist.bjar.modules.Commands.BanchoCommand;
+import com.osuserverlist.bjar.modules.Commands.BanchoCommandHandler;
+import com.osuserverlist.bjar.modules.Commands.CommandCategory;
+import com.osuserverlist.bjar.modules.Commands.CommandInfo;
+import com.osuserverlist.bjar.modules.Commands.Session;
 import com.osuserverlist.bjar.modules.calculations.IPerformanceCalculator;
 import com.osuserverlist.bjar.modules.calculations.OsuNativePerformanceCalculator;
-import com.osuserverlist.bjar.modules.commands.BanchoCommand;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry.CommandInfo;
-import com.osuserverlist.bjar.modules.commands.CommandCategory;
 import com.osuserverlist.bjar.modules.osu.OsuMapDownloader;
 
 import me.skiincraft.api.ousu.entity.beatmap.Beatmap;
@@ -26,9 +26,9 @@ import me.skiincraft.api.ousu.entity.beatmap.Beatmap;
 public class GeneralCommands extends BanchoCommandHandler {
 
     @BanchoCommand(name = "!with", category = CommandCategory.GENERAL, description = "Shows PPCount of last nped map")
-    public void with(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
+    public void with(Player sender, Session session, String[] args) {
         if (sender.getLastNpBeatmapId() == 0) {
-            sendBotMessage(commandInfos, "No beatmap selected. Please select a beatmap with /np first.");
+            session.sendAnswer("No beatmap selected. Please select a beatmap with /np first.");
             return;
         }
 
@@ -37,21 +37,21 @@ public class GeneralCommands extends BanchoCommandHandler {
             try {
                 mods |= Mods.fromAbbreviation(modStr).getValue();
             } catch (IllegalArgumentException e) {
-                sendBotMessage(commandInfos, "Invalid mod: " + modStr);
+                session.sendAnswer("Invalid mod: " + modStr);
                 return;
             }
         }
 
-        Beatmap beatmap = server.osuAPIHandler.getRawBeatmapById(sender.getLastNpBeatmapId());
+        Beatmap beatmap = session.server.osuAPIHandler.getRawBeatmapById(sender.getLastNpBeatmapId());
         if (beatmap == null) {
-            sendBotMessage(commandInfos, "Beatmap not found.");
+            session.sendAnswer("Beatmap not found.");
             return;
         }
 
-        sendBotMessage(commandInfos, String.format("Selected beatmap: %s",
+        session.sendAnswer(String.format("Selected beatmap: %s",
                 BeatmapEntity.toEmbed(beatmap.getBeatmapId(), beatmap.getBeatmapSetId(), beatmap.getArtist(), beatmap.getTitle(), beatmap.getVersion())));
 
-        sendBotMessage(commandInfos, calculatePpBreakdown(sender, beatmap, mods));
+        session.sendAnswer(calculatePpBreakdown(sender, beatmap, mods));
 
     }
 
@@ -82,8 +82,8 @@ public class GeneralCommands extends BanchoCommandHandler {
     }
 
     @BanchoCommand(name = "!help", category = CommandCategory.GENERAL, description = "Lists all available commands with their descriptions.", isHidden = true)
-    public void help(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
-        Map<CommandCategory, List<CommandInfo>> commandsByCategory = BanchoCommandRegistry.getAllCommands()
+    public void help(Player sender, Session session, String[] args) {
+        Map<CommandCategory, List<CommandInfo>> commandsByCategory = Commands.getAllCommands()
                 .stream()
                 .filter(commandInfo -> sender.getServerPrivileges() >= commandInfo.requiredPrivileges)
                 .filter(commandInfo -> !commandInfo.isHidden)
@@ -100,7 +100,7 @@ public class GeneralCommands extends BanchoCommandHandler {
                 : List.of();
 
         if (commandsByCategory.isEmpty() && multiplayerCommands.isEmpty()) {
-            sendBotMessage(commandInfos, "No commands available.");
+            session.sendAnswer("No commands available.");
             return;
         }
 
@@ -120,7 +120,7 @@ public class GeneralCommands extends BanchoCommandHandler {
             }
         }
 
-        sendBotMessage(commandInfos, help.toString().stripTrailing());
+        session.sendAnswer(help.toString().stripTrailing());
     }
 
 }

@@ -33,7 +33,7 @@ public class UserStatsPresencePackets {
             Player requestedPlayer = Server.getInstance().playerManager.getById(userId);
 
             if (requestedPlayer != null) {
-                player.sendPacket(new UserPresencePacket(requestedPlayer.getId()));
+                player.sendPacket(new UserPresencePacket(requestedPlayer));
             } else {
                 logger.warn("Requested player not found for {}", player.toString());
             }

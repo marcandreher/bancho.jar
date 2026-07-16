@@ -1,8 +1,8 @@
 package com.osuserverlist.bjar.packets.client;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor;
+import com.osuserverlist.bjar.modules.Commands;
 import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacket;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
@@ -77,9 +77,7 @@ public class ChatPackets {
             return true;
         }
 
-        List<Player> players = new ArrayList<>(channel.getPlayers());
-
-        players.forEach(user -> {
+        channel.getPlayers().forEach(user -> {
             if(user.isBot())
                 return;
             if(user.getId() == player.getId())
@@ -87,8 +85,8 @@ public class ChatPackets {
             user.sendPacket(new SendMessagePacket(player.getUsername(), message, target, player.getId()));
         });
 
-        BanchoCommandProcessor.processNp(player, message);
-        BanchoCommandProcessor.processCommand(player, message, target, players);
+        Commands.processNp(player, message);
+        Commands.processCommand(player, message, target, channel.getPlayers());
 
         logger.info("Message from {}: <{}> to <{}>", player.toString(), message, channel.getName());
         return true;
@@ -111,8 +109,8 @@ public class ChatPackets {
 
         targetPlayer.sendPacket(new SendMessagePacket(player.getUsername(), message, target, player.getId()));
 
-        BanchoCommandProcessor.processNp(player, message);
-        BanchoCommandProcessor.processCommand(player, message, target, List.of(player));
+        Commands.processNp(player, message);
+        Commands.processCommand(player, message, target, Set.of(player));
         return true;
     }
 

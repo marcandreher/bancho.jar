@@ -11,10 +11,9 @@ import org.slf4j.LoggerFactory;
 import com.osuserverlist.bjar.models.ConfigModels.ServerConfiguration;
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.modules.Commands;
 import com.osuserverlist.bjar.modules.WebEngine;
 import com.osuserverlist.bjar.modules.WebEngine.BanchoWebLogger;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandRegistry;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
 import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
@@ -86,11 +85,9 @@ public class Server {
             logger.error("Failed to initialize server", e);
         }
 
-        BanchoCommandRegistry.registerAnnotatedHandlers("com.osuserverlist.bjar.commands");
+        Commands.registerAnnotatedHandlers("com.osuserverlist.bjar.commands");
 
-        BanchoCommandRegistry.finalizeCommandRegistration();
-
-        BanchoCommandHandler.server = instance; // Set the server instance for all command handlers
+        Commands.finalizeCommandRegistration();
 
         Javalin app = Javalin.create(config -> {
             config.routes.exception(Exception.class, (e, ctx) -> {

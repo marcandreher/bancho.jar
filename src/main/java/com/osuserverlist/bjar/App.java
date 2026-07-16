@@ -1,8 +1,6 @@
 package com.osuserverlist.bjar;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -10,9 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
+import com.osuserverlist.bjar.modules.Application;
 import com.osuserverlist.bjar.modules.Application.BuildInfo;
 import com.osuserverlist.bjar.modules.Logging.LoggerConfiguration;
-import com.osuserverlist.bjar.modules.Application;
 import com.osuserverlist.bjar.modules.Redis;
 import com.osuserverlist.bjar.modules.assets.AchievementDownloader;
 import com.osuserverlist.bjar.modules.assets.DefaultAssetsDownloader;

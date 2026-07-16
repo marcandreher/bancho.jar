@@ -8,10 +8,10 @@ import java.time.Duration;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.Application.BuildInfo;
-import com.osuserverlist.bjar.modules.commands.BanchoCommand;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
-import com.osuserverlist.bjar.modules.commands.CommandCategory;
+import com.osuserverlist.bjar.modules.Commands.BanchoCommand;
+import com.osuserverlist.bjar.modules.Commands.BanchoCommandHandler;
+import com.osuserverlist.bjar.modules.Commands.CommandCategory;
+import com.osuserverlist.bjar.modules.Commands.Session;
 import com.osuserverlist.bjar.packets.server.UtilServerPackets.NotificationPacket;
 
 public class UtilCommands extends BanchoCommandHandler {
@@ -24,21 +24,21 @@ public class UtilCommands extends BanchoCommandHandler {
         description = "Alert all players with a message", 
         requiredPrivileges = Privileges.ADMINISTRATOR
     )
-    public void alert(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
+    public void alert(Player sender, Session session, String[] args) {
         if(args.length == 0) {
-            sendBotMessage(commandInfos, "Usage: !alert <message>");
+            session.sendAnswer("Usage: !alert <message>");
             return;
         }
 
         String message = String.join(" ", args);
 
-        server.playerManager.getAll().forEach(player -> {
+        session.server.playerManager.getAll().forEach(player -> {
             player.sendPacket(new NotificationPacket(message));
         });
 
         logger.info("Alert sent by {}: {}", sender.toString(), message);
 
-        sendBotMessage(commandInfos, "Alert sent to all players: " + message);
+        session.sendAnswer("Alert sent to all players: " + message);
     }
 
     @BanchoCommand(
@@ -47,8 +47,8 @@ public class UtilCommands extends BanchoCommandHandler {
         description = "Shows server information", 
         requiredPrivileges = Privileges.ADMINISTRATOR
     )
-    public void serverInfo(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
-        sendBotMessage(commandInfos, "Running bancho.jar <v" + BuildInfo.VERSION + "> built on (" + BuildInfo.BUILD_TIME + ")");
+    public void serverInfo(Player sender, Session session, String[] args) {
+        session.sendAnswer("Running bancho.jar <v" + BuildInfo.VERSION + "> built on (" + BuildInfo.BUILD_TIME + ")");
 
         // Get App RAM Info and usage
         Runtime runtime = Runtime.getRuntime();
@@ -79,15 +79,15 @@ public class UtilCommands extends BanchoCommandHandler {
         String osName = System.getProperty("os.name");
         String osArch = System.getProperty("os.arch");
 
-        sendBotMessage(commandInfos, String.format(
+        session.sendAnswer(String.format(
                 "Memory: %dMB / %dMB used (Max: %dMB)",
                 usedMemory / MB, totalMemory / MB, maxMemory / MB
         ));
-        sendBotMessage(commandInfos, "Uptime: " + uptimeFormatted);
-        sendBotMessage(commandInfos, String.format(
+        session.sendAnswer("Uptime: " + uptimeFormatted);
+        session.sendAnswer(String.format(
                 "Threads: %d active (peak: %d)", threadCount, peakThreadCount
         ));
-        sendBotMessage(commandInfos, String.format(
+        session.sendAnswer(String.format(
                 "JVM: %s (%s) | OS: %s (%s) | Cores: %d",
                 javaVersion, javaVendor, osName, osArch, availableProcessors
         ));

@@ -23,7 +23,7 @@ public class UserServerPackets {
 
     @Value
     public static class UserPresencePacket implements ServerPacket {
-        private int userId;
+        private Player player;
     }
 
     @Value
@@ -63,7 +63,7 @@ public class UserServerPackets {
     public static final class UserPresenceHandler implements ServerPacketHandler<UserPresencePacket> {
         @Override
         public void write(UserPresencePacket packet, BanchoPacketWriter writer, Player player) {
-            Player target = Server.getInstance().playerManager.getById(packet.getUserId());
+            Player target = packet.getPlayer();
             if (target == null) return;
         
             writer.startPacket(ServerPackets.USER_PRESENCE);

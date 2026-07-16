@@ -1,23 +1,104 @@
-package com.osuserverlist.bjar.modules.commands;
+package com.osuserverlist.bjar.modules;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.models.osu.Privileges;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.SendMessagePacket;
 
 import io.github.classgraph.ClassGraph;
 import lombok.AllArgsConstructor;
 
-public class BanchoCommandRegistry {
-
+public class Commands {
+    private static Logger logger = LoggerFactory.getLogger(BanchoCommandHandler.class);
     private static Map<String, CommandInfo> commandMap = new HashMap<>();
-    private static final Logger logger = LoggerFactory.getLogger(BanchoCommandRegistry.class);
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.TYPE, ElementType.METHOD })
+    public static @interface BanchoCommand {
+        String name();
+        CommandCategory category();
+        boolean isHidden() default false;
+        String description() default "";
+        Privileges requiredPrivileges() default Privileges.UNRESTRICTED;
+    }
+
+    @AllArgsConstructor
+    public static class Session {
+        public Server server;
+        private Set<Player> recievers;
+        private String target;
+
+        public void sendAnswer(String message) {
+            for (Player player : recievers) {
+                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), message, target,
+                        server.botPlayer.getId()));
+            }
+        }
+    }
+
+    public static class BanchoCommandHandler {
+        protected static Logger logger = LoggerFactory.getLogger(BanchoCommandHandler.class);
+
+        public void handle(Player sender, Session session, String[] args) { }
+    }
+
+    public static void processCommand(Player sender, String commandLine, String target, Set<Player> recievers) {
+        if (!(commandLine.startsWith("!") || commandLine.startsWith("/"))) {
+            return;
+        }
+
+        String[] command = commandLine.split(" ");
+        String commandName = command[0].toLowerCase();
+
+        Server server = Server.getInstance();
+        CommandInfo commandInfo = Commands.getCommand(commandName);
+        Session session = new Session(server, recievers, target);
+
+        if (commandInfo == null) {
+            session.sendAnswer("Unknown command: " + commandName + " use !help for a list of commands");
+            return;
+        }
+
+        if (sender.getServerPrivileges() < commandInfo.requiredPrivileges && commandInfo.requiredPrivileges != 0) {
+            session.sendAnswer("You don't have permission to use this command.");
+            return;
+        }
+
+        String[] args = new String[command.length - 1];
+        System.arraycopy(command, 1, args, 0, args.length);
+        
+        
+
+        commandInfo.handler.handle(sender, session, args);
+    }
+
+    public static void processNp(Player sender, String message) {
+        Pattern pattern = Pattern.compile("beatmapsets/(\\d+)#/(\\d+)");
+        Matcher matcher = pattern.matcher(message);
+
+        if (matcher.find()) {
+            String beatmapId = matcher.group(2);
+            String beatmapSetId = matcher.group(1);
+            sender.setLastNpBeatmapId(Long.parseLong(beatmapId));
+            sender.setLastNpBeatmapSetId(Long.parseLong(beatmapSetId));
+        }
+    }
 
     public static void registerAnnotatedHandlers(String packageName) {
         try (var scan = new ClassGraph()
@@ -44,7 +125,8 @@ public class BanchoCommandRegistry {
                     try {
                         handlerInstance = handlerClass.getDeclaredConstructor().newInstance();
                     } catch (Exception e) {
-                        logger.error("Error occurred while instantiating command handler for class: {}", handlerClass.getName(), e);
+                        logger.error("Error occurred while instantiating command handler for class: {}",
+                                handlerClass.getName(), e);
                         return;
                     }
                 }
@@ -75,8 +157,7 @@ public class BanchoCommandRegistry {
                 commandAnnotation.isHidden(),
                 commandAnnotation.description(),
                 commandAnnotation.requiredPrivileges().getValue(),
-                handler
-        );
+                handler);
 
         commandMap.put(commandName, commandInfo);
     }
@@ -88,26 +169,23 @@ public class BanchoCommandRegistry {
             @Override
             public void handle(
                     Player sender,
-                    BanchoCommandProcessor.PlayerCommandInfo[] commandInfos,
-                    String[] args
-            ) {
+                    Session session,
+                    String[] args) {
                 try {
                     Object target = Modifier.isStatic(method.getModifiers()) ? null : handlerInstance;
-                    method.invoke(target, sender, commandInfos, args);
+                    method.invoke(target, sender, session, args);
                 } catch (Exception e) {
                     logger.error(
                             "Error occurred while invoking command method {}#{}",
                             method.getDeclaringClass().getName(),
                             method.getName(),
-                            e
-                    );
+                            e);
                 }
             }
         };
 
         return handler;
     }
-    
 
     public static void finalizeCommandRegistration() {
         logger.info("Registered <{}> commands", commandMap.size());
@@ -129,6 +207,16 @@ public class BanchoCommandRegistry {
         public String description;
         public int requiredPrivileges;
         public BanchoCommandHandler handler;
+    }
+
+    public static enum CommandCategory {
+        GENERAL,
+        ADMINISTRATION,
+        MODERATION,
+        NOMINATION,
+        FUN,
+        MUSIC,
+        MISC
     }
 
 }

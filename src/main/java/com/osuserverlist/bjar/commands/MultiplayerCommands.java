@@ -15,14 +15,12 @@ import java.util.stream.Collectors;
 import com.osuserverlist.bjar.models.essentials.Match;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
-import com.osuserverlist.bjar.modules.commands.BanchoCommand;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandHandler;
-import com.osuserverlist.bjar.modules.commands.BanchoCommandProcessor.PlayerCommandInfo;
-import com.osuserverlist.bjar.modules.commands.CommandCategory;
+import com.osuserverlist.bjar.modules.Commands.BanchoCommand;
+import com.osuserverlist.bjar.modules.Commands.BanchoCommandHandler;
+import com.osuserverlist.bjar.modules.Commands.CommandCategory;
+import com.osuserverlist.bjar.modules.Commands.Session;
 import com.osuserverlist.bjar.packets.server.MultiplayerServerPackets.MatchTransferHostPacket;
 import com.osuserverlist.bjar.packets.server.UtilServerPackets.GetAttentionPacket;
-
-
 
 @BanchoCommand(
         name = "!mp",
@@ -57,32 +55,32 @@ public class MultiplayerCommands extends BanchoCommandHandler {
     }
 
     @Override
-    public void handle(Player sender, PlayerCommandInfo[] commandInfos, String[] args) {
+    public void handle(Player sender, Session session, String[] args) {
         if (args.length == 0) {
-            sendBotMessage(commandInfos, "No command specified.");
+            session.sendAnswer("No command specified.");
             return;
         }
 
         Match match = sender.getMatch();
         if (match == null) {
-            sendBotMessage(commandInfos, "You are not in a match.");
+            session.sendAnswer("You are not in a match.");
             return;
         }
 
         MultiplayerCommandEntry commandEntry = COMMANDS.get(args[0].toLowerCase());
         if (commandEntry == null) {
-            sendBotMessage(commandInfos, "Unknown command: !mp " + args[0]);
+            session.sendAnswer("Unknown command: !mp " + args[0]);
             return;
         }
 
         if (sender.getServerPrivileges() < commandEntry.requiredPrivileges().value) {
-            sendBotMessage(commandInfos, "You do not have permission to use this command.");
+            session.sendAnswer("You do not have permission to use this command.");
             return;
         }
 
         String[] remainingArgs = Arrays.copyOfRange(args, 1, args.length);
         try {
-            commandEntry.method().invoke(this, sender, commandInfos, remainingArgs, match);
+            commandEntry.method().invoke(this, sender, session, remainingArgs, match);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Failed to execute multiplayer command: " + args[0], e);
         }
@@ -92,7 +90,7 @@ public class MultiplayerCommands extends BanchoCommandHandler {
             name = "start",
             description = "Starts the match if you are the host."
     )
-    public void start(Player sender, PlayerCommandInfo[] commandInfos, String[] args, Match match) {
+    public void start(Player sender, Session session, String[] args, Match match) {
         // TODO: Handle multiplayer commands
     }
 
@@ -100,34 +98,34 @@ public class MultiplayerCommands extends BanchoCommandHandler {
             name = "randpw",
             description = "Changes the match password."
     )
-    public void randpw(Player sender, PlayerCommandInfo[] commandInfos, String[] args, Match match) {
+    public void randpw(Player sender, Session session, String[] args, Match match) {
         String randomPassword = UUID.randomUUID().toString();
         match.setRoomPassword(randomPassword);
         match.enqueUpdate();
-        sendBotMessage(commandInfos, "Match password changed to: " + randomPassword);
+        session.sendAnswer("Match password changed to: " + randomPassword);
     }
 
     @MultiplayerCommand(
             name = "host",
             description = "Transfers host to another player."
     )
-    public void host(Player sender, PlayerCommandInfo[] commandInfos, String[] args, Match match) {
+    public void host(Player sender, Session session, String[] args, Match match) {
         if (args.length == 0) {
-            sendBotMessage(commandInfos, "Usage: !mp host <player>");
+            session.sendAnswer("Usage: !mp host <player>");
             return;
         }
 
         String targetPlayerName = args[0];
         Player targetPlayer = findPlayerInMatch(match, targetPlayerName);
         if (targetPlayer == null) {
-            sendBotMessage(commandInfos, "Player not found in the match.");
+            session.sendAnswer("Player not found in the match.");
             return;
         }
 
         match.setHostId(targetPlayer.getId());
         targetPlayer.sendPacket(new MatchTransferHostPacket());
         match.enqueUpdate();
-        sendBotMessage(commandInfos, "Host transferred to: " + targetPlayerName);
+        session.sendAnswer("Host transferred to: " + targetPlayerName);
     }
 
     @MultiplayerCommand(
@@ -135,23 +133,23 @@ public class MultiplayerCommands extends BanchoCommandHandler {
             description = "Forces a player to join the match.",
             requiredPrivileges = Privileges.ADMINISTRATOR
     )
-    public void forcejoin(Player sender, PlayerCommandInfo[] commandInfos, String[] args, Match match) {
+    public void forcejoin(Player sender, Session session, String[] args, Match match) {
         if (args.length == 0) {
-            sendBotMessage(commandInfos, "Usage: !mp forcejoin <player>");
+            session.sendAnswer("Usage: !mp forcejoin <player>");
             return;
         }
 
         String targetPlayerName = args[0];
-        Player targetPlayer = server.playerManager.getByFilter(p -> p.getUsername().equalsIgnoreCase(targetPlayerName));
+        Player targetPlayer = session.server.playerManager.getByFilter(p -> p.getUsername().equalsIgnoreCase(targetPlayerName));
 
         if (targetPlayer == null) {
-            sendBotMessage(commandInfos, "Player not found.");
+            session.sendAnswer("Player not found.");
             return;
         }
 
-        server.matchManager.joinMatch(match, targetPlayer);
+        session.server.matchManager.joinMatch(match, targetPlayer);
         targetPlayer.sendPacket(new GetAttentionPacket());
-        sendBotMessage(commandInfos, "Player " + targetPlayerName + " has been forced to join the match.");
+        session.sendAnswer("Player " + targetPlayerName + " has been forced to join the match.");
     }
 
     private Player findPlayerInMatch(Match match, String username) {
