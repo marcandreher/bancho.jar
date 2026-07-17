@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.modules.database.MySQL;
 
 import lombok.Data;
@@ -37,11 +37,11 @@ public class BeatmapEntity {
     private float diff;
 
     public String toEmbed() {
-        return String.format("[https://osu.%s/beatmapsets/%s#/%s %s - %s [%s]]", Server.getInstance().domain, setId, id, artist, title, version);
+        return String.format("[https://osu.%s/beatmapsets/%s#/%s %s - %s [%s]]", App.server.enviromentConfig.getDomain(), setId, id, artist, title, version);
     }
 
     public static String toEmbed(long id, long setId, String artist, String title, String version) {
-        return String.format("[https://osu.%s/beatmapsets/%s#/%s %s - %s [%s]]", Server.getInstance().domain, setId, id, artist, title, version);
+        return String.format("[https://osu.%s/beatmapsets/%s#/%s %s - %s [%s]]", App.server.enviromentConfig.getDomain(), setId, id, artist, title, version);
     }
 
     public static BeatmapEntity fromBeatmap(Beatmap beatmap) {

@@ -3,6 +3,7 @@ package com.osuserverlist.bjar.server.scheudler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 
 public class AutoDisconnectTask implements Runnable {
@@ -13,7 +14,7 @@ public class AutoDisconnectTask implements Runnable {
 
     @Override
     public void run() {
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         server.playerManager.getAll().forEach(player -> {
             if (player.isBot())

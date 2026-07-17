@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.modules.Application;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
 import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
@@ -28,10 +28,9 @@ public class PlayerPageHandler implements Handler {
 
     @Override
     public void handle(@NotNull Context ctx) {
-        Server server = Server.getInstance();
         StringBuilder playerHtml = new StringBuilder();
         
-        server.playerManager.getAll().forEach(player -> {
+        App.server.playerManager.getAll().forEach(player -> {
             playerHtml.append(player.getUsername()).append(" (").append(player.getId()).append(")").append("<br>");
         });
 

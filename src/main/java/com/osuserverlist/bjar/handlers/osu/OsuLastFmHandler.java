@@ -4,6 +4,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.jetbrains.annotations.NotNull;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.AntiCheatFlags.LastFMFlags;
@@ -27,7 +28,7 @@ public class OsuLastFmHandler implements Handler {
         String passwordHash = ctx.queryParam("ha");
         String flag = ctx.queryParam("b");
 
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         Player player = server.playerManager.getByApiIdent(username + "|" + passwordHash);
 

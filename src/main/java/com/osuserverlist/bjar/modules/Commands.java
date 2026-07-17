@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
@@ -66,7 +67,7 @@ public class Commands {
         String[] command = commandLine.split(" ");
         String commandName = command[0].toLowerCase();
 
-        Server server = Server.getInstance();
+        Server server = App.server;
         CommandInfo commandInfo = Commands.getCommand(commandName);
         Session session = new Session(server, recievers, target);
 
@@ -83,8 +84,6 @@ public class Commands {
         String[] args = new String[command.length - 1];
         System.arraycopy(command, 1, args, 0, args.length);
         
-        
-
         commandInfo.handler.handle(sender, session, args);
     }
 

@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.osu.match.MatchScoringType;
 import com.osuserverlist.bjar.models.osu.match.MatchSpecialMode;
@@ -86,7 +87,7 @@ public class Match {
     }
 
     public void enqueUpdate() {
-        Server server = Server.getInstance();
+        Server server = App.server;
         
         players.forEach(p -> {
             p.sendPacket(new MatchUpdatePacket(this));

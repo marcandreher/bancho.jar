@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.gson.Gson;
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
 import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
 import com.osuserverlist.bjar.modules.WebEngine.Path;
@@ -22,7 +22,7 @@ public class OsuGetSeasonalHandler implements Handler {
     public void handle(@NotNull Context ctx) throws Exception {
         ctx.contentType("application/json");
         
-        List<String> seasonalBgs = Server.getInstance().config.getSeasonalBackgrounds();
+        List<String> seasonalBgs = App.server.config.getSeasonalBackgrounds();
 
         if (seasonalBgs == null || seasonalBgs.isEmpty()) {
             ctx.result("[]"); // Return empty JSON array if no seasonal_bgs

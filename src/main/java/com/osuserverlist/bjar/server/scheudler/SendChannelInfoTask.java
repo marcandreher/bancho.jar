@@ -1,5 +1,6 @@
 package com.osuserverlist.bjar.server.scheudler;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoPacket;
 
@@ -7,7 +8,7 @@ public class SendChannelInfoTask implements Runnable {
 
     @Override
     public void run() {
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         server.channelManager.getAll().forEach(channel -> {
             if(!channel.isDirty()) return;

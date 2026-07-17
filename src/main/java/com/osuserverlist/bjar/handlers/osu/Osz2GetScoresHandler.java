@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
@@ -55,7 +56,7 @@ public class Osz2GetScoresHandler implements Handler {
         String username     = ctx.queryParam("us");
         String passwordHash = ctx.queryParam("ha");
 
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         Player player = server.playerManager.getByApiIdent(String.format("%s|%s", username, passwordHash));
         if (player == null) {

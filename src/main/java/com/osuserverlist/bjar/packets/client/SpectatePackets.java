@@ -2,6 +2,7 @@ package com.osuserverlist.bjar.packets.client;
 
 import java.io.IOException;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Player;
@@ -51,7 +52,7 @@ public class SpectatePackets {
     public boolean startSpectating(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         int targetUserId = reader.readInt();
 
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         Player newHost = server.playerManager.getById(targetUserId);
         if (newHost == null) {
@@ -145,7 +146,7 @@ public class SpectatePackets {
     @ClientPacket(ClientPackets.STOP_SPECTATING)
     public boolean stopSpectating(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         Player host = player.getSpectating();
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         if (host == null) {
             return true;

@@ -2,7 +2,7 @@ package com.osuserverlist.bjar.packets.server;
 
 import java.util.List;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.Redis;
@@ -94,7 +94,7 @@ public class UserServerPackets {
     public static  final class UserPresenceBundleHandler implements ServerPacketHandler<UserPresenceBundlePacket> {
         @Override
         public void write(UserPresenceBundlePacket packet, BanchoPacketWriter writer, Player player) {
-            List<Integer> userIds = Server.getInstance().playerManager.getAll().stream()
+            List<Integer> userIds = App.server.playerManager.getAll().stream()
                     .filter(p -> p.getId() != player.getId())
                     .map(Player::getId)
                     .toList();

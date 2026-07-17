@@ -2,6 +2,7 @@ package com.osuserverlist.bjar.server.scheudler;
 
 import java.util.Random;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.ConfigModels.PresenceConfiguration;
 import com.osuserverlist.bjar.models.ConfigModels.PresenceConfiguration.PresenceInfo;
@@ -16,7 +17,7 @@ public class BotPresenceTask implements Runnable {
 
     @Override
     public void run() {
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         Random random = new Random();
         PresenceInfo presenceInfo = config.getPresenceInfos().get(random.nextInt(config.getPresenceInfos().size()));

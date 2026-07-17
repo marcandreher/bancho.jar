@@ -29,6 +29,11 @@ public class App {
     public static final String MAIN_PACKAGE = "com.osuserverlist.bjar";
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
+    /**
+     * Main access to the server instance. This is a singleton and should be used to access the server from anywhere in the code.
+     */
+    public static Server server = new Server();
+
     public void main(String[] args) {
         System.out.println(Application.HEADER);
         logger.info("Bancho.jar <v" + BuildInfo.VERSION + "> built on (" + BuildInfo.BUILD_TIME + ")");
@@ -40,9 +45,9 @@ public class App {
         LoggerConfiguration loggerConfig = new LoggerConfiguration(level);
         loggerConfig.apply();
 
-        Database db = new Database();
+        Database database = new Database();
 
-        db.connectToMySQL(config -> {
+        database.connectToMySQL(config -> {
             config.setHost(dotenv.get("DB_HOST"));
             config.setUser(dotenv.get("DB_USER"));
             config.setPassword(dotenv.get("DB_PASS"));
@@ -69,7 +74,6 @@ public class App {
         }
 
         try {
-
             Files.createDirectories(Path.of("data/maps"));
             Files.createDirectories(Path.of("data/replays"));
             Files.createDirectories(Path.of("data/ss"));
@@ -80,16 +84,25 @@ public class App {
             DefaultAssetsDownloader defaultAssetsDownloader = new DefaultAssetsDownloader();
             defaultAssetsDownloader.run();
             downloader.run();
-
         } catch (IOException e) {
             logger.error("Failed to initialize data structure", e);
         }
 
         // Main bjar entrypoint
-        Server.start(dotenv, level);
+        server.start(config -> {
+            config.setDomain(dotenv.get("DOMAIN"));
+            config.setPort(Integer.parseInt(dotenv.get("PORT", "8200")));
+            config.setLevel(ProductionLevel.fromCode(dotenv.get("LEVEL", "PROD")));
+
+            config.setOsuApiKey(dotenv.get("OSU_API_KEY"));
+            config.setDlEndpoint(dotenv.get("DIRECT_DL"));
+            config.setSearchEndpoint(dotenv.get("DIRECT_SEARCH"));
+
+            config.setIngameRegistrationEnabled(Boolean.parseBoolean(dotenv.get("INGAME_REGISTRATION_ENABLED")));
+        });
 
         Runnable shutdownHook = () -> {
-            Server.stop();
+            server.stop();
         };
         
         Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook));

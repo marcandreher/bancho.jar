@@ -7,6 +7,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Player;
@@ -26,7 +27,7 @@ public class ChatPackets {
     public boolean joinChannel(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         String channelName = reader.readString();
 
-        Channel channel = Server.getInstance().channelManager.get(channelName);
+        Channel channel = App.server.channelManager.get(channelName);
         if (channel == null) {
             logger.warn("Player {} tried to join a not existing channel", player.toString());
             return true;
@@ -39,7 +40,7 @@ public class ChatPackets {
 
         player.sendPacket(new ChannelJoinSuccessPacket(channelName));
 
-        Server.getInstance().channelManager.joinChannel(channelName, player);
+        App.server.channelManager.joinChannel(channelName, player);
         logger.info("Player {} joined channel {}", player.toString(), channelName);
         return true;
     }
@@ -52,7 +53,7 @@ public class ChatPackets {
             return true;
         }
 
-        Server server = Server.getInstance();
+        Server server = App.server;
         Channel channel = server.channelManager.get(channelName);
         if (channel == null) {
             logger.warn("Player {} tried to leave a not existing channel {}", player.toString(), channelName);
@@ -100,7 +101,7 @@ public class ChatPackets {
 
         logger.info("Private Message from <{}>: <{}> to <{}>", player.getUsername(), message, target);
 
-        Player targetPlayer = Server.getInstance().playerManager.getByFilter(p -> p.getUsername().equalsIgnoreCase(target));
+        Player targetPlayer = App.server.playerManager.getByFilter(p -> p.getUsername().equalsIgnoreCase(target));
 
         if (targetPlayer == null) {
             logger.warn("Target player not found for private message: " + target);
@@ -115,7 +116,7 @@ public class ChatPackets {
     }
 
     public Channel resolveChannel(Player player, String target) {
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         if ("#spectator".equals(target)) {
             if(player.getSpectators().size() > 0) {

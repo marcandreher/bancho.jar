@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.direct.DirectBeatmapSet;
 import com.osuserverlist.bjar.models.essentials.Player;
@@ -40,7 +41,7 @@ public class OsuSearchHandler implements Handler {
         int rankedStatus = ctx.queryParamAsClass("r", Integer.class).getOrDefault(4);
         String query = ctx.queryParam("q");
 
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         String username = ctx.queryParam("u");
         String passwordHash = ctx.queryParam("h");

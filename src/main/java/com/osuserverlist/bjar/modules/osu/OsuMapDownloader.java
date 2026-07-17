@@ -8,7 +8,7 @@ import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -54,7 +54,7 @@ public final class OsuMapDownloader {
     }
 
     private static void scheduleDiskCache(Path mapFile, byte[] data, long mapId) {
-        Server.getInstance().executor.submit(() -> {
+        App.server.executor.submit(() -> {
             try {
                 Files.write(mapFile, data);
             } catch (IOException e) {

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
@@ -26,7 +27,7 @@ public class OsuUploadScreenshotHandler implements Handler {
         String username = ctx.formParamAsClass("u", String.class).required().get();
         String passwordHash = ctx.formParamAsClass("p", String.class).required().get();
 
-        Server server = Server.getInstance();
+        Server server = App.server;
         Player player = server.playerManager.getByApiIdent(String.format("%s|%s", username, passwordHash));
 
         if (player == null) {

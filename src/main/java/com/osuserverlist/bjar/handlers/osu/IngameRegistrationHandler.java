@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
@@ -74,7 +74,7 @@ public class IngameRegistrationHandler implements Handler {
         validatePassword(password, errors);
         validateEmail(email, errors);
 
-        if (!Server.getInstance().enviromentConfig.isIngameRegistrationEnabled()) {
+        if (!App.server.enviromentConfig.isIngameRegistrationEnabled()) {
             errors.put("password", List.of("In-game registration is currently disabled."));
         }
 

@@ -5,7 +5,7 @@ import java.nio.file.Files;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
 import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
@@ -26,7 +26,7 @@ public class OsuGetReplayHandler implements Handler {
         String passwordHash = ctx.queryParam("h");
         String apiIdent = String.format("%s|%s", username, passwordHash);
 
-        Player player = Server.getInstance().playerManager.getByApiIdent(apiIdent);
+        Player player = App.server.playerManager.getByApiIdent(apiIdent);
 
         if (player == null) {
             ctx.status(401).result("Invalid credentials.");

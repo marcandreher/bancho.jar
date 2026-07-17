@@ -2,6 +2,7 @@ package com.osuserverlist.bjar.handlers.osu;
 
 import org.jetbrains.annotations.NotNull;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
@@ -26,7 +27,7 @@ public class OsuGetFriendsHandler implements Handler {
         String passwordHash = ctx.queryParam("h");
         String apiIdent = String.format("%s|%s", username, passwordHash);
 
-        Server server = Server.getInstance();
+        Server server = App.server;
         Player player = server.playerManager.getByApiIdent(apiIdent);
 
         if (player == null) {

@@ -6,7 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.GameMode;
 import com.osuserverlist.bjar.models.osu.Mods;
@@ -30,7 +30,7 @@ public class UserStatsPresencePackets {
 
         for (Integer userId : userIds) {
             
-            Player requestedPlayer = Server.getInstance().playerManager.getById(userId);
+            Player requestedPlayer = App.server.playerManager.getById(userId);
 
             if (requestedPlayer != null) {
                 player.sendPacket(new UserPresencePacket(requestedPlayer));
@@ -64,7 +64,7 @@ public class UserStatsPresencePackets {
         userIds.forEach(id -> {
             if(player.getId() == id) return;
 
-            Player requestedPlayer = Server.getInstance().playerManager.getById(id);
+            Player requestedPlayer = App.server.playerManager.getById(id);
 
             if (requestedPlayer != null) {
                 player.sendPacket(new UserStatsPacket(requestedPlayer));
@@ -104,7 +104,7 @@ public class UserStatsPresencePackets {
         player.setGameMode(gameMode);
         player.setBeatmapId(beatmapId);
 
-        for (Player onlinePlayer : Server.getInstance().playerManager.getAll()) {
+        for (Player onlinePlayer : App.server.playerManager.getAll()) {
             onlinePlayer.sendPacket(new UserStatsPacket(player));
         }
 

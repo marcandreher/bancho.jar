@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.ConfigModels.ServerConfiguration.WelcomeMessage;
 import com.osuserverlist.bjar.models.database.UserEntity;
@@ -101,7 +102,7 @@ public class ChoHandler implements Handler {
 
         // TODO: fix issue where client is sending login request twice even after login to c4 or any other subdom
 
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         try (MySQL mysql = Database.getConnection()) {
             UserRepository userRepository = new UserRepository(mysql);
@@ -357,7 +358,7 @@ public class ChoHandler implements Handler {
     private static void handlePacketExchange(Context ctx, String osuToken) {
         BanchoPacketWriter packetWriter = new BanchoPacketWriter();
 
-        Server server = Server.getInstance();
+        Server server = App.server;
         Player player = server.playerManager.get(osuToken);
 
         if (player == null) {

@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.modules.Application;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
 import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
@@ -53,7 +53,7 @@ public class HomePageHandler implements Handler {
     @Override
     public void handle(@NotNull Context ctx) {
         String html = indexTemplate
-                .replace("%players%", String.valueOf(Server.getInstance().playerManager.getAll().size()))
+                .replace("%players%", String.valueOf(App.server.playerManager.getAll().size()))
                 .replace("%packets%", packetList)
                 .replace("%header%", Application.HEADER);
 

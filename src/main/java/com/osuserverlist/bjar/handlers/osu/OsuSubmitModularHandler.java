@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.AchievementEntity;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
@@ -67,7 +68,7 @@ public class OsuSubmitModularHandler implements Handler {
             return;
         }
 
-        Server server = Server.getInstance();
+        Server server = App.server;
         String playerIdent = String.format("%s|%s", data[1].stripTrailing(), ctx.formParam("pass"));
 
         Player p = server.playerManager.getByApiIdent(playerIdent);

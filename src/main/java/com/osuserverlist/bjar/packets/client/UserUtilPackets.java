@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
@@ -30,7 +30,7 @@ public class UserUtilPackets {
     public boolean logout(BanchoPacket packet, BanchoPacketReader reader, Player player) {
         logger.info("Player {} has logged out.", player.toString());
 
-        Server.getInstance().playerManager.disconnect(player);
+        App.server.playerManager.disconnect(player);
         return true;
     }
 

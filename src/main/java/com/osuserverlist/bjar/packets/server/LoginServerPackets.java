@@ -1,6 +1,6 @@
 package com.osuserverlist.bjar.packets.server;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.ConfigModels.ServerConfiguration.MenuIcon;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.packets.BanchoPacketWriter;
@@ -43,7 +43,7 @@ public class LoginServerPackets {
     public static final class MenuIconHandler implements ServerPacketHandler<MenuIconPacket> {
         @Override
         public void write(MenuIconPacket packet, BanchoPacketWriter writer, Player player) {
-            MenuIcon menuIcon = Server.getInstance().config.getMenuIcon();
+            MenuIcon menuIcon = App.server.config.getMenuIcon();
 
             writer.startPacket(ServerPackets.MAIN_MENU_ICON);
             writer.writeString(menuIcon.getImageUrl() + "|" + menuIcon.getOutlink());

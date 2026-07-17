@@ -2,7 +2,7 @@ package com.osuserverlist.bjar.handlers.osu;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
 import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
 import com.osuserverlist.bjar.modules.WebEngine.Path;
@@ -24,8 +24,7 @@ public class OsuDownloadHandler implements Handler {
             mapSetId = mapSetId.substring(0, mapSetId.length() - 1);
         }
 
-        Server server = Server.getInstance();
-        String dlEndpoint = server.enviromentConfig.getDlEndpoint();
+        String dlEndpoint = App.server.enviromentConfig.getDlEndpoint();
 
         if (dlEndpoint == null || dlEndpoint.isBlank()) {
             ctx.status(503).result("Download endpoint not configured.");

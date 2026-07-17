@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.modules.database.Database;
 import com.osuserverlist.bjar.modules.database.MySQL;
@@ -86,7 +86,7 @@ public class OsuAPIHandler {
     }
 
     private void scheduleMapsetCaching(long setId) {
-        Server.getInstance().executor.submit(() -> {
+        App.server.executor.submit(() -> {
             try (MySQL con = Database.getConnection()) {
                 cacheMapset(con, setId);
             } catch (SQLException e) {

@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 
 import org.jetbrains.annotations.NotNull;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.WebEngine.Host;
@@ -29,7 +30,7 @@ public class OsuSearchSetHandler implements Handler {
         String username = ctx.queryParamAsClass("u", String.class).required().get();
         String passwordHash = ctx.queryParamAsClass("h", String.class).required().get();
 
-        Server server = Server.getInstance();
+        Server server = App.server;
         Player player = server.playerManager.getByApiIdent(String.format("%s|%s", username, passwordHash));
 
         if (player == null) {

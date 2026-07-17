@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Channel;
@@ -34,9 +35,7 @@ public class MultiplayerPackets {
     public boolean joinLobby(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         player.setInLobby(true);
 
-        Server server = Server.getInstance();
-
-        for (Match match : server.matchManager.getAll()) {
+        for (Match match : App.server.matchManager.getAll()) {
             player.sendPacket(new NewMatchPacket(match));
         }
 
@@ -53,7 +52,7 @@ public class MultiplayerPackets {
     @ClientPacket(ClientPackets.CREATE_MATCH)
     public boolean createMatch(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         Match match = reader.readMatch();
-        Server.getInstance().matchManager.add(match);
+        App.server.matchManager.add(match);
 
         String channelName = "#multi_" + match.getMatchId();
         Channel matchChannel = Channel.builder()
@@ -67,8 +66,8 @@ public class MultiplayerPackets {
                 .visible(false)
                 .build();
 
-        Server.getInstance().channelManager.add(matchChannel);
-        Server.getInstance().channelManager.forceJoinChannel(channelName, player);
+        App.server.channelManager.add(matchChannel);
+        App.server.channelManager.forceJoinChannel(channelName, player);
         player.setMatch(match);
 
         int freeSlot = match.getFreeSlot();
@@ -90,7 +89,7 @@ public class MultiplayerPackets {
         int matchId = reader.readInt();
         String password = "";
 
-        Server server = Server.getInstance();
+        Server server = App.server;
         Match match = server.matchManager.getById((short) matchId);
 
         if (match == null) {
@@ -118,7 +117,7 @@ public class MultiplayerPackets {
 
     @ClientPacket(ClientPackets.PART_MATCH)
     public boolean partMatch(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         Match match = server.matchManager.getAll().stream()
                 .filter(m -> Arrays.stream(m.getSlots())
@@ -307,7 +306,7 @@ public class MultiplayerPackets {
     public boolean matchTransferHost(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         int slotId = reader.readInt();
 
-        Server server = Server.getInstance();
+        Server server = App.server;
         Match match = player.getMatch();
         if (match == null) {
             logger.warn("Player {} sent MATCH_TRANSFER_HOST but is not in a match", player);
@@ -350,7 +349,7 @@ public class MultiplayerPackets {
         }
 
         MatchSlot slot = match.getSlots()[slotId];
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         if (slot.getStatus() == (byte) SlotStatus.LOCKED.value) {
             slot.setStatus((byte) SlotStatus.OPEN.value);
@@ -382,7 +381,7 @@ public class MultiplayerPackets {
             throws IOException {
         Match match = reader.readMatch();
 
-        Server server = Server.getInstance();
+        Server server = App.server;
         Match playerMatch = server.matchManager.getByHostId(player.getId());
 
         if (playerMatch != null) {
@@ -425,7 +424,7 @@ public class MultiplayerPackets {
     @ClientPacket(ClientPackets.MATCH_CHANGE_SETTINGS)
     public boolean matchChangeSettings(BanchoPacket packet, BanchoPacketReader reader, Player player)
             throws IOException {
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         Match match = reader.readMatch();
         Match playerMatch = server.matchManager.getByHostId(player.getId());
@@ -567,7 +566,7 @@ public class MultiplayerPackets {
 
         if (match.getLoadTimeoutTask() == null) {
             match.setLoadTimeoutTask(
-                    Server.getInstance().executor.schedule(() -> {
+                    App.server.executor.schedule(() -> {
                         sendMatchAllPlayersLoadedPacket(match);
                         match.setLoadTimeoutTask(null);
                     }, 30, TimeUnit.SECONDS));

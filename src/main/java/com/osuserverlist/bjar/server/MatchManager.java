@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Match;
@@ -66,7 +67,7 @@ public class MatchManager {
 
     public void joinMatch(Match match, Player player) {
         Integer freeSlot = match.getFreeSlot();
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         if (freeSlot == null) {
             logger.warn("Player {} attempted to join full match {}", player.getUsername(), match.toString());
@@ -100,7 +101,7 @@ public class MatchManager {
     public void leaveMatch(Match match, Player player) {
         String channelName = "#multi_" + match.getMatchId();
 
-        Server server = Server.getInstance();
+        Server server = App.server;
 
         server.channelManager.leaveChannel(channelName, player);
         player.sendPacket(new ChannelRevokedPacket("#multiplayer"));
@@ -158,7 +159,7 @@ public class MatchManager {
 
         this.updateHost(match, newHostId);
 
-        Player newHost = Server.getInstance().playerManager.getById(newHostId);
+        Player newHost = App.server.playerManager.getById(newHostId);
         if (newHost != null) {
             newHost.sendPacket(new MatchTransferHostPacket());
         }
