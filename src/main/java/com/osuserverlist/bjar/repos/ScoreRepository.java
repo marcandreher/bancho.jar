@@ -5,7 +5,7 @@ import java.sql.SQLException;
 
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Score;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
 
 public class ScoreRepository {
 

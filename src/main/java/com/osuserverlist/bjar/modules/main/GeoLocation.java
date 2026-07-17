@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.modules;
+package com.osuserverlist.bjar.modules.main;
 
 import java.io.IOException;
 

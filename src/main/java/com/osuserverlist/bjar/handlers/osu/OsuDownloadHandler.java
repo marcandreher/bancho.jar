@@ -3,9 +3,9 @@ package com.osuserverlist.bjar.handlers.osu;
 import org.jetbrains.annotations.NotNull;
 
 import com.osuserverlist.bjar.App;
-import com.osuserverlist.bjar.modules.WebEngine.Host;
-import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
-import com.osuserverlist.bjar.modules.WebEngine.Path;
+import com.osuserverlist.bjar.modules.main.WebEngine.Host;
+import com.osuserverlist.bjar.modules.main.WebEngine.HttpMethod;
+import com.osuserverlist.bjar.modules.main.WebEngine.Path;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;

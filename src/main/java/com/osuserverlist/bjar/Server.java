@@ -12,11 +12,12 @@ import org.slf4j.LoggerFactory;
 import com.osuserverlist.bjar.models.ConfigModels.ServerConfiguration;
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.Commands;
-import com.osuserverlist.bjar.modules.WebEngine;
-import com.osuserverlist.bjar.modules.WebEngine.BanchoWebLogger;
-import com.osuserverlist.bjar.modules.database.Database;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.calculations.Performance;
+import com.osuserverlist.bjar.modules.datastore.Database;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
+import com.osuserverlist.bjar.modules.main.Commands;
+import com.osuserverlist.bjar.modules.main.WebEngine;
+import com.osuserverlist.bjar.modules.main.WebEngine.BanchoWebLogger;
 import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacketRegistry;
 import com.osuserverlist.bjar.modules.packets.ServerPacketEngine;
@@ -43,6 +44,7 @@ public class Server {
     public MatchManager matchManager = new MatchManager();
     public AchievementManager achievementManager = new AchievementManager();
     public ScheduledExecutorService executor = Executors.newScheduledThreadPool(6);
+    public Performance performance = new Performance();
     public ServerConfig enviromentConfig = new ServerConfig();
 
     protected Javalin app;
@@ -78,6 +80,9 @@ public class Server {
         Commands.registerAnnotatedHandlers("com.osuserverlist.bjar.commands");
 
         Commands.finalizeCommandRegistration();
+
+        performance.loadCalculatorFromString(enviromentConfig.getPerformanceCalculator());
+        logger.info("Using <{}> as PerformanceCalculator", performance.getCalculatorClassName());
 
         app = configureJavalin();
 
@@ -126,6 +131,8 @@ public class Server {
         private ProductionLevel level;
 
         private String osuApiKey;
+
+        private String performanceCalculator;
 
         private String searchEndpoint;
         private String dlEndpoint;

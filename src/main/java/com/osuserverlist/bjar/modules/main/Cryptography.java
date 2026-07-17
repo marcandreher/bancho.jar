@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.modules;
+package com.osuserverlist.bjar.modules.main;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

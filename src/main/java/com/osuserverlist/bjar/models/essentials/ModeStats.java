@@ -3,7 +3,7 @@ package com.osuserverlist.bjar.models.essentials;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.osuserverlist.bjar.modules.Redis;
+import com.osuserverlist.bjar.modules.datastore.Redis;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -11,8 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.osu.GameMode;
-import com.osuserverlist.bjar.modules.database.Database;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.Database;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
 
 import lombok.AllArgsConstructor;
 

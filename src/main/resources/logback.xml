@@ -1,7 +1,7 @@
 <configuration>
     <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
 
-    <conversionRule conversionWord="loggerHighlighter" converterClass="com.osuserverlist.bjar.modules.Logging$LoggerHighlighter" />
+    <conversionRule conversionWord="loggerHighlighter" converterClass="com.osuserverlist.bjar.modules.main.Logging$LoggerHighlighter" />
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">

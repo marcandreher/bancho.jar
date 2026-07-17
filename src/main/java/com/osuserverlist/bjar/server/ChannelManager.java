@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.osuserverlist.bjar.models.database.ChannelEntity;
 import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
 
 public class ChannelManager {
     private final static Logger logger = LoggerFactory.getLogger(ChannelManager.class);

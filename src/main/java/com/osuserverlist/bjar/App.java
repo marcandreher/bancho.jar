@@ -8,14 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
-import com.osuserverlist.bjar.modules.Application;
-import com.osuserverlist.bjar.modules.Application.BuildInfo;
-import com.osuserverlist.bjar.modules.Logging.LoggerConfiguration;
-import com.osuserverlist.bjar.modules.Redis;
 import com.osuserverlist.bjar.modules.assets.AchievementDownloader;
 import com.osuserverlist.bjar.modules.assets.DefaultAssetsDownloader;
-import com.osuserverlist.bjar.modules.database.Database;
-import com.osuserverlist.bjar.modules.database.Database.ServerTimezone;
+import com.osuserverlist.bjar.modules.datastore.Database;
+import com.osuserverlist.bjar.modules.datastore.Redis;
+import com.osuserverlist.bjar.modules.datastore.Database.ServerTimezone;
+import com.osuserverlist.bjar.modules.main.Application;
+import com.osuserverlist.bjar.modules.main.Application.BuildInfo;
+import com.osuserverlist.bjar.modules.main.Logging.LoggerConfiguration;
 import com.osuserverlist.bjar.modules.recalc.RecalcRunnable;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -95,6 +95,8 @@ public class App {
             config.setDomain(dotenv.get("DOMAIN"));
             config.setPort(Integer.parseInt(dotenv.get("PORT", "8200")));
             config.setLevel(ProductionLevel.fromCode(dotenv.get("LEVEL", "PROD")));
+
+            config.setPerformanceCalculator(dotenv.get("PP_CALCULATOR"));
 
             config.setOsuApiKey(dotenv.get("OSU_API_KEY"));
             config.setDlEndpoint(dotenv.get("DIRECT_DL"));

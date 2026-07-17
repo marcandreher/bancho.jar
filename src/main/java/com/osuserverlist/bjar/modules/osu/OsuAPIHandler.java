@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
-import com.osuserverlist.bjar.modules.database.Database;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.Database;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
 
 import me.skiincraft.api.ousu.OusuAPI;
 import me.skiincraft.api.ousu.entity.beatmap.Beatmap;

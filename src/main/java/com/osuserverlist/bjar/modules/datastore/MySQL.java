@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.modules.database;
+package com.osuserverlist.bjar.modules.datastore;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

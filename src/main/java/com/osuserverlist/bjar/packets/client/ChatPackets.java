@@ -11,7 +11,7 @@ import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.Commands;
+import com.osuserverlist.bjar.modules.main.Commands;
 import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacket;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;

@@ -7,11 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.WebEngine.Host;
-import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
-import com.osuserverlist.bjar.modules.WebEngine.Path;
-import com.osuserverlist.bjar.modules.database.Database;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.Database;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
+import com.osuserverlist.bjar.modules.main.WebEngine.Host;
+import com.osuserverlist.bjar.modules.main.WebEngine.HttpMethod;
+import com.osuserverlist.bjar.modules.main.WebEngine.Path;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;

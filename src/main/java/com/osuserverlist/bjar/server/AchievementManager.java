@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.database.AchievementEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.MevlParser.PythonMevlRewriter;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
+import com.osuserverlist.bjar.modules.main.MevlParser.PythonMevlRewriter;
 import com.osuserverlist.bjar.repos.AchievementRepository;
 
 public class AchievementManager {

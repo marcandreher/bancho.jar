@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.osuserverlist.bjar.models.database.AchievementEntity;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
 
 public class AchievementRepository {
 

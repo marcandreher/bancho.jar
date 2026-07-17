@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.modules;
+package com.osuserverlist.bjar.modules.main;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -13,6 +13,10 @@ import com.osuserverlist.bjar.models.essentials.Score;
 
 import lombok.Data;
 
+/**
+ * This is used to rewrite MVEL expressions to be compatible with Python's syntax. It handles chained comparisons, bitwise comparisons, and logical operators.
+ * Since we are using bancho.py database as the source of truth, we need to ensure that the MVEL expressions are compatible with Python's syntax.
+ */
 public class MevlParser {
     public static boolean evaluate(Serializable condition, Score score, BeatmapEntity beatmap) {
         Map<String, Object> vars = new HashMap<>();

@@ -8,9 +8,9 @@ import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.AntiCheatFlags.LastFMFlags;
-import com.osuserverlist.bjar.modules.WebEngine.Host;
-import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
-import com.osuserverlist.bjar.modules.WebEngine.Path;
+import com.osuserverlist.bjar.modules.main.WebEngine.Host;
+import com.osuserverlist.bjar.modules.main.WebEngine.HttpMethod;
+import com.osuserverlist.bjar.modules.main.WebEngine.Path;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.SendMessagePacket;
 import com.osuserverlist.bjar.packets.server.UtilServerPackets.NotificationPacket;
 

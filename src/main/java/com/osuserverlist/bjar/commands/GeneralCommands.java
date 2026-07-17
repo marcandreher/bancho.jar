@@ -11,14 +11,12 @@ import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.essentials.Score;
 import com.osuserverlist.bjar.models.osu.Mods;
-import com.osuserverlist.bjar.modules.Commands;
-import com.osuserverlist.bjar.modules.Commands.BanchoCommand;
-import com.osuserverlist.bjar.modules.Commands.BanchoCommandHandler;
-import com.osuserverlist.bjar.modules.Commands.CommandCategory;
-import com.osuserverlist.bjar.modules.Commands.CommandInfo;
-import com.osuserverlist.bjar.modules.Commands.Session;
-import com.osuserverlist.bjar.modules.calculations.IPerformanceCalculator;
-import com.osuserverlist.bjar.modules.calculations.OsuNativePerformanceCalculator;
+import com.osuserverlist.bjar.modules.main.Commands;
+import com.osuserverlist.bjar.modules.main.Commands.BanchoCommand;
+import com.osuserverlist.bjar.modules.main.Commands.BanchoCommandHandler;
+import com.osuserverlist.bjar.modules.main.Commands.CommandCategory;
+import com.osuserverlist.bjar.modules.main.Commands.CommandInfo;
+import com.osuserverlist.bjar.modules.main.Commands.Session;
 import com.osuserverlist.bjar.modules.osu.OsuMapDownloader;
 
 import me.skiincraft.api.ousu.entity.beatmap.Beatmap;
@@ -51,7 +49,7 @@ public class GeneralCommands extends BanchoCommandHandler {
         session.sendAnswer(String.format("Selected beatmap: %s",
                 BeatmapEntity.toEmbed(beatmap.getBeatmapId(), beatmap.getBeatmapSetId(), beatmap.getArtist(), beatmap.getTitle(), beatmap.getVersion())));
 
-        session.sendAnswer(calculatePpBreakdown(sender, beatmap, mods));
+        session.sendAnswer(calculatePpBreakdown(sender, beatmap, mods, session));
 
     }
 
@@ -59,8 +57,8 @@ public class GeneralCommands extends BanchoCommandHandler {
      * Builds a "PP | 100% - x.xx | 95% - x.xx | ..." breakdown from 100% down to
      * 80% accuracy.
      */
-    private String calculatePpBreakdown(Player sender, Beatmap beatmap, int mods) {
-        IPerformanceCalculator calculator = new OsuNativePerformanceCalculator();
+    private String calculatePpBreakdown(Player sender, Beatmap beatmap, int mods, Session session) {
+        
         byte[] mapData = OsuMapDownloader.downloadMap(beatmap.getBeatmapId());
 
         StringBuilder breakdown = new StringBuilder("PP | ");
@@ -73,7 +71,7 @@ public class GeneralCommands extends BanchoCommandHandler {
             score.setN300(hitObjectCount);
             score.setMods(mods);
 
-            double pp = calculator.calculate(score, mapData);
+            double pp = session.server.performance.calculate(score, mapData);
             breakdown.append(String.format("%d%% - %.2f | ", acc, pp));
         }
         breakdown.setLength(breakdown.length() - 3); // trim trailing " | "

@@ -17,11 +17,11 @@ import com.osuserverlist.bjar.models.osu.GameMode;
 import com.osuserverlist.bjar.models.osu.MapWebRankedStatus;
 import com.osuserverlist.bjar.models.osu.Mods;
 import com.osuserverlist.bjar.models.osu.OsuClientModels.LeaderboardType;
-import com.osuserverlist.bjar.modules.WebEngine.Host;
-import com.osuserverlist.bjar.modules.WebEngine.HttpMethod;
-import com.osuserverlist.bjar.modules.WebEngine.Path;
-import com.osuserverlist.bjar.modules.database.Database;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.Database;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
+import com.osuserverlist.bjar.modules.main.WebEngine.Host;
+import com.osuserverlist.bjar.modules.main.WebEngine.HttpMethod;
+import com.osuserverlist.bjar.modules.main.WebEngine.Path;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserStatsPacket;
 
 import io.javalin.http.Context;

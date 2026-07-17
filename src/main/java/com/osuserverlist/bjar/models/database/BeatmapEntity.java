@@ -6,7 +6,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
 import com.osuserverlist.bjar.App;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
 
 import lombok.Data;
 import me.skiincraft.api.ousu.entity.beatmap.Beatmap;

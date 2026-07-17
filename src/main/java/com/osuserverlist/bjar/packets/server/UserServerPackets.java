@@ -5,7 +5,7 @@ import java.util.List;
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.Redis;
+import com.osuserverlist.bjar.modules.datastore.Redis;
 import com.osuserverlist.bjar.modules.packets.BanchoPacketWriter;
 import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.PacketHandler;
 import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPacket;

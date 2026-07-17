@@ -12,12 +12,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.essentials.Score;
 import com.osuserverlist.bjar.models.osu.GameMode;
-import com.osuserverlist.bjar.modules.calculations.IPerformanceCalculator;
-import com.osuserverlist.bjar.modules.calculations.OsuNativePerformanceCalculator;
-import com.osuserverlist.bjar.modules.database.Database;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.Database;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.modules.osu.OsuMapDownloader;
 
 public class ScoreRecalculator {
@@ -102,9 +101,9 @@ public class ScoreRecalculator {
     private void processScore(ScoreRow row, int mode, AtomicInteger successCount, boolean force) {
         MySQL mysql = Database.getConnection();
         try {
-            IPerformanceCalculator calculator = new OsuNativePerformanceCalculator();
+            
             byte[] mapData = OsuMapDownloader.downloadMap(row.mapId);
-            double newPP = calculator.calculate(row.score, mapData);
+            double newPP = App.server.performance.calculate(row.score, mapData);
 
             if (Math.abs(newPP - row.oldPP) > 0.01 || force) {
                 logger.info("Score <{}>: {}pp -> {}pp",

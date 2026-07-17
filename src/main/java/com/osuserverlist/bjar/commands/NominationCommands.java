@@ -9,12 +9,12 @@ import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.models.osu.RankedStatus;
-import com.osuserverlist.bjar.modules.Commands.BanchoCommand;
-import com.osuserverlist.bjar.modules.Commands.BanchoCommandHandler;
-import com.osuserverlist.bjar.modules.Commands.CommandCategory;
-import com.osuserverlist.bjar.modules.Commands.Session;
-import com.osuserverlist.bjar.modules.database.Database;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.Database;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
+import com.osuserverlist.bjar.modules.main.Commands.BanchoCommand;
+import com.osuserverlist.bjar.modules.main.Commands.BanchoCommandHandler;
+import com.osuserverlist.bjar.modules.main.Commands.CommandCategory;
+import com.osuserverlist.bjar.modules.main.Commands.Session;
 
 public class NominationCommands extends BanchoCommandHandler {
 

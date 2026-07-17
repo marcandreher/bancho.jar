@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.osuserverlist.bjar.models.database.UserEntity;
-import com.osuserverlist.bjar.modules.database.MySQL;
+import com.osuserverlist.bjar.modules.datastore.MySQL;
 
 public class UserRepository {
 

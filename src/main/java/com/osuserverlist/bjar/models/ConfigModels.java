@@ -3,7 +3,7 @@ package com.osuserverlist.bjar.models;
 import java.util.List;
 
 import com.osuserverlist.bjar.models.osu.OsuClientModels.ActionStatus;
-import com.osuserverlist.bjar.modules.Configuration;
+import com.osuserverlist.bjar.modules.main.Configuration;
 import com.zaxxer.hikari.HikariConfig;
 
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.modules;
+package com.osuserverlist.bjar.modules.main;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -187,7 +187,7 @@ public class Commands {
     }
 
     public static void finalizeCommandRegistration() {
-        logger.info("Registered <{}> commands", commandMap.size());
+        logger.info("Loaded <{}> commands", commandMap.size());
     }
 
     public static Collection<CommandInfo> getAllCommands() {
