@@ -6,10 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.Data;
+import redis.clients.jedis.DefaultJedisClientConfig;
+import redis.clients.jedis.JedisClientConfig;
 import redis.clients.jedis.RedisClient;
 
 public class Redis {
-    private final static Logger logger = LoggerFactory.getLogger(Redis.class);
+    private static final Logger logger = LoggerFactory.getLogger(Redis.class);
 
     private static RedisClient redisClient;
     private static RedisConfiguration config;
@@ -27,22 +29,39 @@ public class Redis {
     }
 
     public void connect() {
-        RedisClient redisClient = RedisClient.builder().hostAndPort(config.getHost(), config.getPort()).build();
+        DefaultJedisClientConfig.Builder clientConfigBuilder = DefaultJedisClientConfig.builder()
+                .database(config.getDatabase());
 
-        String ping = redisClient.ping();
+        if (config.getPassword() != null && !config.getPassword().isEmpty()) {
+            clientConfigBuilder.password(config.getPassword());
+        }
+
+        JedisClientConfig clientConfig = clientConfigBuilder.build();
+
+        RedisClient client = RedisClient.builder()
+                .hostAndPort(config.getHost(), config.getPort())
+                .clientConfig(clientConfig)
+                .build();
+
+        String ping = client.ping();
         if (!"PONG".equals(ping)) {
             logger.error("Failed to connect to Redis: PING response was {}", ping);
             System.exit(1);
         }
 
-        logger.info("Connected to Redis ({}:{})", config.getHost(), config.getPort());
-        Redis.redisClient = redisClient;
+        logger.info("Connected to Redis ({}:{}, db={})",
+                config.getHost(),
+                config.getPort(),
+                config.getDatabase());
+
+        Redis.redisClient = client;
     }
 
     @Data
     public static class RedisConfiguration {
         private String host;
         private int port;
+        private String password;
+        private int database = 0;
     }
-
 }

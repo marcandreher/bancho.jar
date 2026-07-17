@@ -58,6 +58,8 @@ public class App {
         Redis redis = new Redis(config -> {
             config.setHost(dotenv.get("REDIS_HOST"));
             config.setPort(Integer.parseInt(dotenv.get("REDIS_PORT")));
+            config.setPassword(dotenv.get("REDIS_PASS"));
+            config.setDatabase(Integer.parseInt(dotenv.get("REDIS_DB", "0")));
         });
 
         redis.connect();
