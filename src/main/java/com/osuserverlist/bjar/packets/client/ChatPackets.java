@@ -18,6 +18,7 @@ import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelJoinSuccessPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.SendMessagePacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.TargetIsSilencedPacket;
 
 public class ChatPackets {
 
@@ -105,6 +106,13 @@ public class ChatPackets {
 
         if (targetPlayer == null) {
             logger.warn("Target player not found for private message: " + target);
+            return true;
+        }
+
+        if(!targetPlayer.canChat()) {
+            String silenceOrRestricted = targetPlayer.isSilenced() ? "silenced" : "restricted";
+            String silenceMessage = String.format("%s has been %s and is unable to respond to your messages right now.", targetPlayer.getUsername(), silenceOrRestricted);
+            player.sendPacket(new TargetIsSilencedPacket(player.getUsername(), silenceMessage, target, player.getId()));
             return true;
         }
 

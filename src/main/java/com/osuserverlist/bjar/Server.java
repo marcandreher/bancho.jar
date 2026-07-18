@@ -26,8 +26,8 @@ import com.osuserverlist.bjar.server.AchievementManager;
 import com.osuserverlist.bjar.server.ChannelManager;
 import com.osuserverlist.bjar.server.MatchManager;
 import com.osuserverlist.bjar.server.PlayerManager;
-import com.osuserverlist.bjar.server.scheudler.AutoDisconnectTask;
 import com.osuserverlist.bjar.server.scheudler.BotPresenceTask;
+import com.osuserverlist.bjar.server.scheudler.PlayerCleanupTask;
 import com.osuserverlist.bjar.server.scheudler.SendChannelInfoTask;
 
 import io.javalin.Javalin;
@@ -57,7 +57,7 @@ public class Server {
 
         osuAPIHandler = new OsuAPIHandler(enviromentConfig.getOsuApiKey());
 
-        executor.scheduleAtFixedRate(new AutoDisconnectTask(), 0, 60, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(new PlayerCleanupTask(), 0, 60, TimeUnit.SECONDS);
         executor.scheduleAtFixedRate(new SendChannelInfoTask(), 0, 8, TimeUnit.SECONDS);
 
         try (MySQL mysql = Database.getConnection()) {

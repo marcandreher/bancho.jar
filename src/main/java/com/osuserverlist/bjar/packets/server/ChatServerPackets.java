@@ -44,6 +44,14 @@ public class ChatServerPackets {
         private int senderId;
     }
 
+    @Value
+    public static class TargetIsSilencedPacket implements ServerPacket {
+        private String senderName;
+        private String message;
+        private String target;
+        private int senderId;
+    }
+
     @PacketHandler(ChannelAutojoinPacket.class)
     public static final class ChannelAutojoinHandler implements ServerPacketHandler<ChannelAutojoinPacket> {
         @Override
@@ -100,6 +108,19 @@ public class ChatServerPackets {
         @Override
         public void write(SendMessagePacket packet, BanchoPacketWriter writer, Player player) {
             writer.startPacket(ServerPackets.SEND_MESSAGE);
+            writer.writeString(packet.getSenderName());
+            writer.writeString(packet.getMessage());
+            writer.writeString(packet.getTarget());
+            writer.writeInt(packet.getSenderId());
+            writer.endPacket();
+        }
+    }
+
+    @PacketHandler(TargetIsSilencedPacket.class)
+    public static final class TargetIsSilencedHandler implements ServerPacketHandler<TargetIsSilencedPacket> {
+        @Override
+        public void write(TargetIsSilencedPacket packet, BanchoPacketWriter writer, Player player) {
+            writer.startPacket(ServerPackets.TARGET_IS_SILENCED);
             writer.writeString(packet.getSenderName());
             writer.writeString(packet.getMessage());
             writer.writeString(packet.getTarget());

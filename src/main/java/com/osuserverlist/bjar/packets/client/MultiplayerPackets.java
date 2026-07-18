@@ -52,6 +52,13 @@ public class MultiplayerPackets {
     @ClientPacket(ClientPackets.CREATE_MATCH)
     public boolean createMatch(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         Match match = reader.readMatch();
+
+        if(!player.canChat()) {
+            logger.debug("Player {} attempted to create a match but is restricted or silenced", player.getUsername());
+            player.sendPacket(new MatchJoinFailPacket());
+            return true;
+        }
+
         App.server.matchManager.add(match);
 
         String channelName = "#multi_" + match.getMatchId();
@@ -74,7 +81,6 @@ public class MultiplayerPackets {
         match.getSlots()[freeSlot].setPlayerId(player.getId());
         match.getSlots()[freeSlot].setStatus(SlotStatus.NOT_READY.byteValue);
         match.getPlayers().add(player);
-        // TODO: Handle restriction and silenced players
 
         logger.info("Player {} created a match {}", player.toString(), match.toString());
         player.sendPacket(new MatchJoinSuccessPacket(match));
@@ -101,10 +107,14 @@ public class MultiplayerPackets {
             password = reader.readString();
         }
 
-        // TODO: handle restrictions
+        if(!player.canChat()) {
+            logger.debug("Player {} attempted to join match {} but is restricted or silenced", player.getUsername(), matchId);
+            player.sendPacket(new MatchJoinFailPacket());
+            return true;
+        }
 
         if (match.getRoomPassword().length() > 0 && !match.getRoomPassword().equals(password)) {
-            logger.warn("Player {} attempted to join match {} with incorrect password", player.getUsername(), matchId);
+            logger.debug("Player {} attempted to join match {} with incorrect password", player.getUsername(), matchId);
             player.sendPacket(new MatchJoinFailPacket());
             return true;
         }

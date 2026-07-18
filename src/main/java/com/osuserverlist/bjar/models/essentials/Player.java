@@ -41,6 +41,7 @@ public class Player {
     private Player spectating = null;
     private Match match = null;
     private boolean stealth = false;
+    private boolean restricted = false;
 
     private String username;
     private String osuToken;
@@ -67,6 +68,7 @@ public class Player {
     private int presenceFilter = 0;
 
     private long lastPing = System.currentTimeMillis();
+    private int silenceEnd = 0;
 
     private Deque<ServerPacket> packetStack = new ConcurrentLinkedDeque<>();
     private boolean inLobby = false;
@@ -77,6 +79,18 @@ public class Player {
         if(isBot) return;
 
         packetStack.push(packet);
+    }
+
+    public boolean isSilenced() {
+        return silenceEnd > System.currentTimeMillis() / 1000L;
+    }
+
+    public boolean canChat() {
+        return !isSilenced() && !restricted;
+    }
+
+    public int getSilenceEndSeconds() {
+        return (int)(silenceEnd - System.currentTimeMillis() / 1000L);
     }
 
     @Override

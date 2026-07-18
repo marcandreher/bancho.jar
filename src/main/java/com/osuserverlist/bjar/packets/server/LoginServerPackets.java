@@ -29,6 +29,11 @@ public class LoginServerPackets {
         private int privs;
     }
 
+    @Value
+    public static class SilenceInfoPacket implements ServerPacket {
+        private int silenceTimeSeconds;
+    }
+
     @PacketHandler(LoginReplyPacket.class)
     public static final class LoginReplyHandler implements ServerPacketHandler<LoginReplyPacket> {
         @Override
@@ -71,5 +76,14 @@ public class LoginServerPackets {
         }
     }
 
+    @PacketHandler(SilenceInfoPacket.class)
+    public static final class SilenceInfoHandler implements ServerPacketHandler<SilenceInfoPacket> {
+        @Override
+        public void write(SilenceInfoPacket packet, BanchoPacketWriter writer, Player player) {
+            writer.startPacket(ServerPackets.SILENCE_END);
+            writer.writeInt(packet.getSilenceTimeSeconds());
+            writer.endPacket();
+        }
+    }
 
 }

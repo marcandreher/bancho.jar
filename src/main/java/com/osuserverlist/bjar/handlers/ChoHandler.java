@@ -45,6 +45,7 @@ import com.osuserverlist.bjar.packets.server.LoginServerPackets.LoginReplyPacket
 import com.osuserverlist.bjar.packets.server.LoginServerPackets.MenuIconPacket;
 import com.osuserverlist.bjar.packets.server.LoginServerPackets.PrivilegesPacket;
 import com.osuserverlist.bjar.packets.server.LoginServerPackets.ProtocolVersionPacket;
+import com.osuserverlist.bjar.packets.server.LoginServerPackets.SilenceInfoPacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.AccountRestrictedPacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.FriendsListPacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserPresenceBundlePacket;
@@ -142,6 +143,8 @@ public class ChoHandler implements Handler {
             sendRestrictionNoticeIfNeeded(server, player);
             player.sendPacket(new MenuIconPacket());
 
+            sendSilenceInfoIfNeeded(server, player);
+
             logger.info("User {} logged in successfully from IP: {}", player, loginResponse.getIp());
 
             scheduleBackgroundLoginTasks(server, player, userEntity, loginResponse);
@@ -214,6 +217,8 @@ public class ChoHandler implements Handler {
         player.setUsername(userEntity.getName());
         player.setServerPrivileges(userEntity.getPriv());
 
+        player.setSilenceEnd(userEntity.getSilenceEnd());
+
         int clientPrivs = Privileges.addPrivilege(userEntity.getPriv(), Privileges.SUPPORTER);
         player.setClientPrivileges(Privileges.toClientPrivileges(clientPrivs));
 
@@ -222,10 +227,24 @@ public class ChoHandler implements Handler {
         return player;
     }
 
+    private void sendSilenceInfoIfNeeded(Server server, Player player) {
+        if (player.getSilenceEnd() > 0) {
+            if(player.getSilenceEnd() > (System.currentTimeMillis() / 1000L)) {
+                int silenceSecondsRemaining = (int) (player.getSilenceEnd() - (System.currentTimeMillis() / 1000L));
+                player.sendPacket(new SilenceInfoPacket(silenceSecondsRemaining));
+                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), "You are currently silenced.", player.getUsername(), server.botPlayer.getId()));
+            } else {
+                player.setSilenceEnd(0);
+                player.sendPacket(new SilenceInfoPacket(0));
+            }
+        }
+    }
+
     private void sendRestrictionNoticeIfNeeded(Server server, Player player) {
         if (Privileges.hasAny(player.getServerPrivileges(), Privileges.UNRESTRICTED)) {
             return;
         }
+        player.setRestricted(true);
 
         player.sendPacket(new AccountRestrictedPacket());
         player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), RESTRICTED_MSG,

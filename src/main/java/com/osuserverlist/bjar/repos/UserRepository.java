@@ -76,9 +76,14 @@ public class UserRepository {
         mysql.exec(UPDATE_USER_COUNTRY_QUERY, country, userId);
     }
 
+    public void updateUserSilence(int userId, int silenceEnd) throws SQLException {
+        mysql.exec(UPDATE_USER_SILENCE_QUERY, silenceEnd, userId);
+    }
+
     private final static String REMOVE_FRIEND_QUERY = "DELETE FROM `relationships` WHERE (`user1` = ? AND `user2` = ?) OR (`user1` = ? AND `user2` = ?)";
     private final static String ADD_FRIEND_QUERY = "INSERT INTO `relationships` (`user1`, `user2`) VALUES (?, ?)";
     private final static String GET_FRIEND_IDS_QUERY = "SELECT * FROM `relationships` WHERE `user1` = ?";
+    private final static String UPDATE_USER_SILENCE_QUERY = "UPDATE `users` SET `silence_end` = ? WHERE `id` = ?";
     private final static String UPDATE_USER_COUNTRY_QUERY = "UPDATE `users` SET `country` = ? WHERE `id` = ?";
     private final static String UPDATE_USER_PRIVS_QUERY = "UPDATE `users` SET `priv` = ? WHERE `id` = ?";
     private final static String INSERT_STATS_QUERY = "INSERT INTO `stats`(`id`, `mode`) VALUES (?,?)";

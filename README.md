@@ -16,7 +16,7 @@
     - [x] Presence, Auto Disconnect
     - [x] User Stats (Also RX & AP)
     - [x] Friends
-    - [ ] Silence Info
+    - [x] Silence Info
     - [x] Privileges
 - [x] Bots
     - [x] Bot online Handling

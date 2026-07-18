@@ -16,6 +16,7 @@ import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.datastore.MySQL;
+import com.osuserverlist.bjar.packets.server.LoginServerPackets.SilenceInfoPacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserQuitPacket;
 
 public class PlayerManager {
@@ -87,6 +88,17 @@ public class PlayerManager {
     public void unrestrict(Player player) {
         player.setServerPrivileges(player.getServerPrivileges() | Privileges.UNRESTRICTED.getValue());
         disconnect(player);
+    }
+
+    public void silence(Player player, int silenceEnd) {
+        int silenceSecondsRemaining = (int) (silenceEnd - (System.currentTimeMillis() / 1000L));
+        player.setSilenceEnd(silenceEnd);
+        player.sendPacket(new SilenceInfoPacket(silenceSecondsRemaining));
+    }
+
+    public void unsilence(Player player) {
+        player.setSilenceEnd(0);
+        player.sendPacket(new SilenceInfoPacket(0));
     }
 
     public Player getBotPlayer(MySQL mysql, int id) throws SQLException {
