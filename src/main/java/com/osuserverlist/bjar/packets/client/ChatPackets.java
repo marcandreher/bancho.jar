@@ -39,6 +39,10 @@ public class ChatPackets {
             return true;
         }
 
+        if(channel.getName().equals("#lobby") && !player.isInLobby()) {
+            return true; // Don't allow players to join the lobby if they are not in the lobby
+        }
+
         player.sendPacket(new ChannelJoinSuccessPacket(channelName));
 
         App.server.channelManager.joinChannel(channelName, player);
@@ -51,6 +55,10 @@ public class ChatPackets {
         String channelName = reader.readString();
 
         if (List.of("#multiplayer", "#spectator").contains(channelName)) {
+            Channel channel = resolveChannel(player, channelName);
+            if(channel != null) {
+                App.server.channelManager.leaveChannel(channel.getName(), player);
+            }
             return true;
         }
 

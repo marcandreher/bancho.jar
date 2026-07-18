@@ -69,6 +69,7 @@ public class Player {
 
     private long lastPing = System.currentTimeMillis();
     private int silenceEnd = 0;
+    private int donorEnd = 0;
 
     private Deque<ServerPacket> packetStack = new ConcurrentLinkedDeque<>();
     private boolean inLobby = false;

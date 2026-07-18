@@ -131,8 +131,6 @@ public class MatchManager {
         player.setMatch(null);
     }
 
-
-
     public void removePlayerFromMatch(Match match, Player player) {
        MatchSlot slot = match.getSlot(player);
         if (slot != null) {

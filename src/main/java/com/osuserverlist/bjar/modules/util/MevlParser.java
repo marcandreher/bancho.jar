@@ -1,4 +1,4 @@
-package com.osuserverlist.bjar.modules.main;
+package com.osuserverlist.bjar.modules.util;
 
 import java.io.Serializable;
 import java.util.HashMap;

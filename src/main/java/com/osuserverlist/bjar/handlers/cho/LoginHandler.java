@@ -1,16 +1,13 @@
-package com.osuserverlist.bjar.handlers;
+package com.osuserverlist.bjar.handlers.cho;
 
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.Iterator;
 import java.util.List;
 
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,14 +25,8 @@ import com.osuserverlist.bjar.modules.main.GeoLocation;
 import com.osuserverlist.bjar.modules.main.Application.BuildInfo;
 import com.osuserverlist.bjar.modules.main.GeoLocation.Country;
 import com.osuserverlist.bjar.modules.main.GeoLocation.GeoResponse;
-import com.osuserverlist.bjar.modules.main.WebEngine.Host;
-import com.osuserverlist.bjar.modules.main.WebEngine.HttpMethod;
-import com.osuserverlist.bjar.modules.main.WebEngine.Path;
-import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
 import com.osuserverlist.bjar.modules.packets.BanchoPacketWriter;
 import com.osuserverlist.bjar.modules.packets.ServerPacketEngine;
-import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPacket;
-import com.osuserverlist.bjar.modules.packets.ServerPacketEngine.ServerPackets;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelAutojoinPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoEndPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelInfoPacket;
@@ -55,19 +46,16 @@ import com.osuserverlist.bjar.packets.server.UtilServerPackets.NotificationPacke
 import com.osuserverlist.bjar.repos.UserRepository;
 
 import io.javalin.http.Context;
-import io.javalin.http.Handler;
 import io.javalin.http.HttpStatus;
 
 /**
- * Handles the Bancho client protocol: initial login (no {@code osu-token}
- * header) and subsequent packet exchange for already-connected players.
+ * Handles the initial Bancho login request (no {@code osu-token} header):
+ * authentication, player construction, stat/channel/friend bootstrapping,
+ * and all the one-time packets sent on connect.
  */
-@Host({ "c.", "c4." })
-@Path("/")
-@HttpMethod("POST")
-public class ChoHandler implements Handler {
+public class LoginHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(ChoHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(LoginHandler.class);
 
     private static final String RESTRICTED_MSG = """
             Your account is currently in restricted mode.
@@ -78,22 +66,7 @@ public class ChoHandler implements Handler {
 
     private static final int LOGIN_FAILED = -1;
 
-    @Override
-    public void handle(@NotNull Context ctx) throws Exception {
-        String osuToken = ctx.header("osu-token");
-
-        if (osuToken == null) {
-            handleLogin(ctx);
-        } else {
-            handlePacketExchange(ctx, osuToken);
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Login
-    // ------------------------------------------------------------------
-
-    private void handleLogin(Context ctx) throws IOException, SQLException {
+    public void handle(Context ctx) throws IOException, SQLException {
         LoginResponse loginResponse = LoginResponse.parse(ctx);
 
         if (!loginResponse.isSuccess()) {
@@ -150,7 +123,7 @@ public class ChoHandler implements Handler {
             scheduleBackgroundLoginTasks(server, player, userEntity, loginResponse);
 
             BanchoPacketWriter writer = new BanchoPacketWriter();
-            handlePendingPackets(writer, player);
+            ChoHandler.handlePendingPackets(writer, player);
 
             ctx.header("cho-token", loginResponse.getUuid())
                     .status(HttpStatus.OK)
@@ -217,7 +190,13 @@ public class ChoHandler implements Handler {
         player.setUsername(userEntity.getName());
         player.setServerPrivileges(userEntity.getPriv());
 
+        if(!Privileges.hasAny(userEntity.getPriv(), Privileges.VERIFIED)) {
+            player.setServerPrivileges(userEntity.getPriv() | Privileges.VERIFIED.getValue());
+            updatePrivsSoon(player);
+        }
+
         player.setSilenceEnd(userEntity.getSilenceEnd());
+        player.setDonorEnd(userEntity.getDonorEnd());
 
         int clientPrivs = Privileges.addPrivilege(userEntity.getPriv(), Privileges.SUPPORTER);
         player.setClientPrivileges(Privileges.toClientPrivileges(clientPrivs));
@@ -227,14 +206,24 @@ public class ChoHandler implements Handler {
         return player;
     }
 
+    private void updatePrivsSoon(Player player) {
+        App.server.executor.submit(() -> {
+            try (MySQL mysql = Database.getConnection()) {
+                UserRepository userRepo = new UserRepository(mysql);
+                userRepo.updateUserPrivileges(player.getId(), player.getServerPrivileges());
+            } catch (SQLException e) {
+                logger.error("Failed to update privileges for {}", player, e);
+            }
+        });
+    }
+
     private void sendSilenceInfoIfNeeded(Server server, Player player) {
         if (player.getSilenceEnd() > 0) {
-            if(player.getSilenceEnd() > (System.currentTimeMillis() / 1000L)) {
+            if (player.getSilenceEnd() > (System.currentTimeMillis() / 1000L)) {
                 int silenceSecondsRemaining = (int) (player.getSilenceEnd() - (System.currentTimeMillis() / 1000L));
                 player.sendPacket(new SilenceInfoPacket(silenceSecondsRemaining));
                 player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), "You are currently silenced.", player.getUsername(), server.botPlayer.getId()));
             } else {
-                player.setSilenceEnd(0);
                 player.sendPacket(new SilenceInfoPacket(0));
             }
         }
@@ -360,7 +349,7 @@ public class ChoHandler implements Handler {
 
     private void sendLoginFailure(Context ctx, int loginState) throws IOException {
         BanchoPacketWriter writer = new BanchoPacketWriter();
-        writer.startPacket(ServerPackets.LOGIN_REPLY);
+        writer.startPacket(ServerPacketEngine.ServerPackets.LOGIN_REPLY);
         writer.writeInt(loginState);
         writer.endPacket();
 
@@ -368,68 +357,5 @@ public class ChoHandler implements Handler {
                 .header("cho-token", "")
                 .contentType("application/octet-stream")
                 .result(writer.getPackets());
-    }
-
-    // ------------------------------------------------------------------
-    // Packet exchange (already-connected players)
-    // ------------------------------------------------------------------
-
-    private static void handlePacketExchange(Context ctx, String osuToken) {
-        BanchoPacketWriter packetWriter = new BanchoPacketWriter();
-
-        Server server = App.server;
-        Player player = server.playerManager.get(osuToken);
-
-        if (player == null) {
-            packetWriter.startPacket(ServerPackets.SWITCH_SERVER);
-            packetWriter.endPacket();
-            ctx.status(HttpStatus.OK).result(packetWriter.getPackets());
-            return;
-        }
-
-        byte[] requestBody = ctx.bodyAsBytes();
-        if (requestBody.length > 0) {
-            try {
-                BanchoPacketReader reader = new BanchoPacketReader(requestBody, player);
-
-                while (reader.hasMorePackets()) {
-                    try {
-                        if (!reader.nextPacket()) {
-                            logger.warn("Failed to process packet for player ID={}", player.getId());
-                        }
-                    } catch (IOException e) {
-                        logger.error("Error reading packet: {}", e.getMessage());
-                        // Continue processing other packets even if one fails
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("Unexpected error processing packets: {}", e.getMessage(), e);
-            }
-        }
-
-        handlePendingPackets(packetWriter, player);
-
-        ctx.result(packetWriter.getPackets())
-                .status(HttpStatus.OK)
-                .contentType("application/octet-stream");
-    }
-
-    /**
-     * Flushes any packets queued on the player's packet stack into the given
-     * writer, in the order they were pushed.
-     */
-    public static void handlePendingPackets(BanchoPacketWriter writer, Player player) {
-        Deque<ServerPacket> packetStack = player.getPacketStack();
-
-        if (packetStack.isEmpty()) {
-            return;
-        }
-
-        Iterator<ServerPacket> it = packetStack.descendingIterator();
-        while (it.hasNext()) {
-            ServerPacketEngine.write(it.next(), writer, player);
-        }
-
-        packetStack.clear();
     }
 }

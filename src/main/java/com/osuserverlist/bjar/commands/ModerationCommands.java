@@ -12,11 +12,10 @@ import com.osuserverlist.bjar.modules.main.Commands.BanchoCommand;
 import com.osuserverlist.bjar.modules.main.Commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.main.Commands.CommandCategory;
 import com.osuserverlist.bjar.modules.main.Commands.Session;
+import com.osuserverlist.bjar.modules.util.Validation;
 import com.osuserverlist.bjar.repos.UserRepository;
 
 public class ModerationCommands extends BanchoCommandHandler {
-
-    private static final int MAX_REASON_LENGTH = 100;
 
     private static final String RESTRICTION_USAGE = "Usage: !restriction <add|remove> <username> <reason>";
     private static final String SILENCE_ADD_USAGE = "Usage: !silence add <username> <duration> <reason> (duration e.g. 30s, 10m, 2h, 1d, 1w)";
@@ -89,7 +88,7 @@ public class ModerationCommands extends BanchoCommandHandler {
         }
 
         String username = args[0];
-        Player targetPlayer = findOnlinePlayer(session, username);
+        Player targetPlayer = session.server.playerManager.getByUsername(username);
 
         if (targetPlayer == null) {
             session.sendAnswer("Player not found: " + username);
@@ -109,9 +108,9 @@ public class ModerationCommands extends BanchoCommandHandler {
         }
 
         String username = args[0];
-        String reason = joinReason(args, 1);
+        String reason = Validation.joinReason(args, 1);
 
-        if (!isValidReason(session, reason)) {
+        if (!Validation.isValidReason(session, reason)) {
             return;
         }
 
@@ -127,7 +126,7 @@ public class ModerationCommands extends BanchoCommandHandler {
     }
 
     private void applyRestriction(Session session, UserRepository userRepo, Player sender, String username, String reason, boolean restrict) throws Exception {
-        Player targetPlayer = findOnlinePlayer(session, username);
+        Player targetPlayer = session.server.playerManager.getByUsername(username);
 
         if (targetPlayer != null) {
             setOnlinePlayerRestricted(session.server, userRepo, targetPlayer, restrict);
@@ -186,17 +185,17 @@ public class ModerationCommands extends BanchoCommandHandler {
 
         if (silence) {
             try {
-                durationSeconds = parseDuration(args[1]);
+                durationSeconds = Validation.parseDuration(args[1]);
             } catch (IllegalArgumentException e) {
                 session.sendAnswer("Invalid duration: " + args[1] + " (expected format like 30s, 10m, 2h, 1d)");
                 return;
             }
-            reason = joinReason(args, 2);
+            reason = Validation.joinReason(args, 2);
         } else {
-            reason = joinReason(args, 1);
+            reason = Validation.joinReason(args, 1);
         }
 
-        if (!isValidReason(session, reason)) {
+        if (!Validation.isValidReason(session, reason)) {
             return;
         }
 
@@ -214,7 +213,7 @@ public class ModerationCommands extends BanchoCommandHandler {
     }
 
     private void applySilence(Session session, UserRepository userRepo, Player sender, String username, String reason, boolean silence, int durationSeconds, int silenceEnd) throws Exception {
-        Player targetPlayer = findOnlinePlayer(session, username);
+        Player targetPlayer = session.server.playerManager.getByUsername(username);
 
         if (targetPlayer != null) {
             setOnlinePlayerSilenced(session.server, userRepo, targetPlayer, silence, silenceEnd);
@@ -232,7 +231,7 @@ public class ModerationCommands extends BanchoCommandHandler {
         }
 
         session.sendAnswer(silence
-                ? "Successfully silenced " + username + " for " + formatDuration(durationSeconds) + ": " + reason
+                ? "Successfully silenced " + username + " for " + Validation.formatDuration(durationSeconds) + ": " + reason
                 : "Successfully unsilenced " + username + " for: " + reason);
     }
 
@@ -256,72 +255,5 @@ public class ModerationCommands extends BanchoCommandHandler {
         } else {
             logger.info("Player {} has been unsilenced by {} for reason: {}", target, sender, reason);
         }
-    }
-
-    // ================================================================
-    // Shared helpers
-    // ================================================================
-
-    private Player findOnlinePlayer(Session session, String username) {
-        return session.server.playerManager.getByFilter(p -> p.getUsername().equalsIgnoreCase(username));
-    }
-
-    private String joinReason(String[] args, int fromIndex) {
-        return String.join(" ", Arrays.copyOfRange(args, fromIndex, args.length)).trim();
-    }
-
-    private boolean isValidReason(Session session, String reason) {
-        if (reason.isEmpty()) {
-            session.sendAnswer("Reason cannot be empty.");
-            return false;
-        }
-
-        if (reason.length() > MAX_REASON_LENGTH) {
-            session.sendAnswer("Reason cannot exceed " + MAX_REASON_LENGTH + " characters.");
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Parses a duration string like "30s", "10m", "2h", "1d", "1w" into seconds.
-     */
-    private int parseDuration(String input) {
-        if (input == null || input.isEmpty()) {
-            throw new IllegalArgumentException("Empty duration");
-        }
-
-        char unit = Character.toLowerCase(input.charAt(input.length() - 1));
-        String numberPart = input.substring(0, input.length() - 1);
-
-        int value;
-        try {
-            value = Integer.parseInt(numberPart);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid duration number: " + numberPart);
-        }
-
-        if (value <= 0) {
-            throw new IllegalArgumentException("Duration must be positive");
-        }
-
-        switch (unit) {
-            case 's': return value;
-            case 'm': return value * 60;
-            case 'h': return value * 3600;
-            case 'd': return value * 86400;
-            case 'w': return value * 604800;
-            default:
-                throw new IllegalArgumentException("Unknown duration unit: " + unit);
-        }
-    }
-
-    private String formatDuration(long seconds) {
-        if (seconds % 604800 == 0) return (seconds / 604800) + "w";
-        if (seconds % 86400 == 0) return (seconds / 86400) + "d";
-        if (seconds % 3600 == 0) return (seconds / 3600) + "h";
-        if (seconds % 60 == 0) return (seconds / 60) + "m";
-        return seconds + "s";
     }
 }

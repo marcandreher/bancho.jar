@@ -43,6 +43,10 @@ public class PlayerManager {
     public Player getById(int id) {
         return getByFilter(p -> p.getId() == id);
     }
+    
+    public Player getByUsername(String username) {
+        return getByFilter(p -> p.getUsername().equalsIgnoreCase(username));
+    }
 
     public Collection<Player> getAll() {
         return onlinePlayers.values();
