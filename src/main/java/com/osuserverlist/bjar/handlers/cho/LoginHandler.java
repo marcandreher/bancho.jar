@@ -21,8 +21,8 @@ import com.osuserverlist.bjar.models.osu.LoginResponse;
 import com.osuserverlist.bjar.models.osu.Privileges;
 import com.osuserverlist.bjar.modules.datastore.Database;
 import com.osuserverlist.bjar.modules.datastore.MySQL;
-import com.osuserverlist.bjar.modules.main.GeoLocation;
 import com.osuserverlist.bjar.modules.main.Application.BuildInfo;
+import com.osuserverlist.bjar.modules.main.GeoLocation;
 import com.osuserverlist.bjar.modules.main.GeoLocation.Country;
 import com.osuserverlist.bjar.modules.main.GeoLocation.GeoResponse;
 import com.osuserverlist.bjar.modules.packets.BanchoPacketWriter;
@@ -102,6 +102,10 @@ public class LoginHandler {
             player.sendPacket(new UserPresencePacket(player));
             player.sendPacket(new UserStatsPacket(player));
             player.sendPacket(new FriendsListPacket(userRepository.getFriendIds(player.getId())));
+
+            for (int blockId : userRepository.getBlockedIds(player.getId())) {
+                player.getBlocks().add(blockId);
+            }
 
             joinAvailableChannels(server, player);
 

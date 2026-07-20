@@ -38,6 +38,8 @@ jobs:
           fi
 
           cp README.md standalone/
+          cp sql/base.sql standalone/
+          cp nginx/bancho.conf standalone/nginx.conf
 
           cd standalone
           zip -r ../standalone.zip .

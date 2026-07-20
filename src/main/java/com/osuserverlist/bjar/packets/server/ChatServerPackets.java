@@ -52,6 +52,14 @@ public class ChatServerPackets {
         private int senderId;
     }
 
+    @Value
+    public static class UserDmBlockedPacket implements ServerPacket {
+        private String senderName;
+        private String message;
+        private String target;
+        private int senderId;
+    }
+
     @PacketHandler(ChannelAutojoinPacket.class)
     public static final class ChannelAutojoinHandler implements ServerPacketHandler<ChannelAutojoinPacket> {
         @Override
@@ -121,6 +129,19 @@ public class ChatServerPackets {
         @Override
         public void write(TargetIsSilencedPacket packet, BanchoPacketWriter writer, Player player) {
             writer.startPacket(ServerPackets.TARGET_IS_SILENCED);
+            writer.writeString(packet.getSenderName());
+            writer.writeString(packet.getMessage());
+            writer.writeString(packet.getTarget());
+            writer.writeInt(packet.getSenderId());
+            writer.endPacket();
+        }
+    }
+
+    @PacketHandler(UserDmBlockedPacket.class)
+    public static final class UserDmBlockedHandler implements ServerPacketHandler<UserDmBlockedPacket> {
+        @Override
+        public void write(UserDmBlockedPacket packet, BanchoPacketWriter writer, Player player) {
+            writer.startPacket(ServerPackets.USER_DM_BLOCKED);
             writer.writeString(packet.getSenderName());
             writer.writeString(packet.getMessage());
             writer.writeString(packet.getTarget());

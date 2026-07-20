@@ -19,6 +19,7 @@ import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelJoinSuccessPacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.SendMessagePacket;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.TargetIsSilencedPacket;
+import com.osuserverlist.bjar.packets.server.ChatServerPackets.UserDmBlockedPacket;
 
 public class ChatPackets {
 
@@ -80,10 +81,13 @@ public class ChatPackets {
         String message = reader.readString();
         String target = reader.readString();
         
-
         Channel channel = resolveChannel(player, target);
         if (channel == null) {
             logger.warn("Player {} sent a message to a non-existing channel {}", player, target);
+            return true;
+        }
+
+        if(!player.canChat()) {
             return true;
         }
 
@@ -121,6 +125,12 @@ public class ChatPackets {
             String silenceOrRestricted = targetPlayer.isSilenced() ? "silenced" : "restricted";
             String silenceMessage = String.format("%s has been %s and is unable to respond to your messages right now.", targetPlayer.getUsername(), silenceOrRestricted);
             player.sendPacket(new TargetIsSilencedPacket(player.getUsername(), silenceMessage, target, player.getId()));
+            return true;
+        }
+
+        if(targetPlayer.getBlocks().contains(player.getId())) {
+            String blockMessage = String.format("%s is currently blocking private messages from people not on their friends list.", targetPlayer.getUsername());
+            player.sendPacket(new UserDmBlockedPacket(player.getUsername(), blockMessage, target, player.getId()));
             return true;
         }
 

@@ -21,7 +21,7 @@ public class OsuGetReplayHandler implements Handler {
 
     @Override
     public void handle(@NotNull Context ctx) throws Exception {
-        String replayId = ctx.queryParam("c");
+        Integer replayId = ctx.queryParamAsClass("c", Integer.class).required().get();
         String username = ctx.queryParam("u");
         String passwordHash = ctx.queryParam("h");
         String apiIdent = String.format("%s|%s", username, passwordHash);
@@ -35,7 +35,7 @@ public class OsuGetReplayHandler implements Handler {
 
         // TODO: Increase replay watched count in database
 
-        File replayFile = new File("data/replays/" + replayId + ".osr");
+        File replayFile = new File("data/replays/" + String.valueOf(replayId) + ".osr");
         if (Files.exists(replayFile.toPath())) {
             ctx.contentType("application/octet-stream");
             ctx.result(Files.readAllBytes(replayFile.toPath()));

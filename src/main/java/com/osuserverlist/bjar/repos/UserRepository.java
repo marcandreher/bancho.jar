@@ -47,12 +47,31 @@ public class UserRepository {
         return friendIds;
     }
 
+    public List<Integer> getBlockedIds(int userId) throws SQLException {
+        List<Integer> blockedIds = new ArrayList<>();
+        
+        ResultSet blockedResult = mysql.query(GET_BLOCK_IDS_QUERY, userId).executeQuery();
+        while (blockedResult.next()) {
+            blockedIds.add(blockedResult.getInt("user2"));
+        }
+        
+        return blockedIds;
+    }
+
     public void addFriend(int userId, int friendId) throws SQLException {
         mysql.exec(ADD_FRIEND_QUERY, userId, friendId);
     }
 
+    public void addBlock(int userId, int blockId) throws SQLException {
+        mysql.exec(ADD_BLOCK_QUERY, userId, blockId);
+    }
+
     public void removeFriend(int userId, int friendId) throws SQLException {
         mysql.exec(REMOVE_FRIEND_QUERY, userId, friendId, friendId, userId);
+    }
+
+    public void removeBlock(int userId, int blockId) throws SQLException {
+        mysql.exec(REMOVE_BLOCK_QUERY, userId, blockId, blockId, userId);
     }
 
     public void insertStats(int userId, int mode) throws SQLException {
@@ -84,9 +103,12 @@ public class UserRepository {
         mysql.exec(UPDATE_USER_DONOR_QUERY, donorEnd, userId);
     }
 
-    private final static String REMOVE_FRIEND_QUERY = "DELETE FROM `relationships` WHERE (`user1` = ? AND `user2` = ?) OR (`user1` = ? AND `user2` = ?)";
-    private final static String ADD_FRIEND_QUERY = "INSERT INTO `relationships` (`user1`, `user2`) VALUES (?, ?)";
-    private final static String GET_FRIEND_IDS_QUERY = "SELECT * FROM `relationships` WHERE `user1` = ?";
+    private final static String GET_BLOCK_IDS_QUERY = "SELECT * FROM `relationships` WHERE `user1` = ? AND `type` = 'block'";
+    private final static String REMOVE_BLOCK_QUERY = "DELETE FROM `relationships` WHERE (`user1` = ? AND `user2` = ?) OR (`user1` = ? AND `user2` = ?) AND `type` = 'block'";
+    private final static String ADD_BLOCK_QUERY = "INSERT INTO `relationships` (`user1`, `user2`, `type`) VALUES (?, ?, 'block')";
+    private final static String REMOVE_FRIEND_QUERY = "DELETE FROM `relationships` WHERE (`user1` = ? AND `user2` = ?) OR (`user1` = ? AND `user2` = ?) AND `type` = 'friend'";
+    private final static String ADD_FRIEND_QUERY = "INSERT INTO `relationships` (`user1`, `user2`, `type`) VALUES (?, ?, 'friend')";
+    private final static String GET_FRIEND_IDS_QUERY = "SELECT * FROM `relationships` WHERE `user1` = ? AND `type` = 'friend'";
     private final static String UPDATE_USER_SILENCE_QUERY = "UPDATE `users` SET `silence_end` = ? WHERE `id` = ?";
     private final static String UPDATE_USER_DONOR_QUERY = "UPDATE `users` SET `donor_end` = ? WHERE `id` = ?";
     private final static String UPDATE_USER_COUNTRY_QUERY = "UPDATE `users` SET `country` = ? WHERE `id` = ?";

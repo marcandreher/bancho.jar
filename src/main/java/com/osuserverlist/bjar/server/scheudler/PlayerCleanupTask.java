@@ -48,7 +48,7 @@ public class PlayerCleanupTask implements Runnable {
     }
 
     private void expireSilence(Server server, Player player) {
-        if (player.getSilenceEnd() <= nowSeconds()) {
+        if (player.getSilenceEnd() == 0 || nowSeconds() <= player.getSilenceEnd()) {
             return;
         }
 
@@ -59,10 +59,12 @@ public class PlayerCleanupTask implements Runnable {
         } catch (SQLException e) {
             logger.error("Failed to update silence for {}", player, e);
         }
+
+        logger.info("Silence expired for {}", player);
     }
 
     private void expireSupporter(Server server, Player player) {
-        if (player.getDonorEnd() <= nowSeconds()) {
+        if (player.getDonorEnd() == 0 || nowSeconds() <= player.getDonorEnd()) {
             return;
         }
 
@@ -75,6 +77,8 @@ public class PlayerCleanupTask implements Runnable {
         } catch (SQLException e) {
             logger.error("Failed to update donor for {}", player, e);
         }
+
+        logger.info("Supporter expired for {}", player);
     }
 
     private long nowSeconds() {

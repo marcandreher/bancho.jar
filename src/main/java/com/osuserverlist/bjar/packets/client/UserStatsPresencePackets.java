@@ -26,7 +26,7 @@ public class UserStatsPresencePackets {
     public boolean userPresenceRequest(BanchoPacket packet, BanchoPacketReader reader, Player player) throws IOException {
         List<Integer> userIds = reader.readIntList();
 
-        logger.debug("Player {} requested presence info for user IDs {}", player.getUsername(), userIds);
+        logger.debug("Player {} requested presence info for user IDs {}", player, userIds);
 
         for (Integer userId : userIds) {
             
@@ -49,7 +49,7 @@ public class UserStatsPresencePackets {
         PresenceFilter filter = PresenceFilter.values()[presenceFilter];
 
         if(filter == null) {
-            logger.warn("Player {} send invalid presence filter value {}", player.getUsername(), presenceFilter);
+            logger.warn("Player {} send invalid presence filter value {}", player, presenceFilter);
             return true;
         }
 
