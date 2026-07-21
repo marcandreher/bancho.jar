@@ -11,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.models.osu.GameMode;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 
 import lombok.AllArgsConstructor;
 
@@ -22,7 +20,7 @@ public class RecalcRunnable implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(RecalcRunnable.class);
 
     private static final int THREAD_COUNT = 4;
-    private static final int[] MODES = {0, 1, 2, 3, 4, 5, 6, 8};
+    private static final int[] MODES = { 0, 1, 2, 3, 4, 5, 6, 8 };
     private boolean force;
 
     @Override
@@ -64,18 +62,14 @@ public class RecalcRunnable implements Runnable {
     private void recalcMode(int mode, boolean force) {
         logger.info("Recalculating mode {} on thread {}", GameMode.fromValue(mode), Thread.currentThread().getName());
 
-        MySQL mysql = Database.getConnection();
-        try {
-            ScoreRecalculator scoreRecalculator = new ScoreRecalculator();
-            int scores = scoreRecalculator.recalcScores(mode, force);
+        ScoreRecalculator scoreRecalculator = new ScoreRecalculator();
+        int scores = scoreRecalculator.recalcScores(mode, force);
 
-            UserRecalculator userRecalculator = new UserRecalculator(mysql);
-            int users = userRecalculator.recalcUsers(mode, force);
+        UserRecalculator userRecalculator = new UserRecalculator();
+        int users = userRecalculator.recalcUsers(mode, force);
 
-            logger.info("Mode {} done — scores processed: {}, users processed: {}",
-                    GameMode.fromValue(mode), scores, users);
-        } finally {
-            mysql.close();
-        }
+        logger.info("Mode {} done — scores processed: {}, users processed: {}",
+                GameMode.fromValue(mode), scores, users);
+
     }
 }

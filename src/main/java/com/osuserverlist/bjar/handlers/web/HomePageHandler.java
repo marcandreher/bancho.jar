@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.modules.main.Application;
+import com.osuserverlist.bjar.modules.main.Application.BuildInfo;
 import com.osuserverlist.bjar.modules.main.WebEngine.Host;
 import com.osuserverlist.bjar.modules.main.WebEngine.HttpMethod;
 import com.osuserverlist.bjar.modules.main.WebEngine.Path;
@@ -54,6 +55,7 @@ public class HomePageHandler implements Handler {
     public void handle(@NotNull Context ctx) {
         String html = indexTemplate
                 .replace("%players%", String.valueOf(App.server.playerManager.getAll().size()))
+                .replace("%version%", "bancho.jar <" + BuildInfo.VERSION + ">")
                 .replace("%packets%", packetList)
                 .replace("%header%", Application.HEADER);
 

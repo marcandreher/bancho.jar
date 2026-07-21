@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.modules.main.Application;
+import com.osuserverlist.bjar.modules.main.Application.BuildInfo;
 import com.osuserverlist.bjar.modules.main.WebEngine.Host;
 import com.osuserverlist.bjar.modules.main.WebEngine.HttpMethod;
 import com.osuserverlist.bjar.modules.main.WebEngine.Path;
@@ -34,7 +35,9 @@ public class PlayerPageHandler implements Handler {
             playerHtml.append(player.getUsername()).append(" (").append(player.getId()).append(")").append("<br>");
         });
 
-        String html = indexTemplate.replace("%players%", playerHtml.toString()).replace("%header%", Application.HEADER);
+        String html = indexTemplate.replace("%players%", playerHtml.toString())
+        .replace("%header%", Application.HEADER)
+        .replace("%version%", "bancho.jar <" + BuildInfo.VERSION + ">");
         ctx.html(html);
     }
 }

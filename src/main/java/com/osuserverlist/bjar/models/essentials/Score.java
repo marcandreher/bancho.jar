@@ -1,16 +1,16 @@
 package com.osuserverlist.bjar.models.essentials;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.time.ZoneOffset;
 
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
+import com.osuserverlist.bjar.models.database.ScoreEntity;
 import com.osuserverlist.bjar.modules.calculations.AccuracyCalculator;
 
 import lombok.Data;
 
 @Data
 public class Score {
-    private int id;
+    private long id;
     private long beatmapId = 1;
     private int playerId = 1;
     private int n300 = 0;
@@ -35,13 +35,27 @@ public class Score {
     private double accuracy = 0.0;
     private String checksum = "";
 
-    public static Score fromResultSet(ResultSet scoreResult, BeatmapEntity beatmap) throws SQLException {
-        Score s = Score.fromResultSet(scoreResult);
-        
-        s.setBeatmapId(beatmap.getId());
+    public static Score fromEntity(ScoreEntity scoreEntity, BeatmapEntity beatmap) {
+        Score s = new Score();
+        s.setId(scoreEntity.getId().intValue());
+        s.setPlayerId(scoreEntity.getUser().getId());
+        s.setN300(scoreEntity.getN300());
+        s.setN100(scoreEntity.getN100());
+        s.setN50(scoreEntity.getN50());
+        s.setNgeki(scoreEntity.getNgeki());
+        s.setNkatu(scoreEntity.getNkatu());
+        s.setNmiss(scoreEntity.getNmiss());
+        s.setScore(scoreEntity.getScore());
+        s.setMax_combo(scoreEntity.getMaxCombo());
+        s.setPerfect(scoreEntity.getPerfect());
+        s.setGrade(scoreEntity.getGrade());
+        s.setMode(scoreEntity.getMode());
+        s.setPlaytime(scoreEntity.getPlayTime().toInstant(ZoneOffset.UTC).toEpochMilli());
+        s.setFlags(scoreEntity.getClientFlags());
+        s.setMods(scoreEntity.getMods());
         s.setMapMd5(beatmap.getMd5());
-        s.setChecksum(scoreResult.getString("online_checksum"));
-        s.setUsername(scoreResult.getString("name"));
+        s.setUsername(scoreEntity.getUser().getName());
+        s.setAccuracy(scoreEntity.getAcc());
 
         return s;
     }
@@ -68,34 +82,8 @@ public class Score {
         return s;
     }
 
-    public static Score fromResultSet(ResultSet scoreResult) throws SQLException {
-        Score s = new Score();
-        s.setId(scoreResult.getInt("id"));
-        s.setPlayerId(scoreResult.getInt("userid"));
-        s.setN300(scoreResult.getInt("n300"));
-        s.setN100(scoreResult.getInt("n100"));
-        s.setN50(scoreResult.getInt("n50"));
-        s.setNgeki(scoreResult.getInt("ngeki"));
-        s.setNkatu(scoreResult.getInt("nkatu"));
-        s.setNmiss(scoreResult.getInt("nmiss"));
-        s.setScore(scoreResult.getLong("score"));
-        s.setMax_combo(scoreResult.getInt("max_combo"));
-        s.setPerfect(scoreResult.getBoolean("perfect"));
-        s.setGrade(scoreResult.getString("grade"));
-        s.setMode(scoreResult.getInt("mode"));
-        s.setPlaytime(
-            scoreResult.getTimestamp("play_time")
-                .toInstant()
-                .getEpochSecond()
-        );
-        s.setFlags(scoreResult.getInt("client_flags"));
-        s.setMods(scoreResult.getInt("mods"));
-        s.setMapMd5(scoreResult.getString("map_md5"));
-        s.setAccuracy(AccuracyCalculator.calculateAccuracy(s));
-        return s;
-    }
 
-    public static String buildScoreWebString(Score s, int scoreId, int submitted) {
+    public static String buildScoreWebString(Score s, long scoreId, int submitted) {
         return "\n" + s.getId() + "|" + s.getUsername() + "|" + s.getScore() + "|" + s.getMax_combo() + "|"
                 + s.getN50() + "|" + s.getN100() + "|" + s.getN300() + "|" + s.getNmiss() + "|" + s.getNkatu() + "|"
                 + s.getNgeki() + "|" + (s.isPerfect() ? 1 : 0) + "|" + s.getMods() + "|" + s.getPlayerId() + "|"

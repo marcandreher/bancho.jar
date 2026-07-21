@@ -1,27 +1,32 @@
 package com.osuserverlist.bjar.models.database;
 
 import java.io.Serializable;
-import java.sql.ResultSet;
 
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Data
+@Entity
+@Table(name = "achievements")
 public class AchievementEntity {
-    private int id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer id;
+
+    @Column(name = "file", length = 128, nullable = false, unique = true)
     private String file;
+
+    @Column(name = "name", length = 128, nullable = false, unique = true)
     private String name;
+
+    @Column(name = "desc", length = 256, nullable = false, unique = true)
     private String description;
+
+    @Column(name = "cond", length = 64, nullable = false)
     private String condition;
 
+    @Transient
     private Serializable conditionCompiled;
-
-    public static AchievementEntity fromResultSet(ResultSet achievementResult) throws java.sql.SQLException {
-        AchievementEntity achievement = new AchievementEntity();
-        achievement.setId(achievementResult.getInt("id"));
-        achievement.setFile(achievementResult.getString("file"));
-        achievement.setName(achievementResult.getString("name"));
-        achievement.setDescription(achievementResult.getString("desc"));
-        achievement.setCondition(achievementResult.getString("cond"));
-        return achievement;
-    }
 }

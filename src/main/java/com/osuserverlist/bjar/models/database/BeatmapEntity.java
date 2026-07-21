@@ -1,116 +1,151 @@
 package com.osuserverlist.bjar.models.database;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 
 import com.osuserverlist.bjar.App;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 
+import jakarta.persistence.*;
 import lombok.Data;
 import me.skiincraft.api.ousu.entity.beatmap.Beatmap;
 
 @Data
+@Entity
+@Table(name = "maps")
 public class BeatmapEntity {
-    private long id;
-    private long setId;
-    private int status;
+
+    @Id
+    @Column(name = "id")
+    private Long id;
+
+    @Column(name = "server", nullable = false)
+    private String server = "osu!";
+
+    @Column(name = "set_id", nullable = false)
+    private Long setId;
+
+    @Column(name = "status", nullable = false)
+    private Integer status;
+
+    @Column(name = "md5", length = 32, nullable = false, unique = true)
     private String md5;
+
+    @Column(name = "artist", length = 128, nullable = false)
     private String artist;
+
+    @Column(name = "title", length = 128, nullable = false)
     private String title;
+
+    @Column(name = "version", length = 128, nullable = false)
     private String version;
+
+    @Column(name = "creator", length = 19, nullable = false)
     private String creator;
+
+    @Column(name = "filename", length = 256, nullable = false)
     private String filename;
-    private String lastUpdate;
-    private int totalLength;
-    private int maxCombo;
-    private boolean frozen;
-    private int plays;
-    private int passes;
-    private int mode;
-    private float bpm;
-    private float cs;
-    private float ar;
-    private float od;
-    private float hp;
-    private float diff;
+
+    @Column(name = "last_update", nullable = false)
+    private LocalDateTime lastUpdate;
+
+    @Column(name = "total_length", nullable = false)
+    private Integer totalLength;
+
+    @Column(name = "max_combo", nullable = false)
+    private Integer maxCombo;
+
+    @Column(name = "frozen", nullable = false)
+    private Boolean frozen = false;
+
+    @Column(name = "plays", nullable = false)
+    private Integer plays = 0;
+
+    @Column(name = "passes", nullable = false)
+    private Integer passes = 0;
+
+    @Column(name = "mode", nullable = false)
+    private Integer mode;
+
+    @Column(name = "bpm", nullable = false)
+    private Float bpm;
+
+    @Column(name = "cs", nullable = false)
+    private Float cs;
+
+    @Column(name = "ar", nullable = false)
+    private Float ar;
+
+    @Column(name = "od", nullable = false)
+    private Float od;
+
+    @Column(name = "hp", nullable = false)
+    private Float hp;
+
+    @Column(name = "diff", nullable = false)
+    private Float diff;
 
     public String toEmbed() {
-        return String.format("[https://osu.%s/beatmapsets/%s#/%s %s - %s [%s]]", App.server.enviromentConfig.getDomain(), setId, id, artist, title, version);
+        return String.format(
+            "[https://osu.%s/beatmapsets/%s#/%s %s - %s [%s]]",
+            App.server.enviromentConfig.getDomain(),
+            setId,
+            id,
+            artist,
+            title,
+            version
+        );
     }
 
     public static String toEmbed(long id, long setId, String artist, String title, String version) {
-        return String.format("[https://osu.%s/beatmapsets/%s#/%s %s - %s [%s]]", App.server.enviromentConfig.getDomain(), setId, id, artist, title, version);
+        return String.format(
+            "[https://osu.%s/beatmapsets/%s#/%s %s - %s [%s]]",
+            App.server.enviromentConfig.getDomain(),
+            setId,
+            id,
+            artist,
+            title,
+            version
+        );
     }
 
     public static BeatmapEntity fromBeatmap(Beatmap beatmap) {
-        BeatmapEntity beatmapEntity = new BeatmapEntity();
-        beatmapEntity.id = beatmap.getBeatmapId();
-        beatmapEntity.setId = beatmap.getBeatmapSetId();
-        beatmapEntity.status = beatmap.getApprovated().getId();
-        beatmapEntity.md5 = beatmap.getFileMD5();
-        beatmapEntity.artist = beatmap.getArtist();
-        beatmapEntity.title = beatmap.getTitle();
-        beatmapEntity.version = beatmap.getVersion();
-        beatmapEntity.creator = beatmap.getCreatorName();
-        beatmapEntity.filename = getFileName(beatmap);
-        beatmapEntity.lastUpdate = OffsetDateTime.parse(beatmap.getLastUpdateDate().toString())
-            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        beatmapEntity.totalLength = beatmap.getTotalLength();
-        beatmapEntity.maxCombo = beatmap.getMaxCombo();
-        beatmapEntity.frozen = false;
-        beatmapEntity.plays = 0;
-        beatmapEntity.passes = 0;
-        beatmapEntity.mode = beatmap.getGameMode().getId();
-        beatmapEntity.bpm = beatmap.getBPM();
-        beatmapEntity.cs = beatmap.getDifficultApproach();
-        beatmapEntity.ar = beatmap.getDifficultOverall();
-        beatmapEntity.od = beatmap.getDifficultSize();
-        beatmapEntity.hp = beatmap.getDifficultDrain();
-        beatmapEntity.diff = (float)beatmap.getDifficultAim();
-        return beatmapEntity;
-    }
 
-    public static BeatmapEntity fromResultSet(ResultSet mapResult) throws SQLException {
-        BeatmapEntity beatmapEntity = new BeatmapEntity();
-        beatmapEntity.id = mapResult.getLong("id");
-        beatmapEntity.setId = mapResult.getLong("set_id");
-        beatmapEntity.status = mapResult.getInt("status");
-        beatmapEntity.md5 = mapResult.getString("md5");
-        beatmapEntity.artist = mapResult.getString("artist");
-        beatmapEntity.title = mapResult.getString("title");
-        beatmapEntity.version = mapResult.getString("version");
-        beatmapEntity.creator = mapResult.getString("creator");
-        beatmapEntity.filename = mapResult.getString("filename");
-        beatmapEntity.lastUpdate = mapResult.getString("last_update");
-        beatmapEntity.totalLength = mapResult.getInt("total_length");
-        beatmapEntity.maxCombo = mapResult.getInt("max_combo");
-        beatmapEntity.frozen = mapResult.getBoolean("frozen");
-        beatmapEntity.plays = mapResult.getInt("plays");
-        beatmapEntity.passes = mapResult.getInt("passes");
-        beatmapEntity.mode = mapResult.getInt("mode");
-        beatmapEntity.bpm = mapResult.getFloat("bpm");
-        beatmapEntity.cs = mapResult.getFloat("cs");
-        beatmapEntity.ar = mapResult.getFloat("ar");
-        beatmapEntity.od = mapResult.getFloat("od");
-        beatmapEntity.hp = mapResult.getFloat("hp");
-        beatmapEntity.diff = mapResult.getFloat("diff");
-        return beatmapEntity;
+        BeatmapEntity entity = new BeatmapEntity();
+
+        entity.id = beatmap.getBeatmapId();
+        entity.setId = beatmap.getBeatmapSetId();
+        entity.status = beatmap.getApprovated().getId();
+        entity.md5 = beatmap.getFileMD5();
+        entity.artist = beatmap.getArtist();
+        entity.title = beatmap.getTitle();
+        entity.version = beatmap.getVersion();
+        entity.creator = beatmap.getCreatorName();
+        entity.filename = getFileName(beatmap);
+        entity.lastUpdate = OffsetDateTime.parse(
+                beatmap.getLastUpdateDate().toString())
+                .toLocalDateTime();
+        entity.totalLength = beatmap.getTotalLength();
+        entity.maxCombo = beatmap.getMaxCombo();
+        entity.frozen = false;
+        entity.plays = 0;
+        entity.passes = 0;
+        entity.mode = beatmap.getGameMode().getId();
+        entity.bpm = beatmap.getBPM();
+        entity.cs = beatmap.getDifficultApproach();
+        entity.ar = beatmap.getDifficultOverall();
+        entity.od = beatmap.getDifficultSize();
+        entity.hp = beatmap.getDifficultDrain();
+        entity.diff = (float) beatmap.getDifficultAim();
+
+        return entity;
     }
 
     public static String getFileName(Beatmap beatmap) {
-        return String.format("%s - %s [%s].osu", beatmap.getArtist(), beatmap.getTitle(), beatmap.getVersion());
-    }
-
-    public static void insert(MySQL mysql, int id, int setId, int status, String md5, String artist, String title,
-            String version,
-            String creator,
-            String filename, String lastUpdate, int totalLength, int maxCombo, boolean frozen, int plays, int passes,
-            int mode, float bpm, float cs, float ar, float od, float hp, float diff) {
-        mysql.exec("INSERT INTO `maps` (`id`, `set_id`, `status`, `md5`, `artist`, `title`, `version`, `creator`, `filename`, " +
-                "`last_update`, `total_length`, `max_combo`, `frozen`, `plays`, `passes`, `mode`, `bpm`, `cs`, `ar`, " +
-                "`od`, `hp`, `diff`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                id, setId, status, md5, artist, title, version, creator, filename, lastUpdate, totalLength, maxCombo, frozen, plays, passes, mode, bpm, cs, ar, od, hp, diff);
+        return String.format(
+            "%s - %s [%s].osu",
+            beatmap.getArtist(),
+            beatmap.getTitle(),
+            beatmap.getVersion()
+        );
     }
 }

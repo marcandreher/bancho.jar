@@ -1,6 +1,5 @@
 package com.osuserverlist.bjar;
 
-import java.sql.SQLException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -13,8 +12,6 @@ import com.osuserverlist.bjar.models.ConfigModels.ServerConfiguration;
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.calculations.Performance;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.modules.main.Commands;
 import com.osuserverlist.bjar.modules.main.WebEngine;
 import com.osuserverlist.bjar.modules.main.WebEngine.BanchoWebLogger;
@@ -60,22 +57,17 @@ public class Server {
         executor.scheduleAtFixedRate(new PlayerCleanupTask(), 0, 60, TimeUnit.SECONDS);
         executor.scheduleAtFixedRate(new SendChannelInfoTask(), 0, 8, TimeUnit.SECONDS);
 
-        try (MySQL mysql = Database.getConnection()) {
+    
+        Player botPlayer = playerManager.getBotPlayer(1);
 
-            Player botPlayer = playerManager.getBotPlayer(mysql, 1);
+        playerManager.add(botPlayer);
+        this.botPlayer = botPlayer;
 
-            playerManager.add(botPlayer);
-            this.botPlayer = botPlayer;
+        executor.scheduleAtFixedRate(new BotPresenceTask(), 0, 60, TimeUnit.SECONDS);
 
-            executor.scheduleAtFixedRate(new BotPresenceTask(), 0, 60, TimeUnit.SECONDS);
+        channelManager.populate();
+        achievementManager.populate();
 
-            channelManager.populate(mysql);
-            achievementManager.populate(mysql);
-
-        } catch (SQLException e) {
-            logger.error("Failed to initialize server", e);
-            System.exit(1);
-        }
 
         Commands.registerAnnotatedHandlers("com.osuserverlist.bjar.commands");
 

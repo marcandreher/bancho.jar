@@ -1,8 +1,6 @@
 package com.osuserverlist.bjar.models.essentials;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
+import com.osuserverlist.bjar.models.database.StatsEntity;
 import com.osuserverlist.bjar.modules.datastore.Redis;
 
 import lombok.Data;
@@ -41,25 +39,26 @@ public class ModeStats {
         this.playtime = stats.playtime;
     }
 
-    public static ModeStats fromResultSet(ResultSet modeResult, int i, Player player) throws SQLException {
+    public static ModeStats fromEntity(StatsEntity statsEntity, int mode, Player player) {
         ModeStats stats = new ModeStats();
-        stats.setPlayCount(modeResult.getInt("plays"));
-        stats.setTotalScore(modeResult.getLong("tscore"));
-        stats.setRankedScore(modeResult.getLong("rscore"));
-        stats.setAccuracy(modeResult.getFloat("acc"));
-        stats.setMaxCombo(modeResult.getInt("max_combo"));
-        stats.setPp(modeResult.getInt("pp"));
-        stats.setTotalHits(modeResult.getInt("total_hits"));
-        stats.setPlaytime(modeResult.getInt("playtime"));
+        stats.setMode(mode);
+        stats.setPlayCount(statsEntity.getPlays());
+        stats.setTotalScore(statsEntity.getTotalScore());
+        stats.setRankedScore(statsEntity.getRankedScore());
+        stats.setAccuracy(statsEntity.getAccuracy());
+        stats.setMaxCombo(statsEntity.getMaxCombo());
+        stats.setPp(statsEntity.getPp());
+        stats.setTotalHits(statsEntity.getTotalHits());
+        stats.setPlaytime(statsEntity.getPlaytime());
 
-        stats.setXhCount(modeResult.getInt("xh_count"));
-        stats.setXCount(modeResult.getInt("x_count"));
-        stats.setShCount(modeResult.getInt("sh_count"));
-        stats.setSCount(modeResult.getInt("s_count"));
-        stats.setACount(modeResult.getInt("a_count"));
+        stats.setXhCount(statsEntity.getXhCount());
+        stats.setXCount(statsEntity.getXCount());
+        stats.setShCount(statsEntity.getShCount());
+        stats.setSCount(statsEntity.getSCount());
+        stats.setACount(statsEntity.getACount());
 
         Long rank = Redis.getClient().zrevrank(
-                "bjar:leaderboard:" + i,
+                "bjar:leaderboard:" + mode,
                 String.valueOf(player.getId()));
 
         stats.setGlobalRank(rank != null ? Math.toIntExact(rank) + 1 : 0);

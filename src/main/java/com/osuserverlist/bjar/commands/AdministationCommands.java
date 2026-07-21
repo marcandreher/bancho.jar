@@ -6,8 +6,6 @@ import java.util.stream.Collectors;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.modules.main.Commands.BanchoCommand;
 import com.osuserverlist.bjar.modules.main.Commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.main.Commands.CommandCategory;
@@ -90,18 +88,11 @@ public class AdministationCommands extends BanchoCommandHandler {
             return;
         }
 
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository userRepo = new UserRepository(mysql);
-            applyPrivilegeChange(session, userRepo, username, privilege, grant);
-        } catch (Exception e) {
-            e.printStackTrace();
-            session.sendAnswer(grant
-                    ? "Failed to add privilege due to an internal error."
-                    : "Failed to remove privilege due to an internal error.");
-        }
+   
+        applyPrivilegeChange(session, username, privilege, grant);
     }
 
-    private void applyPrivilegeChange(Session session, UserRepository userRepo, String username, Privileges privilege, boolean grant) throws Exception {
+    private void applyPrivilegeChange(Session session, String username, Privileges privilege, boolean grant) {
         Player targetPlayer = session.server.playerManager.getByUsername(username);
         int userId;
 
@@ -111,10 +102,14 @@ public class AdministationCommands extends BanchoCommandHandler {
             } else {
                 session.server.playerManager.removePriv(targetPlayer, privilege);
             }
-            userRepo.updateUserPrivileges(targetPlayer.getId(), targetPlayer.getServerPrivileges());
+
+            UserEntity userEntity = targetPlayer.getEntity();
+            userEntity.setPrivileges(targetPlayer.getServerPrivileges());
+            UserRepository.save(userEntity);
+
             userId = targetPlayer.getId();
         } else {
-            UserEntity user = userRepo.getUserByName(username);
+            UserEntity user = UserRepository.findByName(username);
 
             if (user == null) {
                 session.sendAnswer("Player not found: " + username);
@@ -122,10 +117,12 @@ public class AdministationCommands extends BanchoCommandHandler {
             }
 
             int updatedPrivileges = grant
-                    ? user.getPriv() | privilege.getValue()
-                    : user.getPriv() & ~privilege.getValue();
+                    ? user.getPrivileges() | privilege.getValue()
+                    : user.getPrivileges() & ~privilege.getValue();
 
-            userRepo.updateUserPrivileges(user.getId(), updatedPrivileges);
+            user.setPrivileges(updatedPrivileges);
+            UserRepository.save(user);
+
             userId = user.getId();
         }
 
@@ -153,13 +150,8 @@ public class AdministationCommands extends BanchoCommandHandler {
 
         int supporterExpiry = (int) (System.currentTimeMillis() / 1000L) + durationSeconds;
 
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository userRepo = new UserRepository(mysql);
-            applySupporterChange(session, userRepo, username, true, durationSeconds, supporterExpiry);
-        } catch (Exception e) {
-            e.printStackTrace();
-            session.sendAnswer("Failed to grant supporter to " + username + " due to an internal error.");
-        }
+        
+        applySupporterChange(session, username, true, durationSeconds, supporterExpiry);
     }
 
     private void handleSupporterRemove(Session session, String[] args) {
@@ -170,16 +162,11 @@ public class AdministationCommands extends BanchoCommandHandler {
 
         String username = args[0];
 
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository userRepo = new UserRepository(mysql);
-            applySupporterChange(session, userRepo, username, false, 0, 0);
-        } catch (Exception e) {
-            e.printStackTrace();
-            session.sendAnswer("Failed to remove supporter from " + username + " due to an internal error.");
-        }
+        applySupporterChange(session, username, false, 0, 0);
+   
     }
 
-    private void applySupporterChange(Session session, UserRepository userRepo, String username, boolean grant, int durationSeconds, int supporterExpiry) throws Exception {
+    private void applySupporterChange(Session session, String username, boolean grant, int durationSeconds, int supporterExpiry) {
         Player targetPlayer = session.server.playerManager.getByUsername(username);
         int userId;
 
@@ -189,11 +176,15 @@ public class AdministationCommands extends BanchoCommandHandler {
             } else {
                 session.server.playerManager.removePriv(targetPlayer, Privileges.SUPPORTER);
             }
-            userRepo.updateUserPrivileges(targetPlayer.getId(), targetPlayer.getServerPrivileges());
-            userRepo.updateUserDonor(targetPlayer.getId(), supporterExpiry);
+
+            UserEntity userEntity = targetPlayer.getEntity();
+            userEntity.setDonorEnd(supporterExpiry);
+            userEntity.setPrivileges(targetPlayer.getServerPrivileges());
+            UserRepository.save(userEntity);
+
             userId = targetPlayer.getId();
         } else {
-            UserEntity user = userRepo.getUserByName(username);
+            UserEntity user = UserRepository.findByName(username);
 
             if (user == null) {
                 session.sendAnswer("Player not found: " + username);
@@ -201,11 +192,13 @@ public class AdministationCommands extends BanchoCommandHandler {
             }
 
             int updatedPrivileges = grant
-                    ? user.getPriv() | Privileges.SUPPORTER.getValue()
-                    : user.getPriv() & ~Privileges.SUPPORTER.getValue();
+                    ? user.getPrivileges() | Privileges.SUPPORTER.getValue()
+                    : user.getPrivileges() & ~Privileges.SUPPORTER.getValue();
 
-            userRepo.updateUserPrivileges(user.getId(), updatedPrivileges);
-            userRepo.updateUserDonor(user.getId(), supporterExpiry);
+            user.setDonorEnd(supporterExpiry);
+            user.setPrivileges(updatedPrivileges);
+            UserRepository.save(user);
+            
             userId = user.getId();
         }
 

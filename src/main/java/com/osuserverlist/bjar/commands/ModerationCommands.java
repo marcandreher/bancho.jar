@@ -6,8 +6,6 @@ import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.modules.main.Commands.BanchoCommand;
 import com.osuserverlist.bjar.modules.main.Commands.BanchoCommandHandler;
 import com.osuserverlist.bjar.modules.main.Commands.CommandCategory;
@@ -114,32 +112,25 @@ public class ModerationCommands extends BanchoCommandHandler {
             return;
         }
 
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository userRepo = new UserRepository(mysql);
-            applyRestriction(session, userRepo, sender, username, reason, restrict);
-        } catch (Exception e) {
-            e.printStackTrace();
-            session.sendAnswer(restrict
-                    ? "Failed to restrict " + username + " due to an internal error."
-                    : "Failed to unrestrict " + username + " due to an internal error.");
-        }
+        
+        applyRestriction(session, sender, username, reason, restrict);
     }
 
-    private void applyRestriction(Session session, UserRepository userRepo, Player sender, String username, String reason, boolean restrict) throws Exception {
+    private void applyRestriction(Session session, Player sender, String username, String reason, boolean restrict) {
         Player targetPlayer = session.server.playerManager.getByUsername(username);
 
         if (targetPlayer != null) {
-            setOnlinePlayerRestricted(session.server, userRepo, targetPlayer, restrict);
+            setOnlinePlayerRestricted(session.server, targetPlayer, restrict);
             logger.info("Player {} has been {} by {} for reason: {}", targetPlayer, restrict ? "restricted" : "unrestricted", sender, reason);
         } else {
-            UserEntity user = userRepo.getUserByName(username);
+            UserEntity user = UserRepository.findByName(username);
 
             if (user == null) {
                 session.sendAnswer("Player not found: " + username);
                 return;
             }
 
-            setOfflineUserRestricted(userRepo, user, restrict);
+            setOfflineUserRestricted(user, restrict);
             logger.info("Player {} has been {} by {} for reason: {}", user, restrict ? "restricted" : "unrestricted", sender, reason);
         }
 
@@ -148,12 +139,14 @@ public class ModerationCommands extends BanchoCommandHandler {
                 : "Successfully unrestricted " + username + " for: " + reason);
     }
 
-    private void setOnlinePlayerRestricted(Server server, UserRepository userRepo, Player targetPlayer, boolean restrict) throws Exception {
+    private void setOnlinePlayerRestricted(Server server, Player targetPlayer, boolean restrict) {
         int updatedPrivileges = restrict
                 ? targetPlayer.getServerPrivileges() & ~Privileges.UNRESTRICTED.getValue()
                 : targetPlayer.getServerPrivileges() | Privileges.UNRESTRICTED.getValue();
 
-        userRepo.updateUserPrivileges(targetPlayer.getId(), updatedPrivileges);
+        UserEntity userEntity = targetPlayer.getEntity();
+        userEntity.setPrivileges(updatedPrivileges);
+        UserRepository.save(userEntity);
 
         if (restrict) {
             server.playerManager.restrict(targetPlayer);
@@ -162,12 +155,13 @@ public class ModerationCommands extends BanchoCommandHandler {
         }
     }
 
-    private void setOfflineUserRestricted(UserRepository userRepo, UserEntity user, boolean restrict) throws Exception {
+    private void setOfflineUserRestricted(UserEntity user, boolean restrict)  {
         int updatedPrivileges = restrict
-                ? user.getPriv() & ~Privileges.UNRESTRICTED.getValue()
-                : user.getPriv() | Privileges.UNRESTRICTED.getValue();
+                ? user.getPrivileges() & ~Privileges.UNRESTRICTED.getValue()
+                : user.getPrivileges() | Privileges.UNRESTRICTED.getValue();
 
-        userRepo.updateUserPrivileges(user.getId(), updatedPrivileges);
+        user.setPrivileges(updatedPrivileges);
+        UserRepository.save(user);
     }
 
     private void handleSilence(Player sender, Session session, String[] args, boolean silence) {
@@ -201,32 +195,25 @@ public class ModerationCommands extends BanchoCommandHandler {
 
         int silenceEnd = silence ? (int) ((System.currentTimeMillis() / 1000L) + durationSeconds) : 0;
 
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository userRepo = new UserRepository(mysql);
-            applySilence(session, userRepo, sender, username, reason, silence, durationSeconds, silenceEnd);
-        } catch (Exception e) {
-            e.printStackTrace();
-            session.sendAnswer(silence
-                    ? "Failed to silence " + username + " due to an internal error."
-                    : "Failed to unsilence " + username + " due to an internal error.");
-        }
+        applySilence(session, sender, username, reason, silence, durationSeconds, silenceEnd);
+        
     }
 
-    private void applySilence(Session session, UserRepository userRepo, Player sender, String username, String reason, boolean silence, int durationSeconds, int silenceEnd) throws Exception {
+    private void applySilence(Session session, Player sender, String username, String reason, boolean silence, int durationSeconds, int silenceEnd) {
         Player targetPlayer = session.server.playerManager.getByUsername(username);
 
         if (targetPlayer != null) {
-            setOnlinePlayerSilenced(session.server, userRepo, targetPlayer, silence, silenceEnd);
+            setOnlinePlayerSilenced(session.server, targetPlayer, silence, silenceEnd);
             logSilenceAction(targetPlayer.toString(), sender.toString(), reason, silence, durationSeconds);
         } else {
-            UserEntity user = userRepo.getUserByName(username);
+            UserEntity user = UserRepository.findByName(username);
 
             if (user == null) {
                 session.sendAnswer("Player not found: " + username);
                 return;
             }
 
-            setOfflineUserSilenced(userRepo, user, silenceEnd);
+            setOfflineUserSilenced(user, silenceEnd);
             logSilenceAction(user.toString(), sender.toString(), reason, silence, durationSeconds);
         }
 
@@ -235,8 +222,10 @@ public class ModerationCommands extends BanchoCommandHandler {
                 : "Successfully unsilenced " + username + " for: " + reason);
     }
 
-    private void setOnlinePlayerSilenced(Server server, UserRepository userRepo, Player targetPlayer, boolean silence, int silenceEnd) throws Exception {
-        userRepo.updateUserSilence(targetPlayer.getId(), silenceEnd);
+    private void setOnlinePlayerSilenced(Server server, Player targetPlayer, boolean silence, int silenceEnd) {
+        UserEntity userEntity = targetPlayer.getEntity();
+        userEntity.setSilenceEnd(silenceEnd);
+        UserRepository.save(userEntity);
 
         if (silence) {
             server.playerManager.silence(targetPlayer, silenceEnd);
@@ -245,8 +234,9 @@ public class ModerationCommands extends BanchoCommandHandler {
         }
     }
 
-    private void setOfflineUserSilenced(UserRepository userRepo, UserEntity user, int silenceEnd) throws Exception {
-        userRepo.updateUserSilence(user.getId(), silenceEnd);
+    private void setOfflineUserSilenced(UserEntity user, int silenceEnd) {
+        user.setSilenceEnd(silenceEnd);
+        UserRepository.save(user);
     }
 
     private void logSilenceAction(String target, String sender, String reason, boolean silence, int durationSeconds) {

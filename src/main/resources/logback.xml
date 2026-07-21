@@ -24,23 +24,18 @@
         </encoder>
     </appender>
 
-    <!-- Disable all Jetty logs -->
-    <logger name="org.eclipse.jetty" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.server" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.server.Server" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.server.ServerConnector" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.server.AbstractConnector" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.server.AbstractNCSARequestLog" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.server.RequestLog" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.servlet" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.servlet.ServletHandler" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.servlet.ServletContextHandler" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.http" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.io" level="OFF" additivity="false" />
-    <logger name="org.eclipse.jetty.util" level="OFF" additivity="false" />
-    <logger name="net.dv8tion.jda" level="OFF" additivity="false" />
-    <logger name="io.javalin.Javalin" level="OFF" additivity="false" />
-    <logger name="com.zaxxer.hikari" level="ERROR" additivity="true" />
+    <!-- Silence Jetty -->
+    <logger name="org.eclipse.jetty" level="ERROR" additivity="false"/>
+
+    <!-- Silence Javalin -->
+    <logger name="io.javalin" level="ERROR" additivity="false"/>
+
+    <!-- Hikari -->
+    <logger name="com.zaxxer.hikari" level="ERROR"/>
+
+    <!-- Ebean SQL debugging -->
+    <logger name="io.ebean.SQL" level="DEBUG"/>
+    <logger name="io.ebean.TXN" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE" />

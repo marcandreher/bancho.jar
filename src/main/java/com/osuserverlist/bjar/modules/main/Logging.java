@@ -24,6 +24,17 @@ public class Logging {
             if (level == ProductionLevel.DEVELOPMENT) {
                 rootLogger.setLevel(Level.DEBUG);
             }
+
+            // Ebean Logging
+            Logger sqlLogger = (Logger) LoggerFactory.getLogger("io.ebean.SQL");
+            Logger txnLogger = (Logger) LoggerFactory.getLogger("io.ebean.TXN");
+            if(level == ProductionLevel.PRODUCTION) {
+                sqlLogger.setLevel(Level.WARN);
+                txnLogger.setLevel(Level.WARN);
+            } else {
+                sqlLogger.setLevel(Level.DEBUG);
+                txnLogger.setLevel(Level.DEBUG);
+            }
         }
     }
 

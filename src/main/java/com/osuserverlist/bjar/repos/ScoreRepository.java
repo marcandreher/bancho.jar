@@ -1,79 +1,258 @@
 package com.osuserverlist.bjar.repos;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.List;
 
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
-import com.osuserverlist.bjar.models.essentials.Score;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
+import com.osuserverlist.bjar.models.database.ScoreEntity;
+import com.osuserverlist.bjar.models.database.UserEntity;
+import com.osuserverlist.bjar.models.essentials.Player;
+import com.osuserverlist.bjar.models.osu.OsuClientModels.LeaderboardType;
 
-public class ScoreRepository {
+import io.ebean.DB;
+import io.ebean.SqlRow;
 
-    private final MySQL mysql;
+public final class ScoreRepository {
 
-    public ScoreRepository(MySQL mysql) {
-        this.mysql = mysql;
+    public static ScoreEntity getBestScore(UserEntity user, String beatmapMd5, int mode) {
+        return DB.find(ScoreEntity.class)
+                .where()
+                .eq("user", user)
+                .eq("mapMd5", beatmapMd5)
+                .eq("mode", mode)
+                .eq("status", 2)
+                .orderBy("score desc")
+                .setMaxRows(1)
+                .findOne();
     }
 
-    public Score getBestScoreForPlayerOnBeatmap(int playerId, String beatmapMd5, int mode) throws SQLException {
-        ResultSet bestScoreResult = mysql.query(GET_BEST_SCORE_FOR_PLAYER_ON_BEATMAP_QUERY, playerId, beatmapMd5, mode)
-                .executeQuery();
-        if (bestScoreResult.next()) {
-            return Score.fromResultSet(bestScoreResult);
+    public static ScoreEntity getBestScore(int userId, String beatmapMd5, int mode) {
+        return DB.find(ScoreEntity.class)
+                .where()
+                .eq("user.id", userId)
+                .eq("mapMd5", beatmapMd5)
+                .eq("mode", mode)
+                .eq("status", 2)
+                .orderBy("score desc")
+                .setMaxRows(1)
+                .findOne();
+    }
+
+    public static int getRank(String beatmapMd5, int mode, long score) {
+
+        SqlRow row = DB.sqlQuery("""
+                SELECT COUNT(*) + 1 AS osu_rank
+                FROM (
+                    SELECT MAX(score) AS best_score
+                    FROM scores
+                    WHERE map_md5 = :md5
+                      AND mode = :mode
+                      AND status = 2
+                    GROUP BY userid
+                ) best_scores
+                WHERE best_score > :score
+                """)
+                .setParameter("md5", beatmapMd5)
+                .setParameter("mode", mode)
+                .setParameter("score", score)
+                .findOne();
+
+        return row == null ? 1 : row.getInteger("osu_rank");
+    }
+
+    public static int getPreviousRank(String beatmapMd5,
+            int mode,
+            UserEntity user,
+            long score) {
+
+        SqlRow row = DB.sqlQuery("""
+                SELECT COUNT(*) + 1 AS osu_rank
+                FROM (
+                    SELECT MAX(score) AS best_score
+                    FROM scores
+                    WHERE map_md5 = :md5
+                      AND mode = :mode
+                      AND userid <> :userId
+                      AND status = 2
+                    GROUP BY userid
+                ) best_scores
+                WHERE best_score > :score
+                """)
+                .setParameter("md5", beatmapMd5)
+                .setParameter("mode", mode)
+                .setParameter("userId", user.getId())
+                .setParameter("score", score)
+                .findOne();
+
+        return row == null ? 1 : row.getInteger("osu_rank");
+    }
+
+    public static ScoreEntity findById(long id) {
+        return DB.find(ScoreEntity.class, id);
+    }
+
+    public static void save(ScoreEntity score) {
+        DB.save(score);
+    }
+
+    public static void delete(ScoreEntity score) {
+        DB.delete(score);
+    }
+
+    public static void updateStatus(long scoreId, int status) {
+
+        DB.find(ScoreEntity.class)
+                .where()
+                .idEq(scoreId)
+                .asUpdate()
+                .set("status", status)
+                .update();
+    }
+
+    public static List<ScoreEntity> getGlobalLeaderboard(String md5, int mode) {
+
+        return DB.find(ScoreEntity.class)
+                .fetch("user")
+                .where()
+                .eq("mapMd5", md5)
+                .eq("mode", mode)
+                .eq("status", 2)
+                .orderBy("score desc, user.name")
+                .setMaxRows(100)
+                .findList();
+    }
+
+    public static List<ScoreEntity> getGlobalModsLeaderboard(String md5,
+            int mode,
+            int mods) {
+
+        return DB.find(ScoreEntity.class)
+                .fetch("user")
+                .where()
+                .eq("mapMd5", md5)
+                .eq("mode", mode)
+                .eq("mods", mods)
+                .eq("status", 2)
+                .orderBy("score desc, user.name")
+                .setMaxRows(100)
+                .findList();
+    }
+
+    public static List<ScoreEntity> getCountryLeaderboard(String md5,
+            int mode,
+            String country) {
+
+        return DB.find(ScoreEntity.class)
+                .fetch("user")
+                .where()
+                .eq("mapMd5", md5)
+                .eq("mode", mode)
+                .eq("status", 2)
+                .eq("user.country", country)
+                .orderBy("score desc, user.name")
+                .setMaxRows(100)
+                .findList();
+    }
+
+    public static List<ScoreEntity> getFriendsLeaderboard(String md5,
+            int mode,
+            int userId) {
+
+        String sql = """
+                SELECT s.*
+                FROM (
+                    SELECT s.*,
+                           ROW_NUMBER() OVER (PARTITION BY s.userid ORDER BY s.score DESC) rn
+                    FROM scores s
+                    WHERE s.map_md5 = :md5
+                      AND s.mode = :mode
+                      AND s.status = 2
+                      AND (
+                            s.userid = :userId
+                         OR s.userid IN (
+                                SELECT user2
+                                FROM relationships
+                                WHERE user1 = :userId
+                                  AND type = 'friend'
+                         )
+                      )
+                ) s
+                WHERE rn = 1
+                ORDER BY score DESC
+                LIMIT 100
+                """;
+
+        return DB.findNative(ScoreEntity.class, sql)
+                .setParameter("md5", md5)
+                .setParameter("mode", mode)
+                .setParameter("userId", userId)
+                .findList();
+    }
+
+    public static List<ScoreEntity> getLeaderboard(BeatmapEntity beatmap,
+            int mode,
+            LeaderboardType type,
+            int mods,
+            Player player) {
+        return switch (type) {
+            case GLOBAL ->
+                getGlobalLeaderboard(beatmap.getMd5(), mode);
+
+            case GLOBAL_MODS ->
+                getGlobalModsLeaderboard(beatmap.getMd5(), mode, mods);
+
+            case COUNTRY ->
+                getCountryLeaderboard(beatmap.getMd5(), mode, String.valueOf(player.getCountry()));
+
+            case FRIENDS ->
+                getFriendsLeaderboard(beatmap.getMd5(), mode, player.getId());
+        };
+    }
+
+    public static double calculateWeightedPp(long userId, int mode) {
+        SqlRow row = DB.sqlQuery("""
+                SELECT SUM(pp * POW(0.95, rn - 1)) AS weighted_pp
+                FROM (
+                    SELECT pp,
+                           ROW_NUMBER() OVER (ORDER BY pp DESC) AS rn
+                    FROM (
+                        SELECT MAX(s.pp) AS pp
+                        FROM scores s
+                        JOIN maps m ON s.map_md5 = m.md5
+                        WHERE s.userid = :userId
+                          AND s.mode = :mode
+                          AND m.status = 1
+                          AND s.status = 2
+                        GROUP BY s.map_md5
+                    ) best_scores
+                ) ranked
+                """)
+                .setParameter("userId", userId)
+                .setParameter("mode", mode)
+                .findOne();
+
+        if (row == null) {
+            return 0.0;
         }
-        return null;
+
+        Double weightedPp = row.getDouble("weighted_pp");
+        return weightedPp != null ? weightedPp : 0.0;
     }
 
-    public int getPreviousMapRank(String beatmapMd5, int mode, int playerId, long score) throws SQLException {
-        ResultSet rankResult = mysql.query(GET_PREVIOUS_MAP_RANK_QUERY, beatmapMd5, mode, playerId, score)
-                .executeQuery();
-        if (rankResult.next()) {
-            return rankResult.getInt("osu_rank");
-        }
-        return 0;
+    public static List<ScoreEntity> getRankedScoresByMode(int mode) {
+        return DB.find(ScoreEntity.class)
+                .where()
+                .eq("status", 2)
+                .eq("mode", mode)
+                .orderBy("pp desc")
+                .findList();
     }
 
-    public int getRankOnBeatmap(String beatmapMd5, int mode, int playerId, long score) throws SQLException {
-        ResultSet rankResult = mysql.query(GET_RANK_FOR_MAP_QUERY, beatmapMd5, mode, score)
-                .executeQuery();
-        if (rankResult.next()) {
-            return rankResult.getInt("osu_rank");
-        }
-        return 1;
+    public static void updatePp(long scoreId, double pp) {
+        DB.find(ScoreEntity.class)
+                .where()
+                .idEq(scoreId)
+                .asUpdate()
+                .set("pp", (float) pp)
+                .update();
     }
-
-    public void insertScore(Score s, BeatmapEntity beatmap, int scoreStatus, int mode) throws SQLException {
-        mysql.exec(INSERT_SCORE_QUERY, beatmap.getMd5(), s.getScore(), s.getPp(), s.getAccuracy(), s.getMax_combo(),
-            s.getMods(), s.getN300(), s.getN100(), s.getN50(), s.getNmiss(), s.getNgeki(),
-            s.getNkatu(), s.getGrade(), scoreStatus, mode,
-            new java.sql.Timestamp(s.getPlaytime()), 0, s.getFlags(), s.getPlayerId(),
-            s.isPerfect(), s.getChecksum());
-    }
-
-    public void updateScoreStatus(int scoreId, int newStatus) throws SQLException {
-        mysql.exec(UPDATE_SCORE_STATUS_QUERY, newStatus, scoreId);
-    }
-
-    private final static String GET_BEST_SCORE_FOR_PLAYER_ON_BEATMAP_QUERY = "SELECT * FROM scores "+
-            "WHERE userid = ? AND map_md5 = ? AND mode = ? AND status = 2 " +
-            "ORDER BY score DESC LIMIT 1";
-
-    private final static String GET_PREVIOUS_MAP_RANK_QUERY = "SELECT COUNT(*) + 1 AS osu_rank " +
-            "FROM (SELECT MAX(score) AS best_score FROM scores " +
-            "      WHERE map_md5 = ? AND mode = ? AND userid != ? AND status = 2 " +
-            "      GROUP BY userid) AS best_scores " +
-            "WHERE best_score > ?";
-
-    private final static String GET_RANK_FOR_MAP_QUERY = "SELECT COUNT(*) + 1 AS osu_rank " +
-            "FROM (SELECT MAX(score) AS best_score FROM scores " +
-            "      WHERE map_md5 = ? AND mode = ? AND status = 2 " +
-            "      GROUP BY userid) AS best_scores " +
-            "WHERE best_score > ?";
-
-    private final static String INSERT_SCORE_QUERY = "INSERT INTO `scores`(`map_md5`, `score`, `pp`, `acc`, `max_combo`, `mods`, " +
-            "`n300`, `n100`, `n50`, `nmiss`, `ngeki`, `nkatu`, `grade`, `status`, `mode`, " +
-            "`play_time`, `time_elapsed`, `client_flags`, `userid`, `perfect`, `online_checksum`) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-    private final static String UPDATE_SCORE_STATUS_QUERY = "UPDATE scores SET status = ? WHERE id = ?;";
 }

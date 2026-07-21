@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.modules.assets.AchievementDownloader;
 import com.osuserverlist.bjar.modules.assets.DefaultAssetsDownloader;
-import com.osuserverlist.bjar.modules.datastore.Database;
+import com.osuserverlist.bjar.modules.datastore.DatabaseManager;
+import com.osuserverlist.bjar.modules.datastore.DatabaseManager.ServerTimezone;
 import com.osuserverlist.bjar.modules.datastore.Redis;
-import com.osuserverlist.bjar.modules.datastore.Database.ServerTimezone;
 import com.osuserverlist.bjar.modules.main.Application;
 import com.osuserverlist.bjar.modules.main.Application.BuildInfo;
 import com.osuserverlist.bjar.modules.main.Logging.LoggerConfiguration;
@@ -45,9 +45,9 @@ public class App {
         LoggerConfiguration loggerConfig = new LoggerConfiguration(level);
         loggerConfig.apply();
 
-        Database database = new Database();
+        DatabaseManager database = new DatabaseManager();
 
-        database.connectToMySQL(config -> {
+        database.connect(config -> {
             config.setHost(dotenv.get("DB_HOST"));
             config.setUser(dotenv.get("DB_USER"));
             config.setPassword(dotenv.get("DB_PASS"));
@@ -69,6 +69,8 @@ public class App {
             if (args.length > 1 && args[1].equalsIgnoreCase("--force")) {
                 force = true;
             }
+
+            App.server.performance.loadCalculatorFromString(dotenv.get("PP_CALCULATOR"));
 
             RecalcRunnable recalcRunnable = new RecalcRunnable(force);
             recalcRunnable.run();

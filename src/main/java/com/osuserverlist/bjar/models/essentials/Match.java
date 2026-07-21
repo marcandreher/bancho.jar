@@ -88,7 +88,7 @@ public class Match {
 
     public void enqueUpdate() {
         Server server = App.server;
-        
+
         players.forEach(p -> {
             p.sendPacket(new MatchUpdatePacket(this));
         });

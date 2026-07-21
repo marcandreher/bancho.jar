@@ -1,121 +1,80 @@
 package com.osuserverlist.bjar.repos;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.osuserverlist.bjar.models.database.UserEntity;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 
-public class UserRepository {
+import io.ebean.DB;
 
-    private final MySQL mysql;
+public final class UserRepository {
 
-    public UserRepository(MySQL mysql) {
-        this.mysql = mysql;
+    public static UserEntity findById(int id) {
+        return DB.find(UserEntity.class, id);
     }
 
-    public UserEntity getUserByNameOrMail(String name, String email) throws SQLException {
-        ResultSet userResult = mysql.query(GET_USER_BY_NAME_OR_EMAIL_QUERY, name, email).executeQuery();
-
-        if (!userResult.next()) {
-            return null;
-        }
-
-        return UserEntity.fromResultSet(userResult);
+    public static UserEntity findByName(String name) {
+        return DB.find(UserEntity.class)
+                .where()
+                .eq("name", name)
+                .findOne();
     }
 
-    public UserEntity getUserByName(String name) throws SQLException {
-        ResultSet userResult = mysql.query(GET_USER_BY_NAME_QUERY, name).executeQuery();
-
-        if (!userResult.next()) {
-            return null;
-        }
-
-        return UserEntity.fromResultSet(userResult);
+    public static UserEntity findByEmail(String email) {
+        return DB.find(UserEntity.class)
+                .where()
+                .eq("email", email)
+                .findOne();
     }
 
-    public List<Integer> getFriendIds(int userId) throws SQLException {
-        List<Integer> friendIds = new ArrayList<>();
-        
-        ResultSet friendResult = mysql.query(GET_FRIEND_IDS_QUERY, userId).executeQuery();
-        while (friendResult.next()) {
-            friendIds.add(friendResult.getInt("user2"));
-        }
-        
-        return friendIds;
+    public static UserEntity findByNameOrEmail(String name, String email) {
+        return DB.find(UserEntity.class)
+                .where()
+                .or()
+                    .eq("name", name)
+                    .eq("email", email)
+                .endOr()
+                .findOne();
     }
 
-    public List<Integer> getBlockedIds(int userId) throws SQLException {
-        List<Integer> blockedIds = new ArrayList<>();
-        
-        ResultSet blockedResult = mysql.query(GET_BLOCK_IDS_QUERY, userId).executeQuery();
-        while (blockedResult.next()) {
-            blockedIds.add(blockedResult.getInt("user2"));
-        }
-        
-        return blockedIds;
+    public static List<UserEntity> findAll() {
+        return DB.find(UserEntity.class).findList();
     }
 
-    public void addFriend(int userId, int friendId) throws SQLException {
-        mysql.exec(ADD_FRIEND_QUERY, userId, friendId);
+    public static UserEntity create(String name,
+                                    String safeName,
+                                    String email,
+                                    String passwordHash) {
+
+        UserEntity user = new UserEntity();
+
+        user.setName(name);
+        user.setSafeName(safeName);
+        user.setEmail(email);
+        user.setPasswordHash(passwordHash);
+        user.setCreationTime((int) (System.currentTimeMillis() / 1000));
+
+        DB.save(user);
+
+        return user;
     }
 
-    public void addBlock(int userId, int blockId) throws SQLException {
-        mysql.exec(ADD_BLOCK_QUERY, userId, blockId);
+    public static void save(UserEntity user) {
+        DB.save(user);
     }
 
-    public void removeFriend(int userId, int friendId) throws SQLException {
-        mysql.exec(REMOVE_FRIEND_QUERY, userId, friendId, friendId, userId);
+    public static void delete(UserEntity user) {
+        DB.delete(user);
     }
 
-    public void removeBlock(int userId, int blockId) throws SQLException {
-        mysql.exec(REMOVE_BLOCK_QUERY, userId, blockId, blockId, userId);
+    public static boolean exists(int id) {
+        return DB.find(UserEntity.class)
+                .where()
+                .idEq(id)
+                .exists();
     }
 
-    public void insertStats(int userId, int mode) throws SQLException {
-        mysql.exec(INSERT_STATS_QUERY, userId, mode);
+    public static long count() {
+        return DB.find(UserEntity.class)
+                .findCount();
     }
-
-    public void insertUser(String name, String safeName, String email, String pwBcrypt) throws SQLException {
-        int creationTime = (int) (System.currentTimeMillis() / 1000);
-        mysql.exec(INSERT_USER_QUERY, name, safeName, email, pwBcrypt, creationTime);
-    }
-
-    public void updateUserPrivileges(int userId, int privileges) throws SQLException {
-        mysql.exec(UPDATE_USER_PRIVS_QUERY, privileges, userId);
-    }
-
-    public void insertIngameLogin(int userId, String ip, String osuVer, String osuStream) throws SQLException {
-        mysql.exec(INSERT_INGAME_LOGIN_QUERY, userId, ip, osuVer, osuStream);
-    }
-
-    public void updateUserCountry(int userId, String country) throws SQLException {
-        mysql.exec(UPDATE_USER_COUNTRY_QUERY, country, userId);
-    }
-
-    public void updateUserSilence(int userId, int silenceEnd) throws SQLException {
-        mysql.exec(UPDATE_USER_SILENCE_QUERY, silenceEnd, userId);
-    }
-
-    public void updateUserDonor(int userId, int donorEnd) throws SQLException {
-        mysql.exec(UPDATE_USER_DONOR_QUERY, donorEnd, userId);
-    }
-
-    private final static String GET_BLOCK_IDS_QUERY = "SELECT * FROM `relationships` WHERE `user1` = ? AND `type` = 'block'";
-    private final static String REMOVE_BLOCK_QUERY = "DELETE FROM `relationships` WHERE (`user1` = ? AND `user2` = ?) OR (`user1` = ? AND `user2` = ?) AND `type` = 'block'";
-    private final static String ADD_BLOCK_QUERY = "INSERT INTO `relationships` (`user1`, `user2`, `type`) VALUES (?, ?, 'block')";
-    private final static String REMOVE_FRIEND_QUERY = "DELETE FROM `relationships` WHERE (`user1` = ? AND `user2` = ?) OR (`user1` = ? AND `user2` = ?) AND `type` = 'friend'";
-    private final static String ADD_FRIEND_QUERY = "INSERT INTO `relationships` (`user1`, `user2`, `type`) VALUES (?, ?, 'friend')";
-    private final static String GET_FRIEND_IDS_QUERY = "SELECT * FROM `relationships` WHERE `user1` = ? AND `type` = 'friend'";
-    private final static String UPDATE_USER_SILENCE_QUERY = "UPDATE `users` SET `silence_end` = ? WHERE `id` = ?";
-    private final static String UPDATE_USER_DONOR_QUERY = "UPDATE `users` SET `donor_end` = ? WHERE `id` = ?";
-    private final static String UPDATE_USER_COUNTRY_QUERY = "UPDATE `users` SET `country` = ? WHERE `id` = ?";
-    private final static String UPDATE_USER_PRIVS_QUERY = "UPDATE `users` SET `priv` = ? WHERE `id` = ?";
-    private final static String INSERT_STATS_QUERY = "INSERT INTO `stats`(`id`, `mode`) VALUES (?,?)";
-    private final static String INSERT_USER_QUERY = "INSERT INTO `users`(`name`, `safe_name`, `email`, `pw_bcrypt`, `creation_time`) VALUES (?, ?, ?, ?, ?)";
-    private final static String INSERT_INGAME_LOGIN_QUERY = "INSERT INTO `ingame_logins` (`userid`, `ip`, `osu_ver`, `osu_stream`, `datetime`) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)";
-    private final static String GET_USER_BY_NAME_OR_EMAIL_QUERY = "SELECT * FROM `users` WHERE `name` = ? OR `email` = ?";
-    private final static String GET_USER_BY_NAME_QUERY = "SELECT * FROM `users` WHERE `name` = ?";
 }

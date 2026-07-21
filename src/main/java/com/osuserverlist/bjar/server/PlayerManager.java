@@ -1,7 +1,5 @@
 package com.osuserverlist.bjar.server;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -10,14 +8,15 @@ import java.util.function.Predicate;
 
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.Channel;
 import com.osuserverlist.bjar.models.essentials.Match;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.packets.server.LoginServerPackets.SilenceInfoPacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserQuitPacket;
+import com.osuserverlist.bjar.repos.UserRepository;
 
 public class PlayerManager {
     private final Map<String, Player> onlinePlayers = new ConcurrentHashMap<>();
@@ -105,18 +104,19 @@ public class PlayerManager {
         player.sendPacket(new SilenceInfoPacket(0));
     }
 
-    public Player getBotPlayer(MySQL mysql, int id) throws SQLException {
-        ResultSet botRs = mysql.query("SELECT * FROM `users` WHERE `id` = ?", id).executeQuery();
-
-        if (!botRs.next()) {
+    public Player getBotPlayer(int id) {
+        UserEntity entity = UserRepository.findById(id);
+        
+        if (entity == null) {
             return null;
         }
 
         // TODO: Make this more dynamic enabling mutliple bots
 
         Player botPlayer = new Player(id, true, UUID.randomUUID().toString());
-        botPlayer.setUsername(botRs.getString("name"));
+        botPlayer.setUsername(entity.getName());
         botPlayer.setCountry((short) 245); // satellite provider
+        botPlayer.setEntity(entity);
  
         for (int i = 0; i <= 8; i++) {
             ModeStats modeStats = new ModeStats();

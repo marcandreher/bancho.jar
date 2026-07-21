@@ -1,17 +1,18 @@
 package com.osuserverlist.bjar.handlers.osu;
 
-import java.sql.ResultSet;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 import org.jetbrains.annotations.NotNull;
 
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.models.database.BeatmapEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.modules.main.WebEngine.Host;
 import com.osuserverlist.bjar.modules.main.WebEngine.HttpMethod;
 import com.osuserverlist.bjar.modules.main.WebEngine.Path;
+import com.osuserverlist.bjar.repos.BeatmapRepository;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
@@ -21,8 +22,10 @@ import io.javalin.http.Handler;
 @HttpMethod("GET")
 public class OsuSearchSetHandler implements Handler {
 
+    private static final DateTimeFormatter LAST_UPDATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     @Override
-    public void handle(@NotNull Context ctx) throws Exception {
+    public void handle(@NotNull Context ctx) {
         Integer setId = ctx.queryParamAsClass("s", Integer.class).getOrNull();
         Integer bmId = ctx.queryParamAsClass("b", Integer.class).getOrNull();
         String checksum = ctx.queryParamAsClass("c", String.class).getOrNull();
@@ -31,66 +34,48 @@ public class OsuSearchSetHandler implements Handler {
         String passwordHash = ctx.queryParamAsClass("h", String.class).required().get();
 
         Server server = App.server;
-        Player player = server.playerManager.getByApiIdent(String.format("%s|%s", username, passwordHash));
+        Player player = server.playerManager.getByApiIdent(username + "|" + passwordHash);
 
         if (player == null) {
             ctx.status(401).result("Invalid credentials.");
             return;
         }
 
-        String column;
-        Object value;
+        BeatmapEntity beatmap = null;
 
         if (setId != null) {
-            column = "set_id";
-            value = setId;
+            beatmap = BeatmapRepository.findFirstBySetId(setId);
         } else if (bmId != null) {
-            column = "id";
-            value = bmId;
+            beatmap = BeatmapRepository.findById(bmId);
         } else if (checksum != null) {
-            column = "md5";
-            value = checksum;
+            beatmap = BeatmapRepository.findByMd5(checksum);
         } else {
             ctx.result("");
             return;
         }
 
-        try (MySQL mysql = Database.getConnection()) {
-            String sql = "SELECT DISTINCT set_id, artist, title, status, creator, last_update, diff FROM maps WHERE " + column
-                    + " = ?";
-            ResultSet mapResult = mysql.query(sql, value).executeQuery();
-            if (!mapResult.next()) {
-                ctx.result("");
-                return;
-            }
-
-            int foundSetId = mapResult.getInt("set_id");
-            String artist = mapResult.getString("artist");
-            String title = mapResult.getString("title");
-            String creator = mapResult.getString("creator");
-            int status = mapResult.getInt("status");
-            String lastUpdate = mapResult.getString("last_update");
-            float rating = mapResult.getFloat("diff");
-
-            String response = String.format(
-                    java.util.Locale.US,
-                    "%d.osz|%s|%s|%s|%d|%.1f|%s|%d|0|0|0|0|0",
-                    foundSetId,
-                    fix(artist),
-                    fix(title),
-                    fix(creator),
-                    status,
-                    rating,
-                    fix(lastUpdate),
-                    foundSetId);
-
-            ctx.contentType("text/plain");
-            ctx.result(response);
+        if (beatmap == null) {
+            ctx.result("");
+            return;
         }
+
+        String response = String.format(
+                Locale.US,
+                "%d.osz|%s|%s|%s|%d|%.1f|%s|%d|0|0|0|0|0",
+                beatmap.getSetId(),
+                fix(beatmap.getArtist()),
+                fix(beatmap.getTitle()),
+                fix(beatmap.getCreator()),
+                beatmap.getStatus(),
+                beatmap.getDiff(),
+                fix(beatmap.getLastUpdate().format(LAST_UPDATE_FORMAT)),
+                beatmap.getSetId());
+
+        ctx.contentType("text/plain");
+        ctx.result(response);
     }
 
     private static String fix(String s) {
-        return s.replace("|", "I");
+        return s == null ? "" : s.replace("|", "I");
     }
-
 }

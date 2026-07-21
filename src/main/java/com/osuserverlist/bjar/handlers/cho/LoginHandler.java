@@ -1,9 +1,7 @@
 package com.osuserverlist.bjar.handlers.cho;
 
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,17 +12,17 @@ import org.slf4j.LoggerFactory;
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
 import com.osuserverlist.bjar.models.ConfigModels.ServerConfiguration.WelcomeMessage;
+import com.osuserverlist.bjar.models.database.StatsEntity;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.ModeStats;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.LoginResponse;
 import com.osuserverlist.bjar.models.osu.Privileges;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.modules.main.Application.BuildInfo;
 import com.osuserverlist.bjar.modules.main.GeoLocation;
 import com.osuserverlist.bjar.modules.main.GeoLocation.Country;
 import com.osuserverlist.bjar.modules.main.GeoLocation.GeoResponse;
+import com.osuserverlist.bjar.modules.osu.OsuVersionParser;
 import com.osuserverlist.bjar.modules.packets.BanchoPacketWriter;
 import com.osuserverlist.bjar.modules.packets.ServerPacketEngine;
 import com.osuserverlist.bjar.packets.server.ChatServerPackets.ChannelAutojoinPacket;
@@ -43,6 +41,9 @@ import com.osuserverlist.bjar.packets.server.UserServerPackets.UserPresenceBundl
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserPresencePacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.UserStatsPacket;
 import com.osuserverlist.bjar.packets.server.UtilServerPackets.NotificationPacket;
+import com.osuserverlist.bjar.repos.IngameLoginRepository;
+import com.osuserverlist.bjar.repos.RelationshipRepository;
+import com.osuserverlist.bjar.repos.StatsRepository;
 import com.osuserverlist.bjar.repos.UserRepository;
 
 import io.javalin.http.Context;
@@ -74,80 +75,84 @@ public class LoginHandler {
             return;
         }
 
-        // TODO: fix issue where client is sending login request twice even after login to c4 or any other subdom
+        // TODO: fix issue where client is sending login request twice even after login
+        // to c4 or any other subdom
 
         Server server = App.server;
 
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository userRepository = new UserRepository(mysql);
-
-            UserEntity userEntity = authenticate(userRepository, loginResponse);
-            if (userEntity == null) {
-                sendLoginFailure(ctx, LOGIN_FAILED);
-                return;
-            }
-
-            GeoResponse geoLocResponse = resolveGeoLocation(userRepository, userEntity, loginResponse);
-
-            disconnectExistingSession(server, userEntity);
-
-            Player player = buildPlayer(userEntity, loginResponse, geoLocResponse);
-
-            player.sendPacket(new ProtocolVersionPacket());
-            player.sendPacket(new LoginReplyPacket(player.getId()));
-            player.sendPacket(new PrivilegesPacket(player.getClientPrivileges()));
-
-            loadPlayerStats(mysql, player);
-
-            player.sendPacket(new UserPresencePacket(player));
-            player.sendPacket(new UserStatsPacket(player));
-            player.sendPacket(new FriendsListPacket(userRepository.getFriendIds(player.getId())));
-
-            for (int blockId : userRepository.getBlockedIds(player.getId())) {
-                player.getBlocks().add(blockId);
-            }
-
-            joinAvailableChannels(server, player);
-
-            player.sendPacket(new ChannelInfoEndPacket());
-            player.sendPacket(new UserPresenceBundlePacket());
-
-            server.playerManager.add(player);
-
-            notifyOtherPlayers(server, player);
-
-            sendWelcomeMessages(server, player);
-            sendRestrictionNoticeIfNeeded(server, player);
-            player.sendPacket(new MenuIconPacket());
-
-            sendSilenceInfoIfNeeded(server, player);
-
-            logger.info("User {} logged in successfully from IP: {}", player, loginResponse.getIp());
-
-            scheduleBackgroundLoginTasks(server, player, userEntity, loginResponse);
-
-            BanchoPacketWriter writer = new BanchoPacketWriter();
-            ChoHandler.handlePendingPackets(writer, player);
-
-            ctx.header("cho-token", loginResponse.getUuid())
-                    .status(HttpStatus.OK)
-                    .contentType("application/octet-stream")
-                    .result(writer.getPackets());
+        UserEntity userEntity = authenticate(loginResponse);
+        if (userEntity == null) {
+            sendLoginFailure(ctx, LOGIN_FAILED);
+            return;
         }
+
+        GeoResponse geoLocResponse = resolveGeoLocation(userEntity, loginResponse);
+
+        disconnectExistingSession(server, userEntity);
+
+        Player player = buildPlayer(userEntity, loginResponse, geoLocResponse);
+
+        // Entity is used to update the database with the player's information later, so
+        // we need to set it here.
+        player.setEntity(userEntity);
+
+        player.sendPacket(new ProtocolVersionPacket());
+        player.sendPacket(new LoginReplyPacket(player.getId()));
+        player.sendPacket(new PrivilegesPacket(player.getClientPrivileges()));
+
+        loadPlayerStats(player);
+
+        player.sendPacket(new UserPresencePacket(player));
+        player.sendPacket(new UserStatsPacket(player));
+        player.sendPacket(new FriendsListPacket(
+                RelationshipRepository.getFriendUsers(player.getEntity()).stream().map(UserEntity::getId).toList()));
+
+        for (int blockId : RelationshipRepository.getBlockedUsers(player.getEntity()).stream().map(UserEntity::getId)
+                .toList()) {
+            player.getBlocks().add(blockId);
+        }
+
+        joinAvailableChannels(server, player);
+
+        player.sendPacket(new ChannelInfoEndPacket());
+        player.sendPacket(new UserPresenceBundlePacket());
+
+        server.playerManager.add(player);
+
+        notifyOtherPlayers(server, player);
+
+        sendWelcomeMessages(server, player);
+        sendRestrictionNoticeIfNeeded(server, player);
+        player.sendPacket(new MenuIconPacket());
+
+        sendSilenceInfoIfNeeded(server, player);
+
+        logger.info("User {} logged in successfully from IP: {} Channel: {}", player, loginResponse.getIp(), player.getOsuVersion().getStream().name());
+
+        scheduleBackgroundLoginTasks(server, player, userEntity, loginResponse);
+
+        BanchoPacketWriter writer = new BanchoPacketWriter();
+        ChoHandler.handlePendingPackets(writer, player);
+
+        ctx.header("cho-token", loginResponse.getUuid())
+                .status(HttpStatus.OK)
+                .contentType("application/octet-stream")
+                .result(writer.getPackets());
+
     }
 
     /**
      * Looks up the user and verifies their password. Returns {@code null}
      * (and logs a warning) if either step fails.
      */
-    private UserEntity authenticate(UserRepository userRepository, LoginResponse loginResponse) throws SQLException {
-        UserEntity userEntity = userRepository.getUserByName(loginResponse.getUsername());
+    private UserEntity authenticate(LoginResponse loginResponse) throws SQLException {
+        UserEntity userEntity = UserRepository.findByName(loginResponse.getUsername());
         if (userEntity == null) {
             return null;
         }
 
         boolean passwordMatches = OpenBSDBCrypt.checkPassword(
-                userEntity.getPwBcrypt(),
+                userEntity.getPasswordHash(),
                 loginResponse.getPasswordMd5().toCharArray());
 
         if (!passwordMatches) {
@@ -163,13 +168,13 @@ public class LoginHandler {
      * Resolves the player's geo-location and backfills the user's stored
      * country if it hasn't been set yet (i.e. is still {@code XX}).
      */
-    private GeoResponse resolveGeoLocation(UserRepository userRepository, UserEntity userEntity,
-            LoginResponse loginResponse) throws SQLException {
+    private GeoResponse resolveGeoLocation(UserEntity userEntity, LoginResponse loginResponse) {
         GeoResponse geoLocResponse = GeoLocation.provider.getCountryCode(loginResponse.getIp());
 
         if (userEntity.getCountry().equalsIgnoreCase("XX")) {
             Country country = Country.getById(geoLocResponse.getCountryId());
-            userRepository.updateUserCountry(userEntity.getId(), country.name().toLowerCase());
+            userEntity.setCountry(country.name().toLowerCase());
+            UserRepository.save(userEntity);
         }
 
         return geoLocResponse;
@@ -192,17 +197,18 @@ public class LoginHandler {
         player.setDisplayCityLocation(loginResponse.isDisplayCityLocation());
         player.setFriendOnlyDms(loginResponse.isFriendOnlyDms());
         player.setUsername(userEntity.getName());
-        player.setServerPrivileges(userEntity.getPriv());
+        player.setServerPrivileges(userEntity.getPrivileges());
+        player.setOsuVersion(OsuVersionParser.parse(loginResponse.getBuildName()));
 
-        if(!Privileges.hasAny(userEntity.getPriv(), Privileges.VERIFIED)) {
-            player.setServerPrivileges(userEntity.getPriv() | Privileges.VERIFIED.getValue());
+        if (!Privileges.hasAny(userEntity.getPrivileges(), Privileges.VERIFIED)) {
+            player.setServerPrivileges(userEntity.getPrivileges() | Privileges.VERIFIED.getValue());
             updatePrivsSoon(player);
         }
 
         player.setSilenceEnd(userEntity.getSilenceEnd());
         player.setDonorEnd(userEntity.getDonorEnd());
 
-        int clientPrivs = Privileges.addPrivilege(userEntity.getPriv(), Privileges.SUPPORTER);
+        int clientPrivs = Privileges.addPrivilege(userEntity.getPrivileges(), Privileges.SUPPORTER);
         player.setClientPrivileges(Privileges.toClientPrivileges(clientPrivs));
 
         player.setApiIdent(String.format("%s|%s", player.getUsername(), loginResponse.getPasswordMd5()));
@@ -212,12 +218,9 @@ public class LoginHandler {
 
     private void updatePrivsSoon(Player player) {
         App.server.executor.submit(() -> {
-            try (MySQL mysql = Database.getConnection()) {
-                UserRepository userRepo = new UserRepository(mysql);
-                userRepo.updateUserPrivileges(player.getId(), player.getServerPrivileges());
-            } catch (SQLException e) {
-                logger.error("Failed to update privileges for {}", player, e);
-            }
+            UserEntity userEntity = player.getEntity();
+            userEntity.setPrivileges(player.getServerPrivileges());
+            UserRepository.save(userEntity);
         });
     }
 
@@ -226,7 +229,8 @@ public class LoginHandler {
             if (player.getSilenceEnd() > (System.currentTimeMillis() / 1000L)) {
                 int silenceSecondsRemaining = (int) (player.getSilenceEnd() - (System.currentTimeMillis() / 1000L));
                 player.sendPacket(new SilenceInfoPacket(silenceSecondsRemaining));
-                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), "You are currently silenced.", player.getUsername(), server.botPlayer.getId()));
+                player.sendPacket(new SendMessagePacket(server.botPlayer.getUsername(), "You are currently silenced.",
+                        player.getUsername(), server.botPlayer.getId()));
             } else {
                 player.sendPacket(new SilenceInfoPacket(0));
             }
@@ -249,33 +253,22 @@ public class LoginHandler {
      * loading) to run after the login response has already been sent to the
      * client, since neither is needed before the client can start playing.
      */
-    private void scheduleBackgroundLoginTasks(Server server, Player player, UserEntity userEntity,
-            LoginResponse loginResponse) {
+    private void scheduleBackgroundLoginTasks(Server server, Player player, UserEntity userEntity, LoginResponse loginResponse) {
         server.executor.submit(() -> {
-            try (MySQL con = Database.getConnection()) {
-                UserRepository userRepo = new UserRepository(con);
-                userRepo.insertIngameLogin(userEntity.getId(), loginResponse.getIp(),
-                        LoginResponse.parseOsuVersionDate(loginResponse.getBuildName())
-                                .format(DateTimeFormatter.ISO_LOCAL_DATE),
-                        loginResponse.getBuildName());
+            IngameLoginRepository.log(userEntity, loginResponse.getIp(), player.getOsuVersion().getDate().toString(), player.getOsuVersion().getStream().name().toLowerCase());
 
-                server.achievementManager.loadForPlayer(player, con);
-            } catch (SQLException e) {
-                logger.error("Error running background login tasks for user {}: {}", player, e.getMessage());
-            }
+            server.achievementManager.loadForPlayer(player);
         });
     }
 
-    private void loadPlayerStats(MySQL mysql, Player player) throws SQLException {
-        ResultSet statsRs = mysql
-                .query("SELECT * FROM `stats` WHERE `id` = ? AND `mode` IN (0,1,2,3,4,5,6,8)", player.getId())
-                .executeQuery();
+    private void loadPlayerStats(Player player) throws SQLException {
+        List<StatsEntity> statsList = StatsRepository.findAllByUser(player.getId());
 
         boolean[] statsFound = new boolean[9];
 
-        while (statsRs.next()) {
-            int mode = statsRs.getInt("mode");
-            ModeStats modeStats = ModeStats.fromResultSet(statsRs, mode, player);
+        for (StatsEntity stats : statsList) {
+            int mode = stats.getId().getMode();
+            ModeStats modeStats = ModeStats.fromEntity(stats, mode, player);
             player.getModeStats()[mode] = modeStats;
             statsFound[mode] = true;
         }

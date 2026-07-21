@@ -1,59 +1,69 @@
 package com.osuserverlist.bjar.models.database;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Data
+@Entity
+@Table(name = "users")
 public class UserEntity {
-    private int id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer id;
+
+    @Column(name = "name", length = 32, nullable = false)
     private String name;
+
+    @Column(name = "safe_name", length = 32, nullable = false)
     private String safeName;
+
+    @Column(name = "email", length = 254, nullable = false)
     private String email;
-    private int priv;
-    private String pwBcrypt;
-    private String country;
-    private int silenceEnd;
-    private int donorEnd;
-    private int creationTime;
-    private int latestActivity;
-    private int clanId;
-    private boolean clanPriv;
-    private int preferredMode;
-    private int playStyle;
+
+    @Column(name = "priv", nullable = false)
+    private Integer privileges = 1;
+
+    @Column(name = "pw_bcrypt", length = 60, nullable = false)
+    private String passwordHash;
+
+    @Column(name = "country", length = 2, nullable = false)
+    private String country = "xx";
+
+    @Column(name = "silence_end")
+    private Integer silenceEnd = 0;
+
+    @Column(name = "donor_end")
+    private Integer donorEnd = 0;
+
+    @Column(name = "creation_time")
+    private Integer creationTime = 0;
+
+    @Column(name = "latest_activity")
+    private Integer latestActivity = 0;
+
+    @Column(name = "clan_id")
+    private Integer clanId = 0;
+
+    @Column(name = "clan_priv")
+    private Boolean clanPriv = false;
+
+    @Column(name = "preferred_mode")
+    private Integer preferredMode = 0;
+
+    @Column(name = "play_style")
+    private Integer playStyle = 0;
+
+    @Column(name = "custom_badge_name", length = 16)
     private String customBadgeName;
+
+    @Column(name = "custom_badge_icon", length = 64)
     private String customBadgeIcon;
+
+    @Column(name = "userpage_content", length = 2048)
     private String userpageContent;
+
+    @Column(name = "api_key", length = 36)
     private String apiKey;
-
-    public static UserEntity fromResultSet(ResultSet userResult) throws SQLException {
-        UserEntity user = new UserEntity();
-
-        user.id = userResult.getInt("id");
-        user.name = userResult.getString("name");
-        user.safeName = userResult.getString("safe_name");
-        user.email = userResult.getString("email");
-        user.priv = userResult.getInt("priv");
-        user.pwBcrypt = userResult.getString("pw_bcrypt");
-        user.country = userResult.getString("country");
-        user.silenceEnd = userResult.getInt("silence_end");
-        user.donorEnd = userResult.getInt("donor_end");
-        user.creationTime = userResult.getInt("creation_time");
-        user.latestActivity = userResult.getInt("latest_activity");
-        user.clanId = userResult.getInt("clan_id");
-        user.clanPriv = userResult.getBoolean("clan_priv");
-        user.preferredMode = userResult.getInt("preferred_mode");
-        user.playStyle = userResult.getInt("play_style");
-        user.customBadgeName = userResult.getString("custom_badge_name");
-        user.customBadgeIcon = userResult.getString("custom_badge_icon");
-        user.userpageContent = userResult.getString("userpage_content");
-        user.apiKey = userResult.getString("api_key");
-
-        return user;
-    }
-
-    public String toString() {
-        return String.format("<%s>(%d)", this.name, this.id);
-    }
 }

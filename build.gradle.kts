@@ -5,6 +5,7 @@ plugins {
     application
     id("maven-publish")
     id("com.gradleup.shadow") version "9.0.0"
+    id("io.ebean") version "19.2.0"
 }
 
 group = "com.osuserverlist"
@@ -35,6 +36,7 @@ val dotenvVersion = "5.2.2"
 val toml4jVersion = "0.7.3"
 val mysqlVersion = "9.7.0"
 val hikariVersion = "7.1.0"
+val ebeanVersion = "19.2.0"
 val jedisVersion = "7.5.3"
 val ousuApiVersion = "2.1"
 val osuNativeJarVersion = "0.0.9"
@@ -60,6 +62,8 @@ dependencies {
 
     implementation("com.mysql:mysql-connector-j:$mysqlVersion")
     implementation("com.zaxxer:HikariCP:$hikariVersion")
+    implementation("io.ebean:ebean:$ebeanVersion")
+    annotationProcessor("io.ebean:querybean-generator:$ebeanVersion")
 
     implementation("com.squareup.okhttp3:okhttp-jvm")
 

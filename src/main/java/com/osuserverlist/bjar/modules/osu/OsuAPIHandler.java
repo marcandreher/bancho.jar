@@ -1,7 +1,6 @@
 package com.osuserverlist.bjar.modules.osu;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -10,8 +9,9 @@ import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.models.database.BeatmapEntity;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
+import com.osuserverlist.bjar.models.database.MapsetEntity;
+import com.osuserverlist.bjar.repos.BeatmapRepository;
+import com.osuserverlist.bjar.repos.MapsetRepository;
 
 import me.skiincraft.api.ousu.OusuAPI;
 import me.skiincraft.api.ousu.entity.beatmap.Beatmap;
@@ -30,16 +30,17 @@ public class OsuAPIHandler {
         this.osuAPI = new OusuAPI(apiKey);
     }
 
-    public BeatmapEntity getBeatmapById(MySQL mysql, long beatmapId) throws SQLException {
-        BeatmapEntity cachedMap = getMapById(mysql, beatmapId);
-
-        if (cachedMap != null) {
-            return cachedMap;
+    public BeatmapEntity getBeatmapById(long beatmapId) {
+        BeatmapEntity cached = BeatmapRepository.findById(beatmapId);
+        if (cached != null) {
+            return cached;
         }
 
-        Beatmap osuBeatmap = osuAPI.getBeatmap(beatmapId).get();
+        Beatmap beatmap = osuAPI.getBeatmap(beatmapId).get();
 
-        return cacheRequestedMapAndDeferSet(mysql, osuBeatmap);
+        scheduleMapsetCaching(beatmap.getBeatmapSetId());
+
+        return BeatmapEntity.fromBeatmap(beatmap);
     }
 
     public Beatmap getRawBeatmapById(long beatmapId) {
@@ -50,145 +51,70 @@ public class OsuAPIHandler {
         }
     }
 
-    public BeatmapEntity getBeatmapByHash(MySQL mysql, String beatmapHash) throws SQLException {
-        BeatmapEntity cachedMap = getMapByHash(mysql, beatmapHash);
-
-        if (cachedMap != null) {
-            return cachedMap;
+    public BeatmapEntity getBeatmapByHash(String md5) {
+        BeatmapEntity cached = BeatmapRepository.findByMd5(md5);
+        if (cached != null) {
+            return cached;
         }
 
-        Beatmap osuBeatmap;
-
         try {
-            osuBeatmap = osuAPI.getBeatmapByChecksum(beatmapHash).get();
+            Beatmap beatmap = osuAPI.getBeatmapByChecksum(md5).get();
+
+            scheduleMapsetCaching(beatmap.getBeatmapSetId());
+
+            return BeatmapEntity.fromBeatmap(beatmap);
         } catch (BeatmapException e) {
             return null;
         }
-
-        return cacheRequestedMapAndDeferSet(mysql, osuBeatmap);
-    }
-
-    /**
-     * Caches just the specific beatmap the caller asked for (one cheap
-     * insert, already have all the data from the API response) and returns
-     * it immediately. Fetching and caching the rest of the mapset's
-     * difficulties is deferred to the background executor since the caller
-     * doesn't need them to proceed.
-     */
-    private BeatmapEntity cacheRequestedMapAndDeferSet(MySQL mysql, Beatmap osuBeatmap) throws SQLException {
-        BeatmapEntity map = BeatmapEntity.fromBeatmap(osuBeatmap);
-
-        insertMap(mysql, map);
-
-        scheduleMapsetCaching(osuBeatmap.getBeatmapSetId());
-
-        return map;
     }
 
     private void scheduleMapsetCaching(long setId) {
-        App.server.executor.submit(() -> {
-            try (MySQL con = Database.getConnection()) {
-                cacheMapset(con, setId);
-            } catch (SQLException e) {
-                logger.error("Error caching beatmap set <{}>: {}", setId, e.getMessage());
-            }
-        });
+        if (isMapsetCached(setId) || MAPSET_LOCKS.containsKey(setId)) {
+            return;
+        }
+
+        App.server.executor.submit(() -> cacheMapset(setId));
     }
 
-    private BeatmapEntity getMapById(MySQL mysql, long beatmapId) throws SQLException {
-        ResultSet result = mysql.query(
-                "SELECT * FROM `maps` WHERE `id` = ?",
-                beatmapId
-        ).executeQuery();
-
-        return result.next()
-                ? BeatmapEntity.fromResultSet(result)
-                : null;
+    private boolean isMapsetCached(long setId) {
+        return MapsetRepository.findById((int) setId) != null;
     }
 
-    private BeatmapEntity getMapByHash(MySQL mysql, String md5) throws SQLException {
-        ResultSet result = mysql.query(
-                "SELECT * FROM `maps` WHERE `md5` = ?",
-                md5
-        ).executeQuery();
-
-        return result.next()
-                ? BeatmapEntity.fromResultSet(result)
-                : null;
-    }
-
-    private boolean isMapsetCached(MySQL mysql, long setId) throws SQLException {
-        ResultSet result = mysql.query(
-                "SELECT 1 FROM `mapsets` WHERE `id` = ?",
-                setId
-        ).executeQuery();
-
-        return result.next();
-    }
-
-    private void cacheMapset(MySQL mysql, long setId) throws SQLException {
+    private void cacheMapset(long setId) {
         Object lock = MAPSET_LOCKS.computeIfAbsent(setId, k -> new Object());
 
         synchronized (lock) {
             try {
-                if (isMapsetCached(mysql, setId)) {
+                if (isMapsetCached(setId)) {
                     return;
                 }
 
-                long startTime = System.currentTimeMillis();
+                long start = System.currentTimeMillis();
 
-                BeatmapSet beatmapSet = osuAPI.getBeatmapSet(setId).get();
+                BeatmapSet set = osuAPI.getBeatmapSet(setId).get();
 
-                int beatmapCount = 0;
+                int count = 0;
 
-                for (Beatmap beatmap : beatmapSet.getAsList()) {
-                    insertMap(mysql, BeatmapEntity.fromBeatmap(beatmap));
-                    
-                    beatmapCount++;
+                for (Beatmap beatmap : set.getAsList()) {
+                    BeatmapRepository.save(BeatmapEntity.fromBeatmap(beatmap));
+                    count++;
                 }
 
-                mysql.exec(
-                        "INSERT INTO `mapsets` (`id`, `last_osuapi_check`) VALUES (?, CURRENT_TIMESTAMP)",
-                        setId
-                );
+                MapsetEntity mapset = new MapsetEntity();
+                mapset.setId((int) setId);
+                mapset.setLastOsuApiCheck(LocalDateTime.now());
+                MapsetRepository.save(mapset);
 
                 logger.debug(
-                        "Fetched beatmap set <{}> with <{}> beatmaps in <{}ms>",
-                        setId,
-                        beatmapCount,
-                        System.currentTimeMillis() - startTime
+                    "Cached beatmap set {} ({} beatmaps) in {} ms",
+                    setId,
+                    count,
+                    System.currentTimeMillis() - start
                 );
+
             } finally {
                 MAPSET_LOCKS.remove(setId, lock);
             }
         }
-    }
-
-    private void insertMap(MySQL mysql, BeatmapEntity map) {
-        mysql.exec(
-                "INSERT IGNORE INTO `maps` (`id`, `set_id`, `status`, `md5`, `artist`, `title`, `version`, `creator`, `filename`, `last_update`, `total_length`, `max_combo`, `frozen`, `plays`, `passes`, `mode`, `bpm`, `cs`, `ar`, `od`, `hp`, `diff`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                map.getId(),
-                map.getSetId(),
-                map.getStatus(),
-                map.getMd5(),
-                map.getArtist(),
-                map.getTitle(),
-                map.getVersion(),
-                map.getCreator(),
-                map.getFilename(),
-                map.getLastUpdate(),
-                map.getTotalLength(),
-                map.getMaxCombo(),
-                map.isFrozen(),
-                map.getPlays(),
-                map.getPasses(),
-                map.getMode(),
-                map.getBpm(),
-                map.getCs(),
-                map.getAr(),
-                map.getOd(),
-                map.getHp(),
-                map.getDiff()
-        );
     }
 }

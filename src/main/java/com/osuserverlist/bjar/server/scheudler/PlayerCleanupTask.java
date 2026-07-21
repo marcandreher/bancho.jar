@@ -1,16 +1,13 @@
 package com.osuserverlist.bjar.server.scheudler;
 
-import java.sql.SQLException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.models.osu.Privileges;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.repos.UserRepository;
 
 public class PlayerCleanupTask implements Runnable {
@@ -52,13 +49,11 @@ public class PlayerCleanupTask implements Runnable {
             return;
         }
 
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository repo = new UserRepository(mysql);
-            repo.updateUserSilence(player.getId(), 0);
-            server.playerManager.unsilence(player);
-        } catch (SQLException e) {
-            logger.error("Failed to update silence for {}", player, e);
-        }
+        UserEntity entity = player.getEntity();
+        entity.setSilenceEnd(0);
+        UserRepository.save(entity);
+
+        server.playerManager.unsilence(player);
 
         logger.info("Silence expired for {}", player);
     }
@@ -70,13 +65,9 @@ public class PlayerCleanupTask implements Runnable {
 
         server.playerManager.removePriv(player, Privileges.SUPPORTER);
 
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository repo = new UserRepository(mysql);
-            repo.updateUserPrivileges(player.getId(), player.getServerPrivileges());
-            repo.updateUserDonor(player.getId(), 0);
-        } catch (SQLException e) {
-            logger.error("Failed to update donor for {}", player, e);
-        }
+        UserEntity entity = player.getEntity();
+        entity.setDonorEnd(0);
+        UserRepository.save(entity);
 
         logger.info("Supporter expired for {}", player);
     }

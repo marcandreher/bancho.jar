@@ -1,19 +1,18 @@
 package com.osuserverlist.bjar.packets.client;
 
-import java.sql.SQLException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.App;
+import com.osuserverlist.bjar.models.database.RelationshipEntity;
+import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacket;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
 import com.osuserverlist.bjar.packets.BanchoPacket;
 import com.osuserverlist.bjar.packets.server.UserServerPackets.FriendsListPacket;
+import com.osuserverlist.bjar.repos.RelationshipRepository;
 import com.osuserverlist.bjar.repos.UserRepository;
 
 public class UserUtilPackets {
@@ -38,15 +37,18 @@ public class UserUtilPackets {
     public boolean addFriend(BanchoPacket packet, BanchoPacketReader reader, Player player) {
         int userId = reader.readInt();
 
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository userRepository = new UserRepository(mysql);
+        UserEntity userEntity = player.getEntity();
+        UserEntity userTargetEntity = UserRepository.findById(userId);
 
-            userRepository.addFriend(player.getId(), userId);
-            player.sendPacket(new FriendsListPacket(userRepository.getFriendIds(player.getId())));
-        } catch (SQLException e) {
-            logger.error("Error occurred while adding friend", e);
-        }
+        RelationshipRepository.addFriend(userEntity, userTargetEntity);
 
+        player.sendPacket(new FriendsListPacket(RelationshipRepository.getFriends(userEntity)
+            .stream()
+            .map(RelationshipEntity::getTarget)
+            .map(UserEntity::getId)
+            .map(Integer::intValue)
+            .toList()
+        ));
         return true;
     }
 
@@ -54,14 +56,18 @@ public class UserUtilPackets {
     public boolean removeFriend(BanchoPacket packet, BanchoPacketReader reader, Player player) {
         int userId = reader.readInt();
 
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository userRepository = new UserRepository(mysql);
+        UserEntity userEntity = player.getEntity();
+        UserEntity userTargetEntity = UserRepository.findById(userId);
 
-            userRepository.removeFriend(player.getId(), userId);
-            player.sendPacket(new FriendsListPacket(userRepository.getFriendIds(player.getId())));
-        } catch (SQLException e) {
-            logger.error("Error occurred while removing friend", e);
-        }
+        RelationshipRepository.removeFriend(userEntity, userTargetEntity);
+
+        player.sendPacket(new FriendsListPacket(RelationshipRepository.getFriends(userEntity)
+            .stream()
+            .map(RelationshipEntity::getTarget)
+            .map(UserEntity::getId)
+            .map(Integer::intValue)
+            .toList()
+        ));
 
         return true;
     }

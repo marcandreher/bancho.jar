@@ -4,13 +4,13 @@ import org.jetbrains.annotations.NotNull;
 
 import com.osuserverlist.bjar.App;
 import com.osuserverlist.bjar.Server;
+import com.osuserverlist.bjar.models.database.RelationshipEntity;
+import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.modules.main.WebEngine.Host;
 import com.osuserverlist.bjar.modules.main.WebEngine.HttpMethod;
 import com.osuserverlist.bjar.modules.main.WebEngine.Path;
-import com.osuserverlist.bjar.repos.UserRepository;
+import com.osuserverlist.bjar.repos.RelationshipRepository;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
@@ -35,12 +35,13 @@ public class OsuGetFriendsHandler implements Handler {
             return;
         }
 
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository userRepository = new UserRepository(mysql);
-
-            String response = String.join("\n", userRepository.getFriendIds(player.getId()).stream().map(String::valueOf).toArray(String[]::new));
-            ctx.result(response);
-        }
+        String response = RelationshipRepository.getFriends(player.getEntity())
+                .stream()
+                .map(RelationshipEntity::getTarget)
+                .map(UserEntity::getId)
+                .map(String::valueOf)
+                .collect(java.util.stream.Collectors.joining("\n"));
+        ctx.status(200).result(response);
 
     }
 

@@ -1,46 +1,54 @@
 package com.osuserverlist.bjar.repos;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import com.osuserverlist.bjar.models.database.AchievementEntity;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
+import com.osuserverlist.bjar.models.database.UserAchievementEntity;
+import com.osuserverlist.bjar.models.database.UserAchievementId;
+import com.osuserverlist.bjar.models.database.UserEntity;
 
-public class AchievementRepository {
+import io.ebean.DB;
 
-    private final MySQL mysql;
+public final class AchievementRepository {
 
-    public AchievementRepository(MySQL mysql) {
-        this.mysql = mysql;
+    private AchievementRepository() {
     }
 
-    public List<AchievementEntity> getAll() throws SQLException {
-        List<AchievementEntity> achievements = new ArrayList<>();
-
-        ResultSet achievementResult = mysql.query(GET_ALL_ACHIEVEMENTS_QUERY).executeQuery();
-        while (achievementResult.next()) {
-            AchievementEntity achievement = AchievementEntity.fromResultSet(achievementResult);
-            achievements.add(achievement);
-        }
-
-        return achievements;
+    public static List<AchievementEntity> findAll() {
+        return DB.find(AchievementEntity.class).findList();
     }
 
-    public void addAchievementToPlayer(int playerId, int achievementId) throws SQLException {
-        mysql.exec(INSERT_ACHIEVEMENT_TO_PLAYER_QUERY, playerId, achievementId);
+    public static List<AchievementEntity> findByUser(UserEntity user) {
+        return DB.find(UserAchievementEntity.class)
+                .where()
+                .eq("user", user)
+                .findList()
+                .stream()
+                .map(UserAchievementEntity::getAchievement)
+                .toList();
     }
 
-    public void getAllAchievementsForPlayer(int playerId, Consumer<Integer> achievementIdConsumer) throws SQLException {
-        ResultSet achievementResult = mysql.query(GET_ALL_ACHIEVEMENTS_FOR_PLAYER_QUERY, playerId).executeQuery();
-        while (achievementResult.next()) {
-            achievementIdConsumer.accept(achievementResult.getInt("achid"));
-        }
+    public static boolean has(UserEntity user, AchievementEntity achievement) {
+        return DB.find(UserAchievementEntity.class)
+                .where()
+                .eq("user", user)
+                .eq("achievement", achievement)
+                .exists();
     }
 
-    private static final String INSERT_ACHIEVEMENT_TO_PLAYER_QUERY = "INSERT INTO `user_achievements`(`userid`, `achid`) VALUES (?,?)";
-    private static final String GET_ALL_ACHIEVEMENTS_QUERY = "SELECT * FROM `achievements`";
-    private static final String GET_ALL_ACHIEVEMENTS_FOR_PLAYER_QUERY = "SELECT * FROM `user_achievements` WHERE `userid` = ?";
+    public static void unlock(UserEntity user, AchievementEntity achievement) {
+
+        UserAchievementEntity entity = new UserAchievementEntity();
+        entity.setId(new UserAchievementId(user.getId(), achievement.getId()));
+        entity.setUser(user);
+        entity.setAchievement(achievement);
+
+        DB.save(entity);
+    }
+
+    public static void remove(UserEntity user, AchievementEntity achievement) {
+        DB.delete(
+                UserAchievementEntity.class,
+                new UserAchievementId(user.getId(), achievement.getId()));
+    }
 }

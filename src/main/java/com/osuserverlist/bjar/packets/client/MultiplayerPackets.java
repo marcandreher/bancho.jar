@@ -18,8 +18,6 @@ import com.osuserverlist.bjar.models.osu.Mods;
 import com.osuserverlist.bjar.models.osu.match.MatchSpecialMode;
 import com.osuserverlist.bjar.models.osu.match.MatchTeams;
 import com.osuserverlist.bjar.models.osu.match.SlotStatus;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPacket;
 import com.osuserverlist.bjar.modules.packets.ClientPacketEngine.ClientPackets;
@@ -451,11 +449,7 @@ public class MultiplayerPackets {
             BeatmapEntity beatmap = null;
 
             if (match.getBeatmapId() > 0) {
-                try (MySQL mysql = Database.getConnection()) {
-                    beatmap = server.osuAPIHandler.getBeatmapById(mysql, match.getBeatmapId());
-                } catch (Exception e) {
-                    logger.error("Error while fetching beatmap {}", match.getBeatmapId(), e);
-                }
+                beatmap = server.osuAPIHandler.getBeatmapById(match.getBeatmapId());
             }
 
             for (MatchSlot slot : playerMatch.getSlots()) {

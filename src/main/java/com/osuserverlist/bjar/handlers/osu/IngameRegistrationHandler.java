@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HexFormat;
@@ -18,13 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.App;
+import com.osuserverlist.bjar.models.database.StatsEntity;
+import com.osuserverlist.bjar.models.database.StatsId;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.osu.Privileges;
-import com.osuserverlist.bjar.modules.datastore.Database;
-import com.osuserverlist.bjar.modules.datastore.MySQL;
 import com.osuserverlist.bjar.modules.main.WebEngine.Host;
 import com.osuserverlist.bjar.modules.main.WebEngine.HttpMethod;
 import com.osuserverlist.bjar.modules.main.WebEngine.Path;
+import com.osuserverlist.bjar.repos.StatsRepository;
 import com.osuserverlist.bjar.repos.UserRepository;
 
 import io.javalin.http.Context;
@@ -166,38 +166,37 @@ public class IngameRegistrationHandler implements Handler {
 
     private void registerUser(String username, String email, String bcryptHash,
             Map<String, List<String>> errors) {
-        try (MySQL mysql = Database.getConnection()) {
-            UserRepository userRepository = new UserRepository(mysql);
 
-            if (rejectIfConflicting(userRepository, username, email, errors)) {
+            if (rejectIfConflicting(username, email, errors)) {
                 return;
             }
 
-            userRepository.insertUser(username, username.toLowerCase().replaceAll(" ", "_"), email, bcryptHash);
-            Integer userId = mysql.lastInsertId();
+            UserEntity userEntity = new UserEntity();
+            userEntity.setName(username);
+            userEntity.setSafeName(username.toLowerCase().replaceAll(" ", "_"));
+            userEntity.setEmail(email);
+            userEntity.setPasswordHash(bcryptHash);
+            UserRepository.save(userEntity);
 
-            if (userId == null) {
+           
+            if (userEntity.getId() == null) {
                 logger.error("Failed to retrieve last insert ID for user: {}", username);
                 addError(errors, "database", "An error occurred while creating the account. Please try again.");
                 return;
             }
 
-            bootstrapNewUser(userRepository, userId);
+            bootstrapNewUser(userEntity);
 
-            logger.info("Registered new user: <{}>({})", username, userId);
-        } catch (SQLException e) {
-            logger.error("Database error during registration for user: " + username, e);
-            addError(errors, "database", "An error occurred while creating the account. Please try again.");
-        }
+            logger.info("Registered new user: <{}>({})", username, userEntity.getId());
+       
     }
 
     /**
      * Returns true (and populates errors) if the username or email is already
      * taken.
      */
-    private boolean rejectIfConflicting(UserRepository userRepository, String username, String email,
-            Map<String, List<String>> errors) throws SQLException {
-        UserEntity existingUser = userRepository.getUserByNameOrMail(username, email);
+    private boolean rejectIfConflicting(String username, String email, Map<String, List<String>> errors) {
+        UserEntity existingUser = UserRepository.findByNameOrEmail(username, email);
         if (existingUser == null) {
             return false;
         }
@@ -211,13 +210,16 @@ public class IngameRegistrationHandler implements Handler {
         return true;
     }
 
-    private void bootstrapNewUser(UserRepository userRepository, int userId) throws SQLException {
-        if (userId == FIRST_REAL_USER_ID) {
-            userRepository.updateUserPrivileges(userId, Privileges.allPrivsToInt());
+    private void bootstrapNewUser(UserEntity userEntity) {
+        if (userEntity.getId() == FIRST_REAL_USER_ID) {
+            userEntity.setPrivileges(Privileges.allPrivsToInt());
+            UserRepository.save(userEntity);
         }
 
         for (int mode : GAME_MODES_TO_SEED) {
-            userRepository.insertStats(userId, mode);
+            StatsEntity stats = new StatsEntity();
+            stats.setId(new StatsId(userEntity.getId(), mode));
+            StatsRepository.save(stats);
         }
     }
 
