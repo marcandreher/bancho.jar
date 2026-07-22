@@ -57,6 +57,7 @@ public class HomePageHandler implements Handler {
                 .replace("%players%", String.valueOf(App.server.playerManager.getAll().size()))
                 .replace("%version%", "bancho.jar <" + BuildInfo.VERSION + ">")
                 .replace("%packets%", packetList)
+                .replace("%domain%", App.server.enviromentConfig.getDomain())
                 .replace("%header%", Application.HEADER);
 
         ctx.contentType("text/html").result(html);

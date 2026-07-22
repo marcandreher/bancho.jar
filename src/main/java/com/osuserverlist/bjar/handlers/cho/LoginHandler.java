@@ -1,7 +1,5 @@
 package com.osuserverlist.bjar.handlers.cho;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,7 +65,7 @@ public class LoginHandler {
 
     private static final int LOGIN_FAILED = -1;
 
-    public void handle(Context ctx) throws IOException, SQLException {
+    public void handle(Context ctx) {
         LoginResponse loginResponse = LoginResponse.parse(ctx);
 
         if (!loginResponse.isSuccess()) {
@@ -104,14 +102,7 @@ public class LoginHandler {
 
         player.sendPacket(new UserPresencePacket(player));
         player.sendPacket(new UserStatsPacket(player));
-        player.sendPacket(new FriendsListPacket(
-                RelationshipRepository.getFriendUsers(player.getEntity()).stream().map(UserEntity::getId).toList()));
-
-        for (int blockId : RelationshipRepository.getBlockedUsers(player.getEntity()).stream().map(UserEntity::getId)
-                .toList()) {
-            player.getBlocks().add(blockId);
-        }
-
+        
         joinAvailableChannels(server, player);
 
         player.sendPacket(new ChannelInfoEndPacket());
@@ -145,7 +136,7 @@ public class LoginHandler {
      * Looks up the user and verifies their password. Returns {@code null}
      * (and logs a warning) if either step fails.
      */
-    private UserEntity authenticate(LoginResponse loginResponse) throws SQLException {
+    private UserEntity authenticate(LoginResponse loginResponse) {
         UserEntity userEntity = UserRepository.findByName(loginResponse.getUsername());
         if (userEntity == null) {
             return null;
@@ -169,7 +160,7 @@ public class LoginHandler {
      * country if it hasn't been set yet (i.e. is still {@code XX}).
      */
     private GeoResponse resolveGeoLocation(UserEntity userEntity, LoginResponse loginResponse) {
-        GeoResponse geoLocResponse = GeoLocation.provider.getCountryCode(loginResponse.getIp());
+        GeoResponse geoLocResponse = GeoLocation.getProvider().getCountryCode(loginResponse.getIp());
 
         if (userEntity.getCountry().equalsIgnoreCase("XX")) {
             Country country = Country.getById(geoLocResponse.getCountryId());
@@ -257,11 +248,15 @@ public class LoginHandler {
         server.executor.submit(() -> {
             IngameLoginRepository.log(userEntity, loginResponse.getIp(), player.getOsuVersion().getDate().toString(), player.getOsuVersion().getStream().name().toLowerCase());
 
+            player.getFriends().addAll(RelationshipRepository.getFriendUsers(player.getEntity()).stream().map(UserEntity::getId).toList());
+            player.getBlocks().addAll(RelationshipRepository.getBlockedUsers(player.getEntity()).stream().map(UserEntity::getId).toList());
+            player.sendPacket(new FriendsListPacket(player.getFriends().stream().map(Integer::intValue).toList()));
+
             server.achievementManager.loadForPlayer(player);
         });
     }
 
-    private void loadPlayerStats(Player player) throws SQLException {
+    private void loadPlayerStats(Player player) {
         List<StatsEntity> statsList = StatsRepository.findAllByUser(player.getId());
 
         boolean[] statsFound = new boolean[9];
@@ -344,7 +339,7 @@ public class LoginHandler {
         }
     }
 
-    private void sendLoginFailure(Context ctx, int loginState) throws IOException {
+    private void sendLoginFailure(Context ctx, int loginState) {
         BanchoPacketWriter writer = new BanchoPacketWriter();
         writer.startPacket(ServerPacketEngine.ServerPackets.LOGIN_REPLY);
         writer.writeInt(loginState);

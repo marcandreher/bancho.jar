@@ -145,4 +145,9 @@ public class BeatmapRepository {
                 .setParameter("setId", setId)
                 .execute();
     }
+
+    public static long count() {
+        return DB.find(BeatmapEntity.class)
+                .findCount();
+    }
 }

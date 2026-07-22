@@ -23,7 +23,7 @@ public class OsuClientModels {
         public final int id;
 
         public static ActionStatus getById(int id) {
-            return (ActionStatus) java.util.Arrays.stream(values())
+            return java.util.Arrays.stream(values())
                     .filter(s -> s.id == id)
                     .findFirst()
                     .orElse(null);

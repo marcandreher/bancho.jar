@@ -255,4 +255,9 @@ public final class ScoreRepository {
                 .set("pp", (float) pp)
                 .update();
     }
+
+    public static long count() {
+        return DB.find(ScoreEntity.class)
+                .findCount();
+    }
 }

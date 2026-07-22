@@ -12,7 +12,9 @@ import com.osuserverlist.bjar.models.ConfigModels.ServerConfiguration;
 import com.osuserverlist.bjar.models.engine.ProductionLevel;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.calculations.Performance;
+import com.osuserverlist.bjar.modules.main.Application.BuildInfo;
 import com.osuserverlist.bjar.modules.main.Commands;
+import com.osuserverlist.bjar.modules.main.GeoLocation;
 import com.osuserverlist.bjar.modules.main.WebEngine;
 import com.osuserverlist.bjar.modules.main.WebEngine.BanchoWebLogger;
 import com.osuserverlist.bjar.modules.osu.OsuAPIHandler;
@@ -27,6 +29,8 @@ import com.osuserverlist.bjar.server.scheudler.BotPresenceTask;
 import com.osuserverlist.bjar.server.scheudler.PlayerCleanupTask;
 import com.osuserverlist.bjar.server.scheudler.SendChannelInfoTask;
 
+import io.javalin.openapi.plugin.OpenApiPlugin;
+import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import io.javalin.Javalin;
 import lombok.Data;
 
@@ -74,6 +78,7 @@ public class Server {
         Commands.finalizeCommandRegistration();
 
         performance.loadCalculatorFromString(enviromentConfig.getPerformanceCalculator());
+        GeoLocation.loadProviderFromString(enviromentConfig.getGeoProvider());
         logger.info("Using <{}> as PerformanceCalculator", performance.getCalculatorClassName());
 
         app = configureJavalin();
@@ -106,6 +111,22 @@ public class Server {
             config.concurrency.useVirtualThreads = true;
             config.requestLogger.http(new BanchoWebLogger());
 
+            config.registerPlugin(new OpenApiPlugin(pluginConfig -> {
+                pluginConfig.withDefinitionConfiguration((version, definition) -> {
+                    definition.info(info -> info
+                            .title("bancho.jar API")
+                            .version(BuildInfo.VERSION)
+                            .description("The web api for bancho.jar, an open-source osu! server implementation."));
+
+                    final String finalApiUrl = "https://api." +  enviromentConfig.getDomain();
+                    definition.server(server -> server.url(finalApiUrl).description("API Server"));
+                });
+            }));
+
+            config.registerPlugin(new SwaggerPlugin(cfg -> {
+                cfg.uiPath = "/api/docs";
+            }));
+
             // Register annotated handlers for the web server
             WebEngine.registerDefaultHandlers(config);
 
@@ -125,6 +146,7 @@ public class Server {
         private String osuApiKey;
 
         private String performanceCalculator;
+        private String geoProvider;
 
         private String searchEndpoint;
         private String dlEndpoint;

@@ -37,6 +37,7 @@ public class PlayerPageHandler implements Handler {
 
         String html = indexTemplate.replace("%players%", playerHtml.toString())
         .replace("%header%", Application.HEADER)
+        .replace("%domain%", App.server.enviromentConfig.getDomain())
         .replace("%version%", "bancho.jar <" + BuildInfo.VERSION + ">");
         ctx.html(html);
     }

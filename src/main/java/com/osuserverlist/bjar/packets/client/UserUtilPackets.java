@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.osuserverlist.bjar.App;
-import com.osuserverlist.bjar.models.database.RelationshipEntity;
 import com.osuserverlist.bjar.models.database.UserEntity;
 import com.osuserverlist.bjar.models.essentials.Player;
 import com.osuserverlist.bjar.modules.packets.BanchoPacketReader;
@@ -37,18 +36,16 @@ public class UserUtilPackets {
     public boolean addFriend(BanchoPacket packet, BanchoPacketReader reader, Player player) {
         int userId = reader.readInt();
 
-        UserEntity userEntity = player.getEntity();
-        UserEntity userTargetEntity = UserRepository.findById(userId);
+        player.getFriends().add(userId);
 
-        RelationshipRepository.addFriend(userEntity, userTargetEntity);
+        player.sendPacket(new FriendsListPacket(player.getFriends().stream().map(Integer::intValue).toList()));
 
-        player.sendPacket(new FriendsListPacket(RelationshipRepository.getFriends(userEntity)
-            .stream()
-            .map(RelationshipEntity::getTarget)
-            .map(UserEntity::getId)
-            .map(Integer::intValue)
-            .toList()
-        ));
+        App.server.executor.execute(()-> {
+            UserEntity userEntity = player.getEntity();
+            UserEntity userTargetEntity = UserRepository.findById(userId);
+            RelationshipRepository.addFriend(userEntity, userTargetEntity);
+        });
+        
         return true;
     }
 
@@ -56,18 +53,15 @@ public class UserUtilPackets {
     public boolean removeFriend(BanchoPacket packet, BanchoPacketReader reader, Player player) {
         int userId = reader.readInt();
 
-        UserEntity userEntity = player.getEntity();
-        UserEntity userTargetEntity = UserRepository.findById(userId);
+        player.getFriends().remove(userId);
 
-        RelationshipRepository.removeFriend(userEntity, userTargetEntity);
+        player.sendPacket(new FriendsListPacket(player.getFriends().stream().map(Integer::intValue).toList()));
 
-        player.sendPacket(new FriendsListPacket(RelationshipRepository.getFriends(userEntity)
-            .stream()
-            .map(RelationshipEntity::getTarget)
-            .map(UserEntity::getId)
-            .map(Integer::intValue)
-            .toList()
-        ));
+        App.server.executor.execute(()-> {
+            UserEntity userEntity = player.getEntity();
+            UserEntity userTargetEntity = UserRepository.findById(userId);
+            RelationshipRepository.removeFriend(userEntity, userTargetEntity);
+        });
 
         return true;
     }

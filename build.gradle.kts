@@ -46,6 +46,8 @@ val classgraphVersion = "4.8.184"
 val logbackVersion = "1.5.38"
 val jacksonVersion = "2.21.2"
 val mvelVersion = "2.5.2.Final"
+val caffeineVersion = "3.2.4"
+val maxmindVersion = "5.1.0"
 
 dependencies {
     implementation(platform("com.squareup.okhttp3:okhttp-bom:$okhttpVersion"))
@@ -70,6 +72,12 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
 
     implementation("io.javalin:javalin:$javalinVersion")
+    implementation("io.javalin.community.openapi:javalin-openapi-plugin:$javalinVersion")
+    implementation("io.javalin.community.openapi:javalin-swagger-plugin:$javalinVersion")
+    implementation("io.javalin.community.openapi:javalin-redoc-plugin:$javalinVersion")
+
+    compileOnly("io.javalin.community.openapi:openapi-annotation-processor:$javalinVersion")
+    annotationProcessor("io.javalin.community.openapi:openapi-annotation-processor:$javalinVersion")
 
     implementation("com.github.marcandreher:Ousu-Api:$ousuApiVersion")
 
@@ -82,6 +90,10 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
 
     implementation("org.mvel:mvel2:$mvelVersion")
+
+    implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
+
+    implementation("com.maxmind.geoip2:geoip2:$maxmindVersion")
 }
 
 publishing {

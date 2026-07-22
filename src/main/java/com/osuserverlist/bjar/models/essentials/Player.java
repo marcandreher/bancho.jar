@@ -40,6 +40,7 @@ public class Player {
     private Set<Integer> unlockedAchievements = ConcurrentHashMap.newKeySet();
     private Set<Player> spectators = ConcurrentHashMap.newKeySet();
     private Set<Integer> blocks = ConcurrentHashMap.newKeySet();
+    private Set<Integer> friends = ConcurrentHashMap.newKeySet();
     private UserEntity entity = null;
     private OsuVersion osuVersion = null;
     

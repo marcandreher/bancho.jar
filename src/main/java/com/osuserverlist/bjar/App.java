@@ -99,6 +99,7 @@ public class App {
             config.setLevel(ProductionLevel.fromCode(dotenv.get("LEVEL", "PROD")));
 
             config.setPerformanceCalculator(dotenv.get("PP_CALCULATOR"));
+            config.setGeoProvider(dotenv.get("GEO_PROVIDER"));
 
             config.setOsuApiKey(dotenv.get("OSU_API_KEY"));
             config.setDlEndpoint(dotenv.get("DIRECT_DL"));

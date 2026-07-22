@@ -51,7 +51,7 @@ public class IngameRegistrationHandler implements Handler {
 
     private static final int FIRST_REAL_USER_ID = 3;
     private static final int[] GAME_MODES_TO_SEED = { 0, 1, 2, 3, 4, 5, 6, 8 };
-    private static final int BCRYPT_COST = 12;
+    private static final int BCRYPT_COST = 11;
 
     @Override
     public void handle(@NotNull Context ctx) throws Exception {
@@ -176,6 +176,7 @@ public class IngameRegistrationHandler implements Handler {
             userEntity.setSafeName(username.toLowerCase().replaceAll(" ", "_"));
             userEntity.setEmail(email);
             userEntity.setPasswordHash(bcryptHash);
+            userEntity.setCreationTime((int)(System.currentTimeMillis() / 1000));
             UserRepository.save(userEntity);
 
            

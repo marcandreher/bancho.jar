@@ -1,9 +1,22 @@
 package com.osuserverlist.bjar.modules.main;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.maxmind.geoip2.DatabaseReader;
+import com.maxmind.geoip2.model.CityResponse;
+import com.maxmind.geoip2.record.Location;
 
 import lombok.Value;
 import okhttp3.OkHttpClient;
@@ -11,8 +24,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class GeoLocation {
-
-    public static GeoProvider provider = new IPAPIProvider();
+    private static Logger logger = LoggerFactory.getLogger(GeoLocation.class);
+    private static GeoProvider provider;
 
     public static interface GeoProvider {
         public GeoResponse getCountryCode(String ip);
@@ -25,33 +38,161 @@ public class GeoLocation {
         private float longitude;
     }
 
+    public static enum ProviderType {
+        IPAPI,
+        MAXMIND
+    }
+
+    public static GeoProvider getProvider() {
+        if(provider == null) {
+            logger.error("Geolocation provider is not available");
+        }
+        return provider;
+    }
+
+    public static void loadProviderFromString(String provider){
+        switch (provider.toUpperCase()) {
+            case "IPAPI":
+                GeoLocation.provider = new CachingGeoProvider(new IPAPIProvider());
+                break;
+            case "MAXMIND":
+                GeoLocation.provider = new CachingGeoProvider(new MaxMindProvider());
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown provider: " + provider);
+        }
+    }
+
+    /**
+     * Decorator that adds a caching layer on top of any {@link GeoProvider}.
+     * Individual providers no longer need to implement their own caching.
+     */
+    public static class CachingGeoProvider implements GeoProvider {
+
+        private final LoadingCache<String, GeoResponse> cache;
+
+        public CachingGeoProvider(GeoProvider delegate) {
+            this(delegate, 24, TimeUnit.HOURS, 50_000);
+        }
+
+        public CachingGeoProvider(GeoProvider delegate, long expireAfterWrite, TimeUnit unit, long maximumSize) {
+            this.cache = Caffeine.newBuilder()
+                    .expireAfterWrite(expireAfterWrite, unit)
+                    .maximumSize(maximumSize)
+                    .build(delegate::getCountryCode);
+        }
+
+        @Override
+        public GeoResponse getCountryCode(String ip) {
+            return cache.get(ip);
+        }
+    }
+
     public static class IPAPIProvider implements GeoProvider {
         public final String URL = "http://ip-api.com/json/%ip%?fields=status,message,countryCode,lat,lon";
         private final static OkHttpClient client = new OkHttpClient();
 
         @Override
         public GeoResponse getCountryCode(String ip) {
+            return fetch(ip);
+        }
+
+        private GeoResponse fetch(String ip) {
             String url = URL.replace("%ip%", ip);
             Request request = new Request.Builder().url(url).build();
-            
-            
+
             try (Response response = client.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
                     return null;
                 }
+
                 String responseBody = response.body().string();
                 JsonObject json = JsonParser.parseString(responseBody).getAsJsonObject();
+
                 if ("success".equals(json.get("status").getAsString())) {
-                    GeoResponse geoResponse = new GeoResponse(Country.getIndexByCode(json.get("countryCode").getAsString()), json.get("lat").getAsFloat(), json.get("lon").getAsFloat());
-      
-                    return geoResponse;
+                    return new GeoResponse(
+                            Country.getIndexByCode(json.get("countryCode").getAsString()),
+                            json.get("lat").getAsFloat(),
+                            json.get("lon").getAsFloat()
+                    );
                 }
             } catch (IOException e) {
                 throw new RuntimeException("Failed to fetch country code", e);
             }
-            return null; 
+            return null;
+        }
+    }
+
+    public static class MaxMindProvider implements GeoProvider {
+
+        private static final String DB_URL =
+                "https://github.com/Skiddle-ID/geoip2-mirror/releases/download/20260605/GeoLite2-City.mmdb";
+
+        // Where the mmdb file is cached on disk between runs.
+        private static final File DB_FILE = new File("data/", "GeoLite2-City.mmdb");
+
+        private final DatabaseReader reader;
+
+        public MaxMindProvider() {
+            try {
+                ensureDatabaseDownloaded();
+                this.reader = new DatabaseReader.Builder(DB_FILE).build();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to initialize MaxMind database", e);
+            }
         }
 
+        private static final OkHttpClient HTTP = new OkHttpClient();
+
+        private static void ensureDatabaseDownloaded() throws IOException {
+            if (DB_FILE.exists() && DB_FILE.length() > 0) return;
+
+            logger.info("Downloading GeoLite2-City.mmdb...");
+
+            File tmp = File.createTempFile("GeoLite2-City", ".part", DB_FILE.getParentFile());
+    
+
+            try (Response response = HTTP.newCall(new Request.Builder().url(DB_URL).build()).execute()) {
+                if (!response.isSuccessful() || response.body() == null) {
+                    throw new IOException("Download failed: HTTP " + response.code());
+                }
+
+                Files.copy(response.body().byteStream(), tmp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                Files.move(tmp.toPath(), DB_FILE.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } finally {
+                tmp.delete();
+            }
+
+            logger.info("GeoLite2-City.mmdb downloaded.");
+        }
+
+        @Override
+        public GeoResponse getCountryCode(String ip) {
+            return fetch(ip);
+        }
+
+        private GeoResponse fetch(String ip) {
+            try {
+                InetAddress address = InetAddress.getByName(ip);
+                CityResponse response = reader.city(address);
+
+                String isoCode = response.country().isoCode();
+                if (isoCode == null) {
+                    return null;
+                }
+                
+                Location location = response.location();
+                float lat = location.latitude() != null
+                        ? location.latitude().floatValue() : 0f;
+                float lon = location.longitude() != null
+                        ? location.longitude().floatValue() : 0f;
+
+                return new GeoResponse(Country.getIndexByCode(isoCode), lat, lon);
+            } catch (Exception e) {
+                logger.warn("Failed to resolve geolocation for " + ip, e);
+                return null;
+            }
+        }
     }
 
     public static enum Country {
